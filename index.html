@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>CityOS Core — Production Build</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --p: #6366f1; --s: #f43f5e; --acc: #10b981; --bg: #030712; --card: rgba(15, 23, 42, 0.9); }
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg); color: white; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    
+    .vignette { position: fixed; inset: 0; background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 100%); pointer-events: none; z-index: 10; }
+
+    /* Performance-Optimized Viewport */
+    #stage { perspective: 1800px; transition: transform 0.5s ease; }
+    .grid {
+      display: grid; gap: 5px; transform: rotateX(55deg) rotateZ(-45deg);
+      transform-style: preserve-3d; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tile {
+      width: 65px; height: 65px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.04);
+      position: relative; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+    }
+    .tile:hover { background: rgba(99, 102, 241, 0.1); transform: translateZ(8px); border-color: var(--p); }
+
+    .bld { font-size: 40px; position: absolute; transform: translateZ(40px); filter: drop-shadow(0 20px 10px rgba(0,0,0,0.5)); transition: 0.4s; }
+    .offline { filter: grayscale(1) brightness(0.5); opacity: 0.7; }
+
+    /* UI - Production Layout */
+    .ui { position: fixed; inset: 0; pointer-events: none; padding: 20px; z-index: 100; display: flex; flex-direction: column; justify-content: space-between; }
+    .hud { background: var(--card); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 18px; border-radius: 24px; pointer-events: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    
+    .top-flex { display: flex; justify-content: space-between; align-items: center; }
+    .bank { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+    .net { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; }
+
+    .xp-track { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; margin: 12px 0; overflow: hidden; }
+    .xp-bar { height: 100%; background: linear-gradient(90deg, var(--p), #a855f7); transition: 0.6s; }
+
+    .tray { display: flex; gap: 10px; justify-content: center; overflow-x: auto; padding: 10px; }
+    .item {
+      background: rgba(255,255,255,0.03); min-width: 75px; height: 90px; border-radius: 20px; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid transparent; transition: 0.3s;
+    }
+    .item.active { background: var(--p); transform: translateY(-8px); box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3); }
+    .item.locked { opacity: 0.2; filter: grayscale(1); pointer-events: none; }
+
+    /* Alert Engine */
+    .toast { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); background: var(--s); padding: 10px 24px; border-radius: 12px; font-weight: 800; animation: alertIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 200; }
+    @keyframes alertIn { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  </style>
+</head>
+<body>
+<div class="vignette"></div>
+<div id="root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+
+<script>
+const { useState, useEffect, useMemo } = React;
+
+const REGISTRY = {
+  ROAD:    { id: 'ROAD',    icon: '🛣️', cost: 20,   lvl: 1, xp: 5,   maint: 2 },
+  HOUSE:   { id: 'HOUSE',   icon: '🏠', cost: 150,  lvl: 1, xp: 25,  maint: 5,  pop: 15 },
+  PARK:    { id: 'PARK',    icon: '🌳', cost: 350,  lvl: 2, xp: 80,  maint: 20, bty: 60 },
+  FACTORY: { id: 'FACTORY', icon: '🏭', cost: 700,  lvl: 3, xp: 150, maint: 60, inc: 120 },
+  TOWER:   { id: 'TOWER',   icon: '🏢', cost: 1500, lvl: 5, xp: 400, maint: 150, inc: 350 }
+};
+
+function CityCore() {
+  const [save, setSave] = useState(() => JSON.parse(localStorage.getItem('city_core_v1')) || {
+    grid: Array(100).fill(null), coins: 1200, xp: 0, level: 1
+  });
+  
+  const [selected, setSelected] = useState('ROAD');
+  const [alert, setAlert] = useState(null);
+
+  // Simulation Logic
+  const sim = useMemo(() => {
+    let p = 0, i = 0, b = 0, m = 0;
+    save.grid.forEach(type => {
+      if(!type) return;
+      const d = REGISTRY[type];
+      p += d.pop || 0; i += d.inc || 0; b += d.bty || 0; m += d.maint || 0;
+    });
+    const net = Math.floor((i * (1 + b/1000)) - m);
+    return { pop: p, net, bty: b, stagnant: save.coins < 0 };
+  }, [save.grid, save.coins]);
+
+  // Persistent Save Hook
+  useEffect(() => {
+    localStorage.setItem('city_core_v1', JSON.stringify(save));
+  }, [save]);
+
+  // Production Game Loop
+  useEffect(() => {
+    const loop = setInterval(() => {
+      setSave(s => ({ ...s, coins: s.coins + sim.net }));
+      
+      // Random Event
+      if (Math.random() < 0.03 && save.level > 2) {
+        setAlert("Economic Recession Hits! -$400");
+        setSave(s => ({ ...s, coins: Math.max(-500, s.coins - 400) }));
+        setTimeout(() => setAlert(null), 4000);
+      }
+    }, 5000);
+    return () => clearInterval(loop);
+  }, [sim.net, save.level]);
+
+  const place = (idx) => {
+    if (save.grid[idx]) {
+        const newGrid = [...save.grid]; newGrid[idx] = null;
+        setSave(s => ({ ...s, grid: newGrid }));
+        return;
+    }
+    const b = REGISTRY[selected];
+    if (save.coins >= b.cost && save.level >= b.lvl) {
+      const newGrid = [...save.grid]; newGrid[idx] = selected;
+      const newXP = save.xp + b.xp;
+      const newLvl = Math.floor(newXP / 700) + 1;
+      setSave(s => ({ ...s, grid: newGrid, coins: s.coins - b.cost, xp: newXP, level: newLvl }));
+    }
+  };
+
+  return React.createElement("div", null,
+    alert && React.createElement("div", { className: "toast" }, alert),
+    
+    React.createElement("div", { className: "ui" },
+      React.createElement("div", { className: "hud", style: {width: '350px'} },
+        React.createElement("div", { className: "top-flex" },
+          React.createElement("div", null, React.createElement("div", { style: {fontSize: '10px', opacity: 0.5, fontWeight: 800} }, "TREASURY"), React.createElement("div", { className: "bank" }, `₿${save.coins.toLocaleString()}`)),
+          React.createElement("div", { className: "net", style: {background: sim.net >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)', color: sim.net >= 0 ? 'var(--acc)' : 'var(--s)'} }, 
+            `${sim.net >= 0 ? '+' : ''}${sim.net} / tick`
+          )
+        ),
+        React.createElement("div", { className: "xp-track" }, React.createElement("div", { className: "xp-bar", style: {width: `${(save.xp % 700) / 7}%`} })),
+        React.createElement("div", { style: {display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700} }, 
+            React.createElement("span", null, `LVL ${save.level}`),
+            React.createElement("span", { style: {opacity: 0.5} }, `POP: ${sim.pop}`)
+        )
+      ),
+
+      React.createElement("div", { className: "hud tray" },
+        Object.keys(REGISTRY).map(k => {
+          const lck = save.level < REGISTRY[k].lvl;
+          return React.createElement("div", {
+            key: k, className: `item ${selected === k ? 'active' : ''} ${lck ? 'locked' : ''}`,
+            onClick: () => !lck && setSelected(k)
+          }, 
+            React.createElement("span", { style: {fontSize:'28px'} }, lck ? '🔒' : REGISTRY[k].icon),
+            React.createElement("span", { style: {fontSize:'10px', fontWeight:800, marginTop: '4px'} }, lck ? `LVL ${REGISTRY[k].lvl}` : `$${REGISTRY[k].cost}`)
+          );
+        })
+      )
+    ),
+
+    React.createElement("div", { id: "stage" },
+      React.createElement("div", { className: "grid" },
+        save.grid.map((type, i) => React.createElement("div", { key: i, className: "tile", onClick: () => place(i) },
+          type && React.createElement("div", { className: `bld ${sim.stagnant ? 'offline' : ''}` }, REGISTRY[type].icon)
+        ))
+      )
+    )
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(CityCore));
+</script>
+</body>
+</html>
+
+
+
+
+Ye code h mera and isk ilawa I'm blank 
+Mjhe btae k me isse game me kese convert kro mere pas play store fee nhi h
