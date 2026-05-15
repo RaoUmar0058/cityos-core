@@ -1,45 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CityOS Core - Production Build</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CityOS Core — Production Build</title>
+    
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };</script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+
     <style>
-        :root { --bg: #0f172a; --card: rgba(30, 41, 59, 0.7); --accent: #38bdf8; }
-        body { margin: 0; background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; color: white; overflow: hidden; }
-        #root { height: 100vh; display: flex; flex-direction: column; }
+        :root { --p: #6366f1; --s: #f43f5e; --acc: #38bdf8; --bg: #030712; --card: rgba(15, 23, 42, 0.9); }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: white; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
         /* 3D Scene */
-        .scene { flex: 1; perspective: 1200px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); }
-        .grid { 
-            display: grid; grid-template-columns: repeat(10, 50px); grid-template-rows: repeat(10, 50px);
-            transform: rotateX(60deg) rotateZ(-45deg); transform-style: preserve-3d;
-            border: 2px solid rgba(56, 189, 248, 0.2); background: rgba(255,255,255,0.05);
+        .world { perspective: 1800px; height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b 0%, #030712 100%); }
+        .grid {
+            display: grid; grid-template-columns: repeat(8, 70px); grid-template-rows: repeat(8, 70px);
+            gap: 5px; transform: rotateX(55deg) rotateZ(-45deg);
+            transform-style: preserve-3d; transition: 0.5s;
         }
-        .cell { 
-            width: 50px; height: 50px; border: 0.5px solid rgba(255,255,255,0.1); 
-            transition: all 0.2s; cursor: pointer; position: relative;
-        }
-        .cell:hover { background: rgba(56, 189, 248, 0.3); transform: translateZ(5px); }
-        
-        /* Building Visuals */
-        .building { 
-            position: absolute; bottom: 0; width: 100%; height: 100%; 
-            background-size: cover; transform: rotateZ(45deg) rotateX(-60deg) translateY(-25px);
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); animation: pop 0.3s ease-out;
-        }
-        @keyframes pop { from { transform: scale(0) rotateZ(45deg); } to { transform: scale(1) rotateZ(45deg); } }
 
-        /* HUD */
-        .hud { position: absolute; top: 20px; left: 20px; background: var(--card); padding: 20px; border-radius: 16px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); width: 220px; }
-        .toolbar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--card); padding: 12px; border-radius: 24px; display: flex; gap: 15px; backdrop-filter: blur(20px); border: 1px solid rgba(56, 189, 248, 0.3); }
-        .tool { width: 60px; height: 60px; border-radius: 16px; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 10px; gap: 5px; transition: 0.3s; }
-        .tool.active { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
+        .tile {
+            width: 70px; height: 70px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.04);
+            position: relative; transition: 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .tile:hover { background: rgba(99, 102, 241, 0.1); transform: translateZ(8px); border-color: var(--p); }
+
+        .bld-wrapper { 
+            position: absolute; transform: rotateZ(45deg) rotateX(-55deg) translateY(-30px);
+            animation: pop 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); transform-style: preserve-3d;
+        }
+        .bld-icon { font-size: 45px; filter: drop-shadow(0 20px 10px rgba(0,0,0,0.5)); }
+        @keyframes pop { from { transform: rotateZ(45deg) rotateX(-55deg) scale(0); opacity: 0; } }
+
+        /* UI Elements */
+        .ui-layer { position: fixed; inset: 0; pointer-events: none; padding: 30px; z-index: 100; display: flex; flex-direction: column; justify-content: space-between; }
+        .hud-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 24px; pointer-events: auto; width: fit-content; }
+        .bank-val { font-size: 28px; font-weight: 800; color: var(--acc); }
+
+        .toolbar { display: flex; gap: 12px; justify-content: center; pointer-events: auto; margin-bottom: 20px; }
+        .tool-btn {
+            background: rgba(255,255,255,0.03); padding: 15px; min-width: 80px; border-radius: 20px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; border: 1px solid transparent; transition: 0.3s; color: white;
+        }
+        .tool-btn.active { background: var(--p); transform: translateY(-8px); box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3); }
     </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const CityGame = () => {
+            const [money, setMoney] = useState(25000);
+            const [pop, setPop] = useState(0);
+            const [grid, setGrid] = useState(Array(64).fill(null));
+            const [activeTool, setActiveTool] = useState('HOUSE');
+
+            const inventory = {
+                HOUSE: { name: 'Residency', cost: 1200, icon: '🏡', p: 50 },
+                FACTORY: { name: 'Industry', cost: 5000, icon: '🏭', p: 0 },
+                EIFFEL: { name: 'Eiffel', cost: 15000, icon: '🗼', p: 200 },
+                PARK: { name: 'Greenery', cost: 800, icon: '🌳', p: 10 }
+            };
+
+            const build = (idx) => {
+                const item = inventory[activeTool];
+                if (grid[idx] || money < item.cost) return;
+                
+                const newGrid = [...grid];
+                newGrid[idx] = item;
+                setGrid(newGrid);
+                setMoney(m => m - item.cost);
+                setPop(p => p + item.p);
+            };
+
+            return (
+                <div style={{height: '100vh', width: '100vw'}}>
+                    <div className="ui-layer">
+                        <div className="hud-card">
+                            <div style={{fontSize: '10px', letterSpacing: '2px', opacity: 0.6}}>TREASURY</div>
+                            <div className="bank-val">₿ {money.toLocaleString()}</div>
+                            <div style={{marginTop: '10px', fontSize: '10px', letterSpacing: '2px', opacity: 0.6}}>POPULATION</div>
+                            <div style={{fontSize: '20px', fontWeight: '800'}}>{pop}</div>
+                        </div>
+
+                        <div className="toolbar">
+                            {Object.entries(inventory).map(([id, data]) => (
+                                <div 
+                                    key={id} 
+                                    className={`tool-btn ${activeTool === id ? 'active' : ''}`}
+                                    onClick={() => setActiveTool(id)}
+                                >
+                                    <span style={{fontSize: '24px'}}>{data.icon}</span>
+                                    <span style={{fontSize: '10px', marginTop: '5px', fontWeight: 'bold'}}>{data.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="world">
+                        <div className="grid">
+                            {grid.map((cell, i) => (
+                                <div key={i} className="tile" onClick={() => build(i)}>
+                                    {cell && (
+                                        <div className="bld-wrapper">
+                                            <span className="bld-icon">{cell.icon}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CityGame />);
+    </script>
+</body>
+</html>
 </head>
 <body>
     <div id="root"></div>
