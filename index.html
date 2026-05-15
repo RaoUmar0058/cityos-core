@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!DOCTYPE html>
-<html lang="en">
-<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>CityOS Core — Production Build</title>
@@ -121,76 +118,6 @@
                                 </div>
                             ))}
                         </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<CityGame />);
-    </script>
-</body>
-</html>
-</head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        const CityGame = () => {
-            const [money, setMoney] = useState(10000);
-            const [population, setPopulation] = useState(0);
-            const [grid, setGrid] = useState(Array(100).fill(null));
-            const [activeTool, setActiveTool] = useState('RES');
-
-            const tools = [
-                { id: 'RES', name: 'House', cost: 500, pop: 10, icon: '🏠' },
-                { id: 'IND', name: 'Factory', cost: 1500, pop: 0, icon: '🏭' },
-                { id: 'PARK', name: 'Park', cost: 800, pop: 2, icon: '🌳' }
-            ];
-
-            const placeBuilding = (index) => {
-                const tool = tools.find(t => t.id === activeTool);
-                if (grid[index]) return; // Pehle se building hai
-                if (money < tool.cost) return; // Paise kam hain
-
-                const newGrid = [...grid];
-                newGrid[index] = { ...tool };
-                setGrid(newGrid);
-                setMoney(prev => prev - tool.cost);
-                setPopulation(prev => prev + tool.pop);
-            };
-
-            return (
-                <div style={{height: '100%'}}>
-                    <div className="hud">
-                        <div style={{fontSize: '12px', opacity: 0.7}}>TREASURY</div>
-                        <div style={{fontSize: '24px', fontWeight: '800', color: '#38bdf8'}}>${money.toLocaleString()}</div>
-                        <div style={{marginTop: '15px', fontSize: '12px', opacity: 0.7}}>POPULATION</div>
-                        <div style={{fontSize: '20px', fontWeight: '600'}}>{population}</div>
-                    </div>
-
-                    <div className="scene">
-                        <div className="grid">
-                            {grid.map((cell, i) => (
-                                <div key={i} className="cell" onClick={() => placeBuilding(i)}>
-                                    {cell && <div className="building" style={{fontSize: '30px', textAlign: 'center'}}>{cell.icon}</div>}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="toolbar">
-                        {tools.map(t => (
-                            <button 
-                                key={t.id} 
-                                className={`tool ${activeTool === t.id ? 'active' : ''}`}
-                                onClick={() => setActiveTool(t.id)}
-                            >
-                                <span>{t.icon}</span>
-                                <span>{t.name}</span>
-                            </button>
-                        ))}
                     </div>
                 </div>
             );
