@@ -14,7 +14,7 @@ A high-performance, responsive **2.5D Isometric City Builder Simulation Engine**
 *   **Glassmorphism UI (HUD):** A modern, high-fidelity dashboard tracking XP progression, leveling logic, and real-time financial velocity.
 
 ---
-## [Play CityOS Core Here](npx plugins add vercel/vercel-plugin)
+## [Play CityOS Core Here](cityos-core.vercel.app)
 
 
 ---
