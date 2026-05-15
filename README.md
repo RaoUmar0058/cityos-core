@@ -4,11 +4,6 @@ A high-performance, responsive **2.5D Isometric City Builder Simulation Engine**
 
 ---
 
-## 🚀 Live Demo
-🔗 **[Play CityOS Core Here](YOUR_VERCEL_LINK_HERE)**  
-*(Replace the link above with your Vercel deployment link)*
-
----
 
 ## ✨ Key Technical Features
 
