@@ -3,51 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CityOS Core — Final Control Edition</title>
+    <title>CityOS Core — Final Stability Fix</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --p: #6366f1; --acc: #10b981; --bg: #030712; --card: rgba(15, 23, 42, 0.95); }
+        :root { --p: #6366f1; --s: #f43f5e; --acc: #10b981; --bg: #020617; --card: rgba(15, 23, 42, 0.9); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; }
-        body { background: var(--bg); color: white; height: 100vh; overflow: hidden; }
+        body { background: var(--bg); color: white; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
-        /* Layout Structure */
-        .game-wrapper { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        /* 3D Scene */
+        .world { perspective: 1800px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .grid { display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(8, 65px); gap: 6px; transform: rotateX(60deg) rotateZ(-45deg); transform-style: preserve-3d; }
+        .tile { width: 65px; height: 65px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.08); transition: 0.2s; cursor: pointer; }
+        .tile:hover { background: rgba(99, 102, 241, 0.2); transform: translateZ(5px); }
+
+        /* HUD & Emergency Controls */
+        .hud { position: fixed; top: 20px; left: 20px; background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(15px); min-width: 280px; z-index: 100; }
+        .controls { position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
         
-        /* 3D Grid */
-        .scene { perspective: 1800px; transform-style: preserve-3d; }
-        .grid { 
-            display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); 
-            gap: 6px; transform: rotateX(60deg) rotateZ(-45deg); transition: 0.5s ease;
-        }
-        .tile { width: 60px; height: 60px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.08); position: relative; cursor: pointer; }
-        .tile:hover { background: rgba(99, 102, 241, 0.2); }
+        .btn { border: none; padding: 12px 18px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; color: white; }
+        .btn-p { background: var(--p); box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
+        .btn-restart { background: var(--s); box-shadow: 0 5px 15px rgba(244, 63, 94, 0.4); }
+        .btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
 
-        /* HUD & Controls */
-        .top-nav { position: fixed; top: 20px; width: 95%; display: flex; justify-content: space-between; align-items: flex-start; z-index: 1000; }
-        .hud-panel { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); min-width: 250px; }
-        .hint-text { color: var(--p); font-weight: 800; font-size: 12px; letter-spacing: 1px; margin-top: 10px; display: block; }
-
-        .btn-group { display: flex; gap: 10px; }
-        .nav-btn { 
-            background: var(--p); color: white; border: none; padding: 12px 20px; border-radius: 12px; 
-            font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-        }
-        .nav-btn:disabled { background: #1e293b; opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-
-        /* Level Completion Modal */
-        .success-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .success-card { background: #0f172a; border: 2px solid var(--p); padding: 40px; border-radius: 30px; text-align: center; max-width: 400px; }
-
-        .bld-wrapper { position: absolute; transform: rotateZ(45deg) rotateX(-60deg) translateY(-25px); animation: pop 0.4s ease-out; }
+        /* Building Animation */
+        .bld-wrapper { position: absolute; transform: rotateZ(45deg) rotateX(-60deg) translateY(-25px); animation: pop 0.3s ease-out; }
         .bld-icon { font-size: 40px; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5)); }
         @keyframes pop { from { transform: rotateZ(45deg) rotateX(-60deg) scale(0); } }
 
-        .toolbar { position: fixed; bottom: 30px; display: flex; gap: 10px; background: var(--card); padding: 12px; border-radius: 20px; }
-        .tool { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 2px solid transparent; cursor: pointer; color: white; display: flex; flex-direction: column; align-items: center; min-width: 75px; }
-        .tool.active { border-color: var(--p); background: rgba(99, 102, 241, 0.1); }
+        .toolbar { position: fixed; bottom: 30px; background: var(--card); padding: 12px; border-radius: 20px; display: flex; gap: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 15px; border: 2px solid transparent; cursor: pointer; min-width: 75px; text-align: center; }
+        .item.active { border-color: var(--p); background: rgba(99, 102, 241, 0.15); }
     </style>
 </head>
 <body>
@@ -57,104 +45,95 @@
 
         const CityGame = () => {
             const [lvl, setLvl] = useState(1);
-            const [money, setMoney] = useState(20000);
+            const [money, setMoney] = useState(50000); // Increased starting money
             const [grid, setGrid] = useState(Array(64).fill(null));
-            const [count, setCount] = useState(0);
+            const [progress, setProgress] = useState(0);
             const [tool, setTool] = useState('RES');
-            const [complete, setComplete] = useState(false);
+            const [isDone, setIsDone] = useState(false);
 
-            const levels = {
-                1: { title: "Data Foundations", goal: 5, target: "RES", hint: "BUILD 5 HOUSES TO UNLOCK NEXT LEVEL" },
-                2: { title: "Research Hub", goal: 8, target: "LAB", hint: "BUILD 8 AI LABS TO PROGRESS" },
-                3: { title: "Meta Infrastructure", goal: 10, target: "EIFFEL", hint: "BUILD 10 EIFFEL CORES FOR COMPLETION" }
+            const config = {
+                1: { title: "Foundations", goal: 5, target: "RES", hint: "Build 5 Houses" },
+                2: { title: "AI Hub", goal: 8, target: "LAB", hint: "Build 8 AI Labs" },
+                3: { title: "Core City", goal: 10, target: "EIFFEL", hint: "Build 10 Eiffel Cores" }
             };
 
-            const inventory = {
-                RES: { name: 'House', cost: 1200, icon: '🏡' },
-                LAB: { name: 'Lab', cost: 4000, icon: '🏭' },
-                EIFFEL: { name: 'Eiffel', cost: 12000, icon: '🗼' }
+            const items = {
+                RES: { name: 'House', cost: 1000, icon: '🏡' },
+                LAB: { name: 'Lab', cost: 3000, icon: '🏭' },
+                EIFFEL: { name: 'Eiffel', cost: 10000, icon: '🗼' }
+            };
+
+            const resetGame = () => {
+                setGrid(Array(64).fill(null));
+                setProgress(0);
+                setIsDone(false);
             };
 
             const build = (idx) => {
-                const item = inventory[tool];
-                if (grid[idx] || money < item.cost || complete) return;
+                if (grid[idx] || money < items[tool].cost || isDone) return;
                 
                 const newGrid = [...grid];
-                newGrid[idx] = item;
+                newGrid[idx] = items[tool];
                 setGrid(newGrid);
-                setMoney(m => m - item.cost);
+                setMoney(m => m - items[tool].cost);
                 
-                if (tool === levels[lvl].target) {
-                    setCount(prev => prev + 1);
+                if (tool === config[lvl].target) {
+                    setProgress(prev => prev + 1);
                 }
             };
 
             useEffect(() => {
-                if (count >= levels[lvl].goal) {
-                    setComplete(true);
-                }
-            }, [count]);
+                if (progress >= config[lvl].goal) setIsDone(true);
+            }, [progress]);
 
-            const handleNext = () => {
+            const nextLvl = () => {
                 if (lvl < 3) {
                     setLvl(l => l + 1);
-                    resetLevel();
+                    resetGame();
                 }
-            };
-
-            const resetLevel = () => {
-                setGrid(Array(64).fill(null));
-                setCount(0);
-                setMoney(m => m + 15000);
-                setComplete(false);
             };
 
             return (
-                <div className="game-wrapper">
-                    <div className="top-nav">
-                        <div className="hud-panel">
-                            <div style={{fontSize: '10px', fontWeight: '800', opacity: 0.6}}>STAGE {lvl}</div>
-                            <div style={{fontSize: '28px', fontWeight: '800'}}>₿ {money.toLocaleString()}</div>
-                            <span className="hint-text">💡 HINT: {levels[lvl].hint}</span>
-                            <div style={{marginTop:'10px', fontSize:'12px'}}>Progress: {count} / {levels[lvl].goal}</div>
+                <div className="world">
+                    <div className="hud">
+                        <div style={{color: 'var(--p)', fontWeight: 800, fontSize: '12px'}}>STAGE {lvl}: {config[lvl].title}</div>
+                        <div style={{fontSize: '32px', fontWeight: 800}}>₿ {money.toLocaleString()}</div>
+                        <div style={{background: 'rgba(255,255,255,0.05)', height: '8px', borderRadius: '4px', margin: '10px 0', overflow: 'hidden'}}>
+                            <div style={{width: `${(progress/config[lvl].goal)*100}%`, height: '100%', background: 'var(--acc)', transition: '0.3s'}}></div>
                         </div>
-                        
-                        <div className="btn-group">
-                            <button className="nav-btn" disabled={lvl === 1} onClick={() => {setLvl(l => l - 1); resetLevel();}}>← Prev</button>
-                            <button className="nav-btn" disabled={!complete || lvl === 3} onClick={handleNext}>Next Level →</button>
-                        </div>
+                        <div style={{fontSize: '11px', opacity: 0.7}}>GOAL: {config[lvl].hint} ({progress}/{config[lvl].goal})</div>
                     </div>
 
-                    {complete && (
-                        <div className="success-overlay">
-                            <div className="success-card">
-                                <h1 style={{fontSize:'32px'}}>LEVEL {lvl} CLEAR!</h1>
-                                <p style={{margin:'15px 0', opacity:0.7}}>Data successfully synthesized. Reward: ₿ 15,000</p>
-                                <button className="nav-btn" style={{width:'100%'}} onClick={handleNext}>
-                                    {lvl === 3 ? "Game Completed!" : "Start Level " + (lvl + 1)}
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                    <div className="controls">
+                        <button className="btn btn-restart" onClick={resetGame}>Restart Level</button>
+                        <button className="btn btn-p" disabled={!isDone} onClick={nextLvl}>Next Level →</button>
+                    </div>
 
-                    <div className="scene">
-                        <div className="grid">
-                            {grid.map((cell, i) => (
-                                <div key={i} className="tile" onClick={() => build(i)}>
-                                    {cell && <div className="bld-wrapper"><span className="bld-icon">{cell.icon}</span></div>}
-                                </div>
-                            ))}
-                        </div>
+                    <div className="grid">
+                        {grid.map((cell, i) => (
+                            <div key={i} className="tile" onClick={() => build(i)}>
+                                {cell && <div className="bld-wrapper"><span className="bld-icon">{cell.icon}</span></div>}
+                            </div>
+                        ))}
                     </div>
 
                     <div className="toolbar">
-                        {Object.entries(inventory).map(([id, data]) => (
-                            <button key={id} className={`tool ${tool === id ? 'active' : ''}`} onClick={() => setTool(id)}>
-                                <span style={{fontSize: '24px'}}>{data.icon}</span>
-                                <span style={{fontSize: '10px', fontWeight: '800'}}>{data.name}</span>
-                            </button>
+                        {Object.entries(items).map(([id, data]) => (
+                            <div key={id} className={`item ${tool === id ? 'active' : ''}`} onClick={() => setTool(id)}>
+                                <div style={{fontSize: '24px'}}>{data.icon}</div>
+                                <div style={{fontSize: '10px', fontWeight: 800}}>{data.name}</div>
+                            </div>
                         ))}
                     </div>
+
+                    {isDone && (
+                        <div style={{position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', z-index: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center'}}>
+                            <div>
+                                <h1 style={{fontSize: '48px', color: 'var(--acc)'}}>GOAL REACHED!</h1>
+                                <button className="btn btn-p" style={{marginTop: '20px', padding: '15px 40px', fontSize: '20px'}} onClick={nextLvl}>Unlock Stage {lvl + 1}</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -162,3 +141,4 @@
     </script>
 </body>
 </html>
+
