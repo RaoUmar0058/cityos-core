@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CityOS Core — Professional Loop</title>
+    <title>CityOS Core — Final Control Edition</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -13,31 +13,41 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; }
         body { background: var(--bg); color: white; height: 100vh; overflow: hidden; }
         
-        .world { height: 100vh; display: flex; align-items: center; justify-content: center; perspective: 2000px; }
-        .grid { display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(8, 65px); gap: 8px; transform: rotateX(60deg) rotateZ(-45deg); transform-style: preserve-3d; }
-        .tile { width: 65px; height: 65px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05); position: relative; }
-        .tile:hover { background: rgba(99, 102, 241, 0.2); transform: translateZ(10px); cursor: pointer; }
+        /* Layout Structure */
+        .game-wrapper { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        
+        /* 3D Grid */
+        .scene { perspective: 1800px; transform-style: preserve-3d; }
+        .grid { 
+            display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); 
+            gap: 6px; transform: rotateX(60deg) rotateZ(-45deg); transition: 0.5s ease;
+        }
+        .tile { width: 60px; height: 60px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.08); position: relative; cursor: pointer; }
+        .tile:hover { background: rgba(99, 102, 241, 0.2); }
 
-        .bld-wrapper { position: absolute; transform: rotateZ(45deg) rotateX(-60deg) translateY(-30px); animation: pop 0.4s ease-out; }
-        .bld-icon { font-size: 45px; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5)); }
+        /* HUD & Controls */
+        .top-nav { position: fixed; top: 20px; width: 95%; display: flex; justify-content: space-between; align-items: flex-start; z-index: 1000; }
+        .hud-panel { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); min-width: 250px; }
+        .hint-text { color: var(--p); font-weight: 800; font-size: 12px; letter-spacing: 1px; margin-top: 10px; display: block; }
+
+        .btn-group { display: flex; gap: 10px; }
+        .nav-btn { 
+            background: var(--p); color: white; border: none; padding: 12px 20px; border-radius: 12px; 
+            font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        .nav-btn:disabled { background: #1e293b; opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+        /* Level Completion Modal */
+        .success-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .success-card { background: #0f172a; border: 2px solid var(--p); padding: 40px; border-radius: 30px; text-align: center; max-width: 400px; }
+
+        .bld-wrapper { position: absolute; transform: rotateZ(45deg) rotateX(-60deg) translateY(-25px); animation: pop 0.4s ease-out; }
+        .bld-icon { font-size: 40px; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.5)); }
         @keyframes pop { from { transform: rotateZ(45deg) rotateX(-60deg) scale(0); } }
 
-        /* HUD & Goals */
-        .hud { position: fixed; top: 25px; left: 25px; background: var(--card); padding: 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); width: 300px; z-index: 100; backdrop-filter: blur(20px); }
-        .goal-box { background: rgba(99, 102, 241, 0.1); padding: 12px; border-radius: 12px; margin-top: 15px; border: 1px dashed var(--p); }
-        
-        /* Navigation Buttons */
-        .nav-controls { position: fixed; top: 25px; right: 25px; display: flex; gap: 10px; z-index: 100; }
-        .nav-btn { background: var(--card); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .nav-btn:hover:not(:disabled) { background: var(--p); }
-
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .modal-content { background: #0f172a; padding: 40px; border-radius: 30px; text-align: center; border: 2px solid var(--p); box-shadow: 0 0 50px rgba(99,102,241,0.4); }
-
-        .toolbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; background: var(--card); padding: 15px; border-radius: 25px; z-index: 100; }
-        .tool { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 18px; border: 2px solid transparent; cursor: pointer; color: white; display: flex; flex-direction: column; align-items: center; min-width: 80px; }
-        .tool.active { border-color: var(--p); background: rgba(99,102,241,0.15); }
+        .toolbar { position: fixed; bottom: 30px; display: flex; gap: 10px; background: var(--card); padding: 12px; border-radius: 20px; }
+        .tool { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 2px solid transparent; cursor: pointer; color: white; display: flex; flex-direction: column; align-items: center; min-width: 75px; }
+        .tool.active { border-color: var(--p); background: rgba(99, 102, 241, 0.1); }
     </style>
 </head>
 <body>
@@ -47,88 +57,101 @@
 
         const CityGame = () => {
             const [lvl, setLvl] = useState(1);
-            const [money, setMoney] = useState(25000);
+            const [money, setMoney] = useState(20000);
             const [grid, setGrid] = useState(Array(64).fill(null));
-            const [buildCount, setBuildCount] = useState(0);
-            const [activeTool, setActiveTool] = useState('RES');
-            const [showSuccess, setShowSuccess] = useState(false);
+            const [count, setCount] = useState(0);
+            const [tool, setTool] = useState('RES');
+            const [complete, setComplete] = useState(false);
 
             const levels = {
-                1: { title: "Data Foundations", goal: 5, targetName: "Houses" },
-                2: { title: "Model Engineering", goal: 8, targetName: "Labs" },
-                3: { title: "AI Deployment", goal: 10, targetName: "Eiffel Towers" }
+                1: { title: "Data Foundations", goal: 5, target: "RES", hint: "BUILD 5 HOUSES TO UNLOCK NEXT LEVEL" },
+                2: { title: "Research Hub", goal: 8, target: "LAB", hint: "BUILD 8 AI LABS TO PROGRESS" },
+                3: { title: "Meta Infrastructure", goal: 10, target: "EIFFEL", hint: "BUILD 10 EIFFEL CORES FOR COMPLETION" }
             };
 
             const inventory = {
                 RES: { name: 'House', cost: 1200, icon: '🏡' },
-                LAB: { name: 'Lab', cost: 5000, icon: '🏭' },
-                EIFFEL: { name: 'Eiffel', cost: 15000, icon: '🗼' }
+                LAB: { name: 'Lab', cost: 4000, icon: '🏭' },
+                EIFFEL: { name: 'Eiffel', cost: 12000, icon: '🗼' }
             };
 
             const build = (idx) => {
-                const item = inventory[activeTool];
-                if (grid[idx] || money < item.cost || showSuccess) return;
+                const item = inventory[tool];
+                if (grid[idx] || money < item.cost || complete) return;
                 
                 const newGrid = [...grid];
                 newGrid[idx] = item;
                 setGrid(newGrid);
                 setMoney(m => m - item.cost);
-                setBuildCount(prev => prev + 1);
+                
+                if (tool === levels[lvl].target) {
+                    setCount(prev => prev + 1);
+                }
             };
 
             useEffect(() => {
-                if (buildCount >= levels[lvl].goal) {
-                    setShowSuccess(true);
+                if (count >= levels[lvl].goal) {
+                    setComplete(true);
                 }
-            }, [buildCount]);
+            }, [count]);
 
-            const nextLevel = () => {
-                setLvl(l => l + 1);
-                setBuildCount(0);
+            const handleNext = () => {
+                if (lvl < 3) {
+                    setLvl(l => l + 1);
+                    resetLevel();
+                }
+            };
+
+            const resetLevel = () => {
                 setGrid(Array(64).fill(null));
-                setMoney(m => m + 20000);
-                setShowSuccess(false);
+                setCount(0);
+                setMoney(m => m + 15000);
+                setComplete(false);
             };
 
             return (
-                <div className="world">
-                    <div className="nav-controls">
-                        <button className="nav-btn" disabled={lvl === 1} onClick={() => setLvl(l => l - 1)}>← Previous</button>
-                        <button className="nav-btn" disabled={!showSuccess} onClick={nextLevel}>Next Level →</button>
-                    </div>
-
-                    <div className="hud">
-                        <div style={{fontSize: '11px', fontWeight: '800', color: 'var(--p)'}}>STAGE {lvl}: {levels[lvl].title}</div>
-                        <div style={{fontSize: '32px', fontWeight: '800', margin: '5px 0'}}>₿ {money.toLocaleString()}</div>
-                        <div className="goal-box">
-                            <div style={{fontSize: '12px', fontWeight: '700'}}>GOAL: Build {levels[lvl].goal} {levels[lvl].targetName}</div>
-                            <div style={{fontSize: '10px', opacity: 0.6, marginTop: '4px'}}>Progress: {buildCount} / {levels[lvl].goal}</div>
+                <div className="game-wrapper">
+                    <div className="top-nav">
+                        <div className="hud-panel">
+                            <div style={{fontSize: '10px', fontWeight: '800', opacity: 0.6}}>STAGE {lvl}</div>
+                            <div style={{fontSize: '28px', fontWeight: '800'}}>₿ {money.toLocaleString()}</div>
+                            <span className="hint-text">💡 HINT: {levels[lvl].hint}</span>
+                            <div style={{marginTop:'10px', fontSize:'12px'}}>Progress: {count} / {levels[lvl].goal}</div>
+                        </div>
+                        
+                        <div className="btn-group">
+                            <button className="nav-btn" disabled={lvl === 1} onClick={() => {setLvl(l => l - 1); resetLevel();}}>← Prev</button>
+                            <button className="nav-btn" disabled={!complete || lvl === 3} onClick={handleNext}>Next Level →</button>
                         </div>
                     </div>
 
-                    {showSuccess && (
-                        <div className="modal">
-                            <div className="modal-content">
-                                <h1 style={{fontSize: '40px'}}>🎊 EXCELLENT!</h1>
-                                <p style={{margin: '15px 0', opacity: 0.7}}>Level {lvl} Completed. Data points collected.</p>
-                                <button className="nav-btn" style={{background: 'var(--p)', padding: '15px 40px'}} onClick={nextLevel}>Unlock Level {lvl + 1}</button>
+                    {complete && (
+                        <div className="success-overlay">
+                            <div className="success-card">
+                                <h1 style={{fontSize:'32px'}}>LEVEL {lvl} CLEAR!</h1>
+                                <p style={{margin:'15px 0', opacity:0.7}}>Data successfully synthesized. Reward: ₿ 15,000</p>
+                                <button className="nav-btn" style={{width:'100%'}} onClick={handleNext}>
+                                    {lvl === 3 ? "Game Completed!" : "Start Level " + (lvl + 1)}
+                                </button>
                             </div>
                         </div>
                     )}
 
-                    <div className="grid">
-                        {grid.map((cell, i) => (
-                            <div key={i} className="tile" onClick={() => build(i)}>
-                                {cell && <div className="bld-wrapper"><span className="bld-icon">{cell.icon}</span></div>}
-                            </div>
-                        ))}
+                    <div className="scene">
+                        <div className="grid">
+                            {grid.map((cell, i) => (
+                                <div key={i} className="tile" onClick={() => build(i)}>
+                                    {cell && <div className="bld-wrapper"><span className="bld-icon">{cell.icon}</span></div>}
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="toolbar">
                         {Object.entries(inventory).map(([id, data]) => (
-                            <button key={id} className={`tool ${activeTool === id ? 'active' : ''}`} onClick={() => setActiveTool(id)}>
+                            <button key={id} className={`tool ${tool === id ? 'active' : ''}`} onClick={() => setTool(id)}>
                                 <span style={{fontSize: '24px'}}>{data.icon}</span>
-                                <span style={{fontSize: '10px', fontWeight: '800', marginTop: '5px'}}>{data.name}</span>
+                                <span style={{fontSize: '10px', fontWeight: '800'}}>{data.name}</span>
                             </button>
                         ))}
                     </div>
