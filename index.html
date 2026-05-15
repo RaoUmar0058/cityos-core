@@ -3,128 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CityOS Core — Production Build</title>
-    
+    <title>CityOS Core — Infinite Build</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <script>window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };</script>
-    <script defer src="/_vercel/speed-insights/script.js"></script>
-
     <style>
-        :root { --p: #6366f1; --s: #f43f5e; --acc: #38bdf8; --bg: #030712; --card: rgba(15, 23, 42, 0.9); }
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; font-family: 'Plus Jakarta Sans', sans-serif; }
+        :root { --p: #6366f1; --acc: #38bdf8; --bg: #020617; --card: rgba(15, 23, 42, 0.95); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg); color: white; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         
-        /* 3D Scene */
-        .world { perspective: 1800px; height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b 0%, #030712 100%); }
-        .grid {
-            display: grid; grid-template-columns: repeat(8, 70px); grid-template-rows: repeat(8, 70px);
-            gap: 5px; transform: rotateX(55deg) rotateZ(-45deg);
-            transform-style: preserve-3d; transition: 0.5s;
-        }
+        /* High-Performance 3D Grid */
+        .world { perspective: 2000px; height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1e293b 0%, #020617 100%); }
+        .grid { display: grid; grid-template-columns: repeat(8, 80px); grid-template-rows: repeat(8, 80px); gap: 8px; transform: rotateX(60deg) rotateZ(-45deg); transform-style: preserve-3d; }
 
-        .tile {
-            width: 70px; height: 70px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.04);
-            position: relative; transition: 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
-        .tile:hover { background: rgba(99, 102, 241, 0.1); transform: translateZ(8px); border-color: var(--p); }
+        .tile { width: 80px; height: 80px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05); position: relative; transition: 0.2s; cursor: pointer; }
+        .tile:hover { background: rgba(99, 102, 241, 0.2); transform: translateZ(12px); border-color: var(--p); }
 
-        .bld-wrapper { 
-            position: absolute; transform: rotateZ(45deg) rotateX(-55deg) translateY(-30px);
-            animation: pop 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); transform-style: preserve-3d;
-        }
-        .bld-icon { font-size: 45px; filter: drop-shadow(0 20px 10px rgba(0,0,0,0.5)); }
-        @keyframes pop { from { transform: rotateZ(45deg) rotateX(-55deg) scale(0); opacity: 0; } }
+        .bld-wrapper { position: absolute; transform: rotateZ(45deg) rotateX(-60deg) translateY(-40px); animation: buildPop 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .bld-icon { font-size: 55px; filter: drop-shadow(0 25px 15px rgba(0,0,0,0.7)); }
+        @keyframes buildPop { from { transform: rotateZ(45deg) rotateX(-60deg) scale(0); opacity: 0; } }
 
-        /* UI Elements */
-        .ui-layer { position: fixed; inset: 0; pointer-events: none; padding: 30px; z-index: 100; display: flex; flex-direction: column; justify-content: space-between; }
-        .hud-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 24px; pointer-events: auto; width: fit-content; }
-        .bank-val { font-size: 28px; font-weight: 800; color: var(--acc); }
+        /* Modern HUD */
+        .hud { position: fixed; top: 30px; left: 30px; background: var(--card); padding: 25px; border-radius: 28px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(25px); pointer-events: auto; min-width: 240px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .xp-bar-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin: 15px 0; overflow: hidden; }
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--p), var(--acc)); transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .toolbar { display: flex; gap: 12px; justify-content: center; pointer-events: auto; margin-bottom: 20px; }
-        .tool-btn {
-            background: rgba(255,255,255,0.03); padding: 15px; min-width: 80px; border-radius: 20px; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; border: 1px solid transparent; transition: 0.3s; color: white;
-        }
-        .tool-btn.active { background: var(--p); transform: translateY(-8px); box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3); }
+        /* Interactive Toolbar */
+        .footer { position: fixed; bottom: 40px; display: flex; gap: 15px; pointer-events: auto; background: var(--card); padding: 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); }
+        .tool-btn { background: rgba(255,255,255,0.02); padding: 18px; border-radius: 22px; border: 1px solid transparent; cursor: pointer; transition: 0.4s; display: flex; flex-direction: column; align-items: center; min-width: 90px; color: white; }
+        .tool-btn:hover { background: rgba(255,255,255,0.05); }
+        .tool-btn.active { background: var(--p); transform: translateY(-12px); box-shadow: 0 15px 30px rgba(99,102,241,0.5); border-color: rgba(255,255,255,0.3); }
+        .tool-btn.locked { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
     </style>
 </head>
 <body>
     <div id="root"></div>
-
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
 
         const CityGame = () => {
-            const [money, setMoney] = useState(25000);
-            const [pop, setPop] = useState(0);
+            const [money, setMoney] = useState(30000);
+            const [xp, setXp] = useState(0);
+            const [lvl, setLvl] = useState(1);
             const [grid, setGrid] = useState(Array(64).fill(null));
-            const [activeTool, setActiveTool] = useState('HOUSE');
+            const [activeTool, setActiveTool] = useState('RES');
 
-            const inventory = {
-                HOUSE: { name: 'Residency', cost: 1200, icon: '🏡', p: 50 },
-                FACTORY: { name: 'Industry', cost: 5000, icon: '🏭', p: 0 },
-                EIFFEL: { name: 'Eiffel', cost: 15000, icon: '🗼', p: 200 },
-                PARK: { name: 'Greenery', cost: 800, icon: '🌳', p: 10 }
+            const nextLevelGoal = lvl * 1500;
+
+            const items = {
+                RES: { name: 'Housing', cost: 1500, icon: '🏡', xp: 200, req: 1 },
+                WORK: { name: 'Industry', cost: 6000, icon: '🏭', xp: 500, req: 1 },
+                PARK: { name: 'Nature', cost: 2000, icon: '🌳', xp: 300, req: 2 },
+                EIFFEL: { name: 'Eiffel', cost: 20000, icon: '🗼', xp: 2500, req: 3 }
             };
 
-            const build = (idx) => {
-                const item = inventory[activeTool];
-                if (grid[idx] || money < item.cost) return;
+            const buildItem = (idx) => {
+                const current = items[activeTool];
+                if (grid[idx] || money < current.cost || lvl < current.req) return;
                 
                 const newGrid = [...grid];
-                newGrid[idx] = item;
+                newGrid[idx] = current;
                 setGrid(newGrid);
-                setMoney(m => m - item.cost);
-                setPop(p => p + item.p);
+                setMoney(m => m - current.cost);
+                setXp(x => x + current.xp);
             };
 
-            return (
-                <div style={{height: '100vh', width: '100vw'}}>
-                    <div className="ui-layer">
-                        <div className="hud-card">
-                            <div style={{fontSize: '10px', letterSpacing: '2px', opacity: 0.6}}>TREASURY</div>
-                            <div className="bank-val">₿ {money.toLocaleString()}</div>
-                            <div style={{marginTop: '10px', fontSize: '10px', letterSpacing: '2px', opacity: 0.6}}>POPULATION</div>
-                            <div style={{fontSize: '20px', fontWeight: '800'}}>{pop}</div>
-                        </div>
+            // Enhanced Level Up Logic to prevent getting stuck
+            useEffect(() => {
+                if (xp >= nextLevelGoal) {
+                    setXp(prev => prev - nextLevelGoal); // Excess XP carries over
+                    setLvl(l => l + 1);
+                }
+            }, [xp, nextLevelGoal]);
 
-                        <div className="toolbar">
-                            {Object.entries(inventory).map(([id, data]) => (
-                                <div 
-                                    key={id} 
-                                    className={`tool-btn ${activeTool === id ? 'active' : ''}`}
-                                    onClick={() => setActiveTool(id)}
-                                >
-                                    <span style={{fontSize: '24px'}}>{data.icon}</span>
-                                    <span style={{fontSize: '10px', marginTop: '5px', fontWeight: 'bold'}}>{data.name}</span>
-                                </div>
-                            ))}
+            return (
+                <div className="world">
+                    <div className="hud">
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                            <span style={{fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing:'1px'}}>LVL {lvl}</span>
+                            <span style={{fontSize: '11px', opacity: 0.5}}>DATA SCIENCE CITY</span>
                         </div>
+                        <div style={{fontSize: '32px', fontWeight: '800', margin:'5px 0'}}>₿ {money.toLocaleString()}</div>
+                        <div className="xp-bar-bg">
+                            <div className="xp-bar-fill" style={{width: `${(xp/nextLevelGoal)*100}%`}}></div>
+                        </div>
+                        <div style={{fontSize: '10px', opacity: 0.6, textAlign:'right'}}>Next Unlock at Level {lvl + 1}</div>
                     </div>
 
-                    <div className="world">
-                        <div className="grid">
-                            {grid.map((cell, i) => (
-                                <div key={i} className="tile" onClick={() => build(i)}>
-                                    {cell && (
-                                        <div className="bld-wrapper">
-                                            <span className="bld-icon">{cell.icon}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                    <div className="grid">
+                        {grid.map((cell, i) => (
+                            <div key={i} className="tile" onClick={() => buildItem(i)}>
+                                {cell && <div className="bld-wrapper"><span className="bld-icon">{cell.icon}</span></div>}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="footer">
+                        {Object.entries(items).map(([id, data]) => (
+                            <div key={id} 
+                                className={`tool-btn ${activeTool === id ? 'active' : ''} ${lvl < data.req ? 'locked' : ''}`}
+                                onClick={() => lvl >= data.req && setActiveTool(id)}>
+                                <span style={{fontSize: '28px'}}>{lvl < data.req ? '🔒' : data.icon}</span>
+                                <span style={{fontSize: '10px', marginTop: '8px', fontWeight: '800'}}>{data.name}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
         };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<CityGame />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<CityGame />);
     </script>
 </body>
 </html>
+    
