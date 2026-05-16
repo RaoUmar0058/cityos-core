@@ -17,7 +17,8 @@ A high-performance, responsive **2.5D Isometric City Builder Simulation Engine**
 
 
 ## [Play CityOS Core Here]
-(prj_JzVfPTYMJiA2OdJrvRYjpsmzeaNg)
+
+(https://cityos-core-k434z879i-khadija-rao-s-projects.vercel.app)
 
 
 ---
