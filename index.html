@@ -1,1121 +1,468 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis,
-} from "recharts";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CityOS v5 — Smart Simulator</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;600;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --p: #6366f1; --acc: #10b981; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+        
+        /* Layout CSS styling based on your theme rules */
+        .app-container { display: flex; height: 100vh; width: 100vw; transition: background 0.5s ease; }
+        .sidebar { width: 280px; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; backdrop-filter: blur(20px); border-right: 1px solid; transition: all 0.5s; }
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; backdrop-filter: blur(10px); z-index: 10; }
+        
+        /* 3D Isometric Viewport Grid */
+        .world-container { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; position: relative; }
+        .grid-isometric { display: grid; grid-template-columns: repeat(10, var(--cell-size, 45px)); grid-template-rows: repeat(10, var(--cell-size, 45px)); gap: 4px; transform: rotateX(55deg) rotateZ(-45deg); transform-style: preserve-3d; transition: all 0.4s ease; padding: 20px; }
+        
+        /* Animation & Tooltip rules */
+        .bld-btn { width: 100%; border: none; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; }
+        .bld-btn:hover:not(:disabled) { transform: translateX(3px); }
+        
+        @keyframes twinkle { from { opacity: 0.3; } to { opacity: 1; } }
+        @keyframes tooltipIn { from { opacity: 0; transform: translateX(-50%) translateY(5px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-// ═══════════════════════════════════════════════════════════════
-// CONSTANTS
-// ═══════════════════════════════════════════════════════════════
-const GRID_COLS = 10;
-const GRID_SIZE = GRID_COLS * GRID_COLS;
-const SAVE_KEY  = "cityos_v5";
-const STARTING_COINS = 800;
+    <script type="text/babel">
+        // Extracting components from Recharts Global object for browser-compatible execution
+        const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip: ChartTooltip, RadarChart, Radar, PolarGrid, PolarAngleAxis } = Recharts;
+        const { useState, useEffect, useCallback, useRef } = React;
 
-const BUILDINGS = {
-  TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:8,  pollution:-6,  traffic:0,  energy:2,  population:0,  color:"#4ade80", unlockAt:0,  tier:1 },
-  ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-2, pollution:4,   traffic:-10,energy:-2, population:0,  color:"#94a3b8", unlockAt:0,  tier:1 },
-  HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-1, pollution:3,   traffic:4,  energy:-5, population:15, color:"#60a5fa", unlockAt:0,  tier:1 },
-  PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  beauty:20, oxygen:12, pollution:-10, traffic:-3, energy:3,  population:5,  color:"#86efac", unlockAt:0,  tier:1 },
-  SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:25, population:2,  color:"#fbbf24", unlockAt:5,  tier:2 },
-  FACTORY:  { id:"FACTORY",  label:"Factory",       icon:"🏭", cost:150, beauty:-5, oxygen:-12,pollution:18,  traffic:8,  energy:15, population:10, color:"#fb923c", unlockAt:5,  tier:2 },
-  HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:8,  oxygen:2,  pollution:-4,  traffic:6,  energy:-8, population:25, color:"#f43f5e", unlockAt:8,  tier:2 },
-  SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:12, oxygen:3,  pollution:-3,  traffic:4,  energy:-6, population:12, color:"#c084fc", unlockAt:8,  tier:2 },
-  MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:30, oxygen:2,  pollution:-2,  traffic:3,  energy:-3, population:8,  color:"#a78bfa", unlockAt:12, tier:3 },
-  TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:20, oxygen:-5, pollution:8,   traffic:10, energy:-15,population:50, color:"#38bdf8", unlockAt:12, tier:3 },
-  FASHION:  { id:"FASHION",  label:"Fashion Hub ✦", icon:"👗", cost:400, beauty:40, oxygen:1,  pollution:-5,  traffic:8,  energy:-10,population:30, color:"#f472b6", unlockAt:15, tier:3 },
-};
+        // ═══════════════════════════════════════════════════════════════
+        // ENGINE DATA & CONSTANTS FROM YOUR ORIGINAL CODE
+        // ═══════════════════════════════════════════════════════════════
+        const GRID_COLS = 10;
+        const GRID_SIZE = GRID_COLS * GRID_COLS;
+        const SAVE_KEY  = "cityos_v5";
+        const STARTING_COINS = 800;
 
-const MISSIONS = [
-  { id:"m1", title:"Green Starter",    desc:"Plant 3 Trees",              icon:"🌳", check:(g,s)=>g.filter(c=>c==="TREE").length>=3,  reward:100, xp:50  },
-  { id:"m2", title:"Clean Air Act",    desc:"Reduce pollution below 35%", icon:"💨", check:(g,s)=>s.pollution<35,                       reward:150, xp:80  },
-  { id:"m3", title:"City Builder",     desc:"Reach 50 population",        icon:"👥", check:(g,s)=>s.population>=50,                     reward:200, xp:100 },
-  { id:"m4", title:"Energy Surplus",   desc:"Energy above 60%",           icon:"⚡", check:(g,s)=>s.energy>60,                          reward:180, xp:90  },
-  { id:"m5", title:"Beautiful City",   desc:"Beauty score above 60%",     icon:"✨", check:(g,s)=>s.beauty>60,                          reward:200, xp:100 },
-  { id:"m6", title:"Mega City",        desc:"Reach 150 population",       icon:"🏙️", check:(g,s)=>s.population>=150,                   reward:500, xp:250 },
-  { id:"m7", title:"Eco Champion",     desc:"Sustainability above 75%",   icon:"🌱", check:(g,s)=>s.sustainability>75,                  reward:400, xp:200 },
-  { id:"m8", title:"Fashion Forward",  desc:"Place Fashion Hub",          icon:"👗", check:(g,s)=>g.some(c=>c==="FASHION"),             reward:600, xp:300 },
-];
+        const BUILDINGS = {
+          TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:8,  pollution:-6,  traffic:0,  energy:2,  population:0,  color:"#4ade80", unlockAt:0,  tier:1 },
+          ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-2, pollution:4,   traffic:-10,energy:-2, population:0,  color:"#94a3b8", unlockAt:0,  tier:1 },
+          HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-1, pollution:3,   traffic:4,  energy:-5, population:15, color:"#60a5fa", unlockAt:0,  tier:1 },
+          PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  beauty:20, oxygen:12, pollution:-10, traffic:-3, energy:3,  population:5,  color:"#86efac", unlockAt:0,  tier:1 },
+          SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:25, population:2,  color:"#fbbf24", unlockAt:5,  tier:2 },
+          FACTORY:  { id:"FACTORY",  label:"Factory",       icon:"🏭", cost:150, beauty:-5, oxygen:-12,pollution:18,  traffic:8,  energy:15, population:10, color:"#fb923c", unlockAt:5,  tier:2 },
+          HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:8,  oxygen:2,  pollution:-4,  traffic:6,  energy:-8, population:25, color:"#f43f5e", unlockAt:8,  tier:2 },
+          SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:12, oxygen:3,  pollution:-3,  traffic:4,  energy:-6, population:12, color:"#c084fc", unlockAt:8,  tier:2 },
+          MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:30, oxygen:2,  pollution:-2,  traffic:3,  energy:-3, population:8,  color:"#a78bfa", unlockAt:12, tier:3 },
+          TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:20, oxygen:-5, pollution:8,   traffic:10, energy:-15,population:50, color:"#38bdf8", unlockAt:12, tier:3 },
+          FASHION:  { id:"FASHION",  label:"Fashion Hub ✦", icon:"👗", cost:400, beauty:40, oxygen:1,  pollution:-5,  traffic:8,  energy:-10,population:30, color:"#f472b6", unlockAt:15, tier:3 },
+        };
 
-const ACHIEVEMENTS = [
-  { id:"a1", icon:"🏆", title:"First Block",    desc:"Place your first block", check:(moves)=>moves>=1  },
-  { id:"a2", icon:"🌟", title:"10 Moves",       desc:"Make 10 moves",          check:(moves)=>moves>=10 },
-  { id:"a3", icon:"💎", title:"Veteran Planner",desc:"Make 25 moves",          check:(moves)=>moves>=25 },
-  { id:"a4", icon:"👑", title:"City Master",    desc:"Make 50 moves",          check:(moves)=>moves>=50 },
-];
+        const MISSIONS = [
+          { id:"m1", title:"Green Starter",    desc:"Plant 3 Trees",            icon:"🌳", check:(g,s)=>g.filter(c=>c==="TREE").length>=3,   reward:100, xp:50  },
+          { id:"m2", title:"Clean Air Act",    desc:"Reduce pollution below 35%", icon:"💨", check:(g,s)=>s.pollution<35,                       reward:150, xp:80  },
+          { id:"m3", title:"City Builder",     desc:"Reach 50 population",        icon:"👥", check:(g,s)=>s.population>=50,                     reward:200, xp:100 },
+          { id:"m4", title:"Energy Surplus",   desc:"Energy above 60%",           icon:"⚡", check:(g,s)=>s.energy>60,                         reward:180, xp:90  },
+          { id:"m5", title:"Beautiful City",   desc:"Beauty score above 60%",     icon:"✨", check:(g,s)=>s.beauty>60,                         reward:200, xp:100 },
+          { id:"m6", title:"Mega City",        desc:"Reach 150 population",       icon:"🏙️", check:(g,s)=>s.population>=150,                    reward:500, xp:250 },
+          { id:"m7", title:"Eco Champion",     desc:"Sustainability above 75%",   icon:"🌱", check:(g,s)=>s.sustainability>75,                  reward:400, xp:200 },
+          { id:"m8", title:"Fashion Forward",  desc:"Place Fashion Hub",          icon:"👗", check:(g,s)=>g.some(c=>c==="FASHION"),             reward:600, xp:300 },
+        ];
 
-// ═══════════════════════════════════════════════════════════════
-// THEME
-// ═══════════════════════════════════════════════════════════════
-const THEMES = {
-  light: {
-    bg:         "linear-gradient(160deg,#f0f4ff 0%,#fafafe 45%,#f5f0ff 100%)",
-    sidebar:    "rgba(255,255,255,0.75)",
-    sidebarBdr: "rgba(99,102,241,0.10)",
-    glass:      "rgba(255,255,255,0.82)",
-    glassBdr:   "rgba(99,102,241,0.12)",
-    gridBg:     "rgba(241,245,249,0.82)",
-    gridBdr:    "rgba(255,255,255,0.92)",
-    cellTop:    "#f1f5f9", cellLeft:"#dde6f0", cellRight:"#c8d5e8",
-    text:       "#1e1b4b", textSub:"#475569", textMuted:"#94a3b8",
-    divider:    "rgba(0,0,0,0.06)", barBg:"rgba(0,0,0,0.06)",
-    chartCard:  "rgba(255,255,255,0.78)",
-    emojiShadow:"drop-shadow(0 5px 8px rgba(0,0,0,0.18))",
-    gridFilter: "none",
-    orb1:"#c7d2fe33", orb2:"#f5d0fe22",
-    notif:{ success:"#16a34a", error:"#dc2626", info:"#4f46e5", unlock:"#f472b6" },
-  },
-  dark: {
-    bg:         "linear-gradient(160deg,#060912 0%,#0f172a 55%,#0c0a1e 100%)",
-    sidebar:    "rgba(8,12,28,0.97)",
-    sidebarBdr: "rgba(99,102,241,0.18)",
-    glass:      "rgba(8,12,28,0.88)",
-    glassBdr:   "rgba(99,102,241,0.18)",
-    gridBg:     "rgba(8,12,28,0.78)",
-    gridBdr:    "rgba(99,102,241,0.14)",
-    cellTop:    "#1a2540", cellLeft:"#121c32", cellRight:"#0d1626",
-    text:       "#f1f5f9", textSub:"#94a3b8", textMuted:"#475569",
-    divider:    "rgba(255,255,255,0.05)", barBg:"rgba(255,255,255,0.06)",
-    chartCard:  "rgba(255,255,255,0.03)",
-    emojiShadow:"drop-shadow(0 0 12px rgba(99,102,241,0.65)) drop-shadow(0 5px 10px rgba(0,0,0,0.6))",
-    gridFilter: "saturate(1.25) brightness(1.06)",
-    orb1:"#6366f11a", orb2:"#a855f714",
-    notif:{ success:"#15803d", error:"#b91c1c", info:"#4338ca", unlock:"#be185d" },
-  },
-};
+        const ACHIEVEMENTS = [
+          { id:"a1", icon:"🏆", title:"First Block",    desc:"Place your first block", check:(moves)=>moves>=1   },
+          { id:"a2", icon:"🌟", title:"10 Moves",       desc:"Make 10 moves",          check:(moves)=>moves>=10  },
+          { id:"a3", icon:"💎", title:"Veteran Planner",desc:"Make 25 moves",          check:(moves)=>moves>=25  },
+          { id:"a4", icon:"👑", title:"City Master",    desc:"Make 50 moves",          check:(moves)=>moves>=50  },
+        ];
 
-// ═══════════════════════════════════════════════════════════════
-// RESPONSIVE HOOK — cell size + layout mode
-// ═══════════════════════════════════════════════════════════════
-function useResponsive() {
-  const [size, setSize] = useState({ cellPx: 54, isMobile: false, isTablet: false, vw: window.innerWidth });
-  useEffect(() => {
-    function update() {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const isMobile  = vw < 640;
-      const isTablet  = vw >= 640 && vw < 1024;
-      // Grid needs: GRID_COLS cells + 4px gap each + 34px padding
-      // On mobile: available width = vw (full screen), subtract 34px padding
-      // On tablet: available = vw - sidebar(240) - 40px margin
-      // On desktop: available = vw - sidebar(258) - 80px margin
-      let availableW;
-      if (isMobile) {
-        availableW = vw - 34; // full width minus grid padding
-      } else if (isTablet) {
-        availableW = vw - 240 - 40;
-      } else {
-        availableW = vw - 258 - 80;
-      }
-      // Also limit by height so grid doesn't overflow vertically
-      // Grid height ≈ GRID_COLS * cellPx * sin(46deg perspective) ≈ cellPx * 7.2
-      let cellByW = Math.floor((availableW - 40) / GRID_COLS);
-      const maxCellByH = isMobile ? Math.floor((vh * 0.45) / 7.2) : Math.floor((vh * 0.68) / 7.2);
-      let cellPx = Math.min(cellByW, maxCellByH, 54);
-      cellPx = Math.max(cellPx, isMobile ? 26 : 32); // min floor
-      setSize({ cellPx, isMobile, isTablet, vw });
-    }
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-  return size;
-}
+        const THEMES = {
+          light: {
+            bg:         "linear-gradient(160deg,#f0f4ff 0%,#fafafe 45%,#f5f0ff 100%)",
+            sidebar:    "rgba(255,255,255,0.75)", sidebarBdr: "rgba(99,102,241,0.10)",
+            glass:      "rgba(255,255,255,0.82)", glassBdr:   "rgba(99,102,241,0.12)",
+            gridBg:     "rgba(241,245,249,0.82)", gridBdr:    "rgba(255,255,255,0.92)",
+            cellTop:    "#f1f5f9", cellLeft:"#dde6f0", cellRight:"#c8d5e8",
+            text:       "#1e1b4b", textSub:"#475569", textMuted:"#94a3b8",
+            divider:    "rgba(0,0,0,0.06)", barBg:"rgba(0,0,0,0.06)", chartCard:  "rgba(255,255,255,0.78)",
+            emojiShadow:"drop-shadow(0 5px 8px rgba(0,0,0,0.18))", gridFilter: "none",
+          },
+          dark: {
+            bg:         "linear-gradient(160deg,#060912 0%,#0f172a 55%,#0c0a1e 100%)",
+            sidebar:    "rgba(8,12,28,0.97)", sidebarBdr: "rgba(99,102,241,0.18)",
+            glass:      "rgba(8,12,28,0.88)", glassBdr:   "rgba(99,102,241,0.18)",
+            gridBg:     "rgba(8,12,28,0.78)", gridBdr:    "rgba(99,102,241,0.14)",
+            cellTop:    "#1a2540", cellLeft:"#121c32", cellRight:"#0d1626",
+            text:       "#f1f5f9", textSub:"#94a3b8", textMuted:"#475569",
+            divider:    "rgba(255,255,255,0.05)", barBg:"rgba(255,255,255,0.06)", chartCard:  "rgba(255,255,255,0.03)",
+            emojiShadow:"drop-shadow(0 0 12px rgba(99,102,241,0.65)) drop-shadow(0 5px 10px rgba(0,0,0,0.6))", gridFilter: "saturate(1.25) brightness(1.06)",
+          }
+        };
 
-// ═══════════════════════════════════════════════════════════════
-// ENGINE
-// ═══════════════════════════════════════════════════════════════
-function computeStats(grid) {
-  let oxygen=40,beauty=30,pollution=20,traffic=30,energy=50,population=0,score=0;
-  grid.forEach(cell=>{
-    if(!cell)return;
-    const b=BUILDINGS[cell];
-    oxygen=Math.max(0,Math.min(100,oxygen+b.oxygen));
-    beauty=Math.max(0,Math.min(100,beauty+b.beauty));
-    pollution=Math.max(0,Math.min(100,pollution+b.pollution));
-    traffic=Math.max(0,Math.min(100,traffic+b.traffic));
-    energy=Math.max(0,Math.min(100,energy+b.energy));
-    population+=b.population; score+=10+b.beauty;
-  });
-  const livability=Math.round((oxygen+beauty+(100-pollution)+(100-traffic)+energy)/5);
-  const sustainability=Math.round(oxygen*0.35+(100-pollution)*0.35+energy*0.3);
-  return{oxygen,beauty,pollution,traffic,energy,population,score,livability,sustainability};
-}
-
-function safeLoad(key){
-  try{
-    const raw=localStorage.getItem(key);
-    if(!raw)return null;
-    const p=JSON.parse(raw);
-    if(!Array.isArray(p.grid)||p.grid.length!==GRID_SIZE)throw new Error("bad");
-    return p;
-  }catch(e){localStorage.removeItem(key);return null;}
-}
-function safeSave(key,data){try{localStorage.setItem(key,JSON.stringify(data));}catch{}}
-
-// ═══════════════════════════════════════════════════════════════
-// SOUND ENGINE
-// ═══════════════════════════════════════════════════════════════
-function useSound() {
-  const ctx = useRef(null);
-  const ensure = () => {
-    if (!ctx.current) ctx.current = new (window.AudioContext || window.webkitAudioContext)();
-    return ctx.current;
-  };
-  const play = useCallback((type) => {
-    try {
-      const ac = ensure();
-      const o = ac.createOscillator();
-      const g = ac.createGain();
-      o.connect(g); g.connect(ac.destination);
-      const now = ac.currentTime;
-      if (type === "place") {
-        o.frequency.setValueAtTime(440, now);
-        o.frequency.exponentialRampToValueAtTime(660, now + 0.1);
-        g.gain.setValueAtTime(0.15, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-        o.start(now); o.stop(now + 0.18);
-      } else if (type === "remove") {
-        o.frequency.setValueAtTime(300, now);
-        o.frequency.exponentialRampToValueAtTime(180, now + 0.12);
-        g.gain.setValueAtTime(0.1, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        o.start(now); o.stop(now + 0.15);
-      } else if (type === "unlock") {
-        [0,0.1,0.2].forEach((d,i)=>{
-          const o2=ac.createOscillator(); const g2=ac.createGain();
-          o2.connect(g2); g2.connect(ac.destination);
-          o2.frequency.setValueAtTime([523,659,784][i],now+d);
-          g2.gain.setValueAtTime(0.15,now+d);
-          g2.gain.exponentialRampToValueAtTime(0.001,now+d+0.25);
-          o2.start(now+d); o2.stop(now+d+0.25);
-        });
-      } else if (type === "mission") {
-        [0,0.08,0.16,0.24].forEach((d,i)=>{
-          const o2=ac.createOscillator(); const g2=ac.createGain();
-          o2.connect(g2); g2.connect(ac.destination);
-          o2.frequency.setValueAtTime([523,659,784,1047][i],now+d);
-          g2.gain.setValueAtTime(0.18,now+d);
-          g2.gain.exponentialRampToValueAtTime(0.001,now+d+0.3);
-          o2.start(now+d); o2.stop(now+d+0.3);
-        });
-      } else if (type === "error") {
-        o.frequency.setValueAtTime(220, now);
-        g.gain.setValueAtTime(0.1, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        o.start(now); o.stop(now + 0.2);
-      }
-    } catch {}
-  }, []);
-  return play;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SUB-COMPONENTS
-// ═══════════════════════════════════════════════════════════════
-
-function DayNightToggle({ isNight, onToggle }) {
-  return (
-    <button onClick={onToggle} title={isNight?"Switch to Day":"Switch to Night"} style={{
-      width:60,height:28,borderRadius:99,
-      background:isNight?"linear-gradient(135deg,#0f172a,#1e293b)":"linear-gradient(135deg,#dbeafe,#bfdbfe)",
-      border:`1px solid ${isNight?"rgba(99,102,241,0.35)":"rgba(147,197,253,0.5)"}`,
-      position:"relative",cursor:"pointer",padding:0,flexShrink:0,
-      transition:"all 0.55s cubic-bezier(0.4,0,0.2,1)",
-      boxShadow:isNight?"0 0 16px rgba(99,102,241,0.28)":"0 2px 10px rgba(147,197,253,0.45)",
-    }}>
-      {isNight&&[{l:7,top:6,s:4},{l:16,top:17,s:3},{l:11,top:20,s:4}].map((s,i)=>(
-        <div key={i} style={{position:"absolute",left:s.l,top:s.top,width:s.s,height:s.s,borderRadius:"50%",
-          background:"rgba(255,255,255,0.85)",boxShadow:"0 0 4px rgba(255,255,255,0.7)",
-          animation:`twinkle ${1.1+i*0.45}s ease-in-out infinite alternate`}}/>
-      ))}
-      <div style={{
-        position:"absolute",top:3,left:isNight?33:3,width:22,height:22,borderRadius:"50%",
-        background:isNight?"linear-gradient(135deg,#e2e8f0,#cbd5e1)":"linear-gradient(135deg,#fde68a,#f59e0b)",
-        boxShadow:isNight?"0 2px 8px rgba(0,0,0,0.45),inset -4px -2px 0 0 #c7d2fe":"0 2px 10px rgba(245,158,11,0.55)",
-        transition:"all 0.55s cubic-bezier(0.34,1.56,0.64,1)",
-        display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,
-      }}>{isNight?"🌙":"☀️"}</div>
-    </button>
-  );
-}
-
-function BlockTooltip({ building, cellPx }) {
-  const b = BUILDINGS[building];
-  const rows=[
-    {k:"Beauty",v:b.beauty,pos:b.beauty>0},{k:"Oxygen",v:b.oxygen,pos:b.oxygen>0},
-    {k:"Pollution",v:b.pollution,pos:b.pollution<0},{k:"Traffic",v:b.traffic,pos:b.traffic<0},
-    {k:"Energy",v:b.energy,pos:b.energy>0},{k:"Pop.",v:b.population,pos:b.population>0},
-  ].filter(r=>r.v!==0);
-  // On very small cells, show tooltip differently
-  const isSmall = cellPx < 36;
-  return (
-    <div style={{
-      position:"absolute",
-      bottom: isSmall ? "auto" : "calc(100% + 10px)",
-      top: isSmall ? "calc(100% + 4px)" : "auto",
-      left:"50%",transform:"translateX(-50%)",
-      background:"rgba(6,9,18,0.97)",backdropFilter:"blur(20px)",
-      border:`1px solid ${b.color}55`,borderRadius:12,padding:"10px 12px",minWidth:140,
-      zIndex:9999,pointerEvents:"none",
-      boxShadow:`0 16px 40px rgba(0,0,0,0.6),0 0 20px ${b.color}22`,
-      animation:"tooltipIn 0.18s cubic-bezier(.16,1,.3,1)",
-    }}>
-      <div style={{fontSize:9,fontWeight:800,color:b.color,letterSpacing:1.1,marginBottom:6,textTransform:"uppercase",fontFamily:"'DM Mono',monospace"}}>{b.label}</div>
-      <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginBottom:5,fontFamily:"'DM Mono',monospace"}}>💰 {b.cost}</div>
-      {rows.map(r=>(
-        <div key={r.k} style={{display:"flex",justifyContent:"space-between",gap:14,fontSize:9,marginBottom:3,fontFamily:"'DM Mono',monospace"}}>
-          <span style={{color:"rgba(255,255,255,0.4)"}}>{r.k}</span>
-          <span style={{fontWeight:700,color:r.pos?"#4ade80":"#f87171"}}>{r.v>0?"+":""}{r.v}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Touch-aware IsoCell
-function IsoCell({ building, selected, onClick, onRightClick, isNight, t, locked, cellPx }) {
-  const [hov,setHov]=useState(false);
-  const b=building?BUILDINGS[building]:null;
-  const sel=BUILDINGS[selected];
-  const fontSize = Math.max(10, Math.round(cellPx * 0.38));
-  const hoverFontSize = Math.max(8, Math.round(cellPx * 0.26));
-
-  // Touch long-press → remove (replaces right-click on mobile)
-  const longPressTimer = useRef(null);
-  const handleTouchStart = () => {
-    longPressTimer.current = setTimeout(() => {
-      if (!locked) onRightClick();
-    }, 500);
-  };
-  const handleTouchEnd = () => clearTimeout(longPressTimer.current);
-
-  return (
-    <div
-      style={{position:"relative",width:cellPx,height:cellPx,touchAction:"manipulation"}}
-      onMouseEnter={()=>setHov(true)}
-      onMouseLeave={()=>setHov(false)}
-      onClick={locked?undefined:onClick}
-      onContextMenu={e=>{e.preventDefault();if(!locked)onRightClick();}}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchEnd}
-    >
-      <div style={{position:"absolute",inset:0,transform:"rotateX(52deg)",transformStyle:"preserve-3d"}}>
-        <div style={{
-          position:"absolute",inset:0,borderRadius:Math.max(3,cellPx*0.09),
-          background:hov&&!building?(isNight?`${sel.color}28`:`${sel.color}1a`):building?(isNight?"#1a2744":"#f8fafc"):t.cellTop,
-          border:`${cellPx>40?1.5:1}px solid ${hov?`${(b||sel).color}99`:building?(isNight?"#253655":"#e0e9f5"):(isNight?"rgba(99,102,241,0.09)":"rgba(148,163,184,0.16)")}`,
-          boxShadow:(isNight&&building)?`0 0 8px ${b.color}18`:"none",
-          transition:"all 0.13s ease",cursor:locked?"not-allowed":"pointer",
-        }}/>
-        <div style={{position:"absolute",bottom:-Math.round(cellPx*0.13),left:0,right:"50%",height:Math.round(cellPx*0.13),background:t.cellLeft,transformOrigin:"top",transform:"rotateX(-90deg) translateY(-50%)"}}/>
-        <div style={{position:"absolute",bottom:-Math.round(cellPx*0.13),left:"50%",right:0,height:Math.round(cellPx*0.13),background:t.cellRight,transformOrigin:"top",transform:"rotateX(-90deg) translateY(-50%)"}}/>
-      </div>
-      <div style={{
-        position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
-        fontSize:building?fontSize:hoverFontSize,zIndex:2,userSelect:"none",
-        transform:building?(hov?"translateY(-8px)":"translateY(-3px)"):(hov?"translateY(-2px)":"translateY(-1px)"),
-        transition:"transform 0.22s cubic-bezier(.16,1,.3,1)",
-        filter:isNight&&building?t.emojiShadow:(building?"drop-shadow(0 3px 6px rgba(0,0,0,0.15))":"none"),
-        opacity:hov&&!building?0.5:1,
-      }}>{building?b.icon:(hov&&!locked?sel.icon:"")}</div>
-      {isNight&&building&&cellPx>=36&&(
-        <div style={{position:"absolute",bottom:Math.round(cellPx*0.13),left:"50%",transform:"translateX(-50%)",
-          width:Math.round(cellPx*0.38),height:2,borderRadius:99,
-          background:b.color,boxShadow:`0 0 8px ${b.color},0 0 16px ${b.color}88`,
-          opacity:hov?1:0.45,transition:"opacity 0.2s",zIndex:3}}/>
-      )}
-      {locked&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.max(8,cellPx*0.22),zIndex:5,opacity:0.35}}>🔒</div>}
-      {hov&&building&&<BlockTooltip building={building} cellPx={cellPx}/>}
-    </div>
-  );
-}
-
-function StatBar({label,val,color,icon,isNight,t}){
-  const pct=Math.max(0,Math.min(100,val));
-  return(
-    <div style={{marginBottom:8}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-        <span style={{fontSize:10,fontWeight:600,color:t.textSub,fontFamily:"'DM Mono',monospace"}}>{icon} {label}</span>
-        <span style={{fontSize:10,fontWeight:800,color,fontFamily:"'DM Mono',monospace"}}>{Math.round(pct)}%</span>
-      </div>
-      <div style={{background:t.barBg,borderRadius:99,height:5,overflow:"hidden"}}>
-        <div style={{width:`${pct}%`,height:"100%",borderRadius:99,
-          background:`linear-gradient(90deg,${color}77,${color})`,
-          transition:"width 0.65s cubic-bezier(.16,1,.3,1)",
-          boxShadow:isNight?`0 0 8px ${color}99`:"none"}}/>
-      </div>
-    </div>
-  );
-}
-
-function MissionCard({mission,done,t,isNight}){
-  return(
-    <div style={{
-      display:"flex",alignItems:"center",gap:9,
-      padding:"9px 11px",borderRadius:12,
-      background:done?(isNight?"rgba(34,197,94,0.1)":"rgba(34,197,94,0.08)"):t.chartCard,
-      border:`1px solid ${done?"rgba(34,197,94,0.3)":t.glassBdr}`,
-      transition:"all 0.3s",
-    }}>
-      <span style={{fontSize:16,opacity:done?1:0.5}}>{mission.icon}</span>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontSize:11,fontWeight:700,color:done?"#4ade80":t.text,fontFamily:"'Syne',sans-serif"}}>{mission.title}</div>
-        <div style={{fontSize:9,color:t.textMuted,marginTop:1,fontFamily:"'DM Mono',monospace"}}>{mission.desc}</div>
-      </div>
-      <div style={{textAlign:"right",flexShrink:0}}>
-        {done
-          ?<div style={{fontSize:10,fontWeight:800,color:"#4ade80",fontFamily:"'DM Mono',monospace"}}>✓ DONE</div>
-          :<div style={{fontSize:9,color:t.textMuted,fontFamily:"'DM Mono',monospace"}}>+💰{mission.reward}</div>
+        function computeStats(grid) {
+          let oxygen=40, beauty=30, pollution=20, traffic=30, energy=50, population=0, score=0;
+          grid.forEach(cell => {
+            if(!cell) return;
+            const b = BUILDINGS[cell];
+            if(!b) return;
+            oxygen = Math.max(0, Math.min(100, oxygen + b.oxygen));
+            beauty = Math.max(0, Math.min(100, beauty + b.beauty));
+            pollution = Math.max(0, Math.min(100, pollution + b.pollution));
+            traffic = Math.max(0, Math.min(100, traffic + b.traffic));
+            energy = Math.max(0, Math.min(100, energy + b.energy));
+            population += b.population; 
+            score += 10 + b.beauty;
+          });
+          const livability = Math.round((oxygen + beauty + (100 - pollution) + (100 - traffic) + energy) / 5);
+          const sustainability = Math.round(oxygen * 0.35 + (100 - pollution) * 0.35 + energy * 0.3);
+          return { oxygen, beauty, pollution, traffic, energy, population, score, livability, sustainability };
         }
-      </div>
-    </div>
-  );
-}
 
-function AchievementBadge({ach,earned,isNight,t}){
-  return(
-    <div style={{
-      textAlign:"center",padding:"10px 6px",borderRadius:12,
-      background:earned?(isNight?"rgba(251,191,36,0.12)":"rgba(251,191,36,0.08)"):"transparent",
-      border:`1px solid ${earned?"rgba(251,191,36,0.35)":t.glassBdr}`,
-      transition:"all 0.3s",opacity:earned?1:0.35,
-    }}>
-      <div style={{fontSize:20,filter:earned?"drop-shadow(0 0 6px rgba(251,191,36,0.6))":"none"}}>{ach.icon}</div>
-      <div style={{fontSize:9,fontWeight:700,color:earned?"#fbbf24":t.textMuted,marginTop:4,fontFamily:"'DM Mono',monospace",lineHeight:1.2}}>{ach.title}</div>
-    </div>
-  );
-}
-
-function loadHtml2Canvas(){
-  return new Promise((res,rej)=>{
-    if(window.html2canvas){res(window.html2canvas);return;}
-    const s=document.createElement("script");
-    s.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-    s.onload=()=>res(window.html2canvas);
-    s.onerror=()=>rej(new Error("fail"));
-    document.head.appendChild(s);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SIDEBAR CONTENT (shared between desktop sidebar & mobile drawer)
-// ═══════════════════════════════════════════════════════════════
-function SidebarContent({
-  t, isNight, level, xpPct, xp, coins, moveCount, stats,
-  tab, setTab, history, future, undo, redo, reset,
-  selected, setSelected, completedM, capturing,
-  downloadBlueprint, takeScreenshot,
-  showAdModal, setShowAdModal, adWatched,
-  radarData, barData, livColor, livIcon, card,
-  isMobile,
-}) {
-  return (
-    <>
-      {/* Brand */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-        <div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontSize:isMobile?17:20,fontWeight:800,color:t.text,letterSpacing:-0.5}}>
-            {isNight?"🌃":"🌆"} CityOS
-          </div>
-          <div style={{fontSize:8,color:t.textMuted,fontWeight:700,letterSpacing:1,fontFamily:"'DM Mono',monospace",marginTop:1}}>SMART CITY SIMULATOR v5</div>
-        </div>
-      </div>
-
-      {/* XP + Level */}
-      <div style={{background:isNight?"rgba(99,102,241,0.1)":"rgba(99,102,241,0.07)",border:`1px solid rgba(99,102,241,0.2)`,borderRadius:14,padding:"9px 12px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-          <div style={{fontSize:9,fontWeight:700,color:"#6366f1",fontFamily:"'DM Mono',monospace",letterSpacing:1}}>LEVEL {level} PLANNER</div>
-          <div style={{fontSize:9,color:t.textMuted,fontFamily:"'DM Mono',monospace"}}>{xp%200}/200 XP</div>
-        </div>
-        <div style={{background:"rgba(99,102,241,0.15)",borderRadius:99,height:5,overflow:"hidden"}}>
-          <div style={{width:`${xpPct}%`,height:"100%",borderRadius:99,
-            background:"linear-gradient(90deg,#818cf8,#6366f1)",
-            transition:"width 0.6s cubic-bezier(.16,1,.3,1)",
-            boxShadow:isNight?"0 0 8px #6366f188":undefined}}/>
-        </div>
-      </div>
-
-      {/* Budget */}
-      <div style={{borderRadius:14,padding:"12px 14px",color:"#fff",
-        background:isNight?"linear-gradient(135deg,#312e81,#4c1d95)":"linear-gradient(135deg,#4f46e5,#7c3aed)",
-        boxShadow:isNight?"0 6px 24px rgba(79,70,229,0.45)":"0 6px 24px rgba(99,102,241,0.32)"}}>
-        <div style={{fontSize:8,opacity:0.6,fontWeight:700,letterSpacing:1.2,fontFamily:"'DM Mono',monospace"}}>CITY BUDGET</div>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginTop:2}}>
-          <div style={{fontSize:22,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>💰 {coins}</div>
-          <button onClick={()=>setShowAdModal(true)} style={{
-            background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.2)",
-            borderRadius:99,padding:"4px 9px",color:"#fff",fontSize:9,fontWeight:700,
-            cursor:"pointer",fontFamily:"'DM Mono',monospace",letterSpacing:0.3,flexShrink:0,
-          }}>+AD</button>
-        </div>
-        <div style={{display:"flex",gap:12,marginTop:7}}>
-          {[["MOVES",moveCount],["PEOPLE",stats.population],["SCORE",stats.score]].map(([l,v])=>(
-            <div key={l}>
-              <div style={{fontSize:8,opacity:0.55,letterSpacing:0.8,fontFamily:"'DM Mono',monospace"}}>{l}</div>
-              <div style={{fontSize:13,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>{v}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Livability */}
-      <div style={{border:`1.5px solid ${livColor}44`,background:isNight?`${livColor}0d`:`${livColor}0a`,borderRadius:12,padding:"9px 12px"}}>
-        <div style={{fontSize:8,fontWeight:700,color:t.textMuted,letterSpacing:1.2,fontFamily:"'DM Mono',monospace"}}>LIVABILITY INDEX</div>
-        <div style={{fontSize:22,fontWeight:800,color:livColor,fontFamily:"'Syne',sans-serif",marginTop:1}}>{stats.livability}% {livIcon}</div>
-      </div>
-
-      {/* Tabs */}
-      <div style={{display:"flex",gap:3,background:isNight?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.04)",borderRadius:11,padding:3}}>
-        {[["build","🏗"],["missions","🎯"],["analytics","📊"]].map(([k,ic])=>(
-          <button key={k} onClick={()=>setTab(k)} style={{
-            flex:1,border:"none",cursor:"pointer",borderRadius:8,padding:"6px 2px",fontSize:10,fontWeight:700,
-            background:tab===k?(isNight?"rgba(99,102,241,0.22)":"#fff"):"transparent",
-            color:tab===k?"#6366f1":t.textMuted,
-            boxShadow:tab===k?"0 2px 8px rgba(0,0,0,0.1)":"none",
-            transition:"all 0.2s",fontFamily:"'DM Sans',sans-serif",
-          }}>{ic} {k.charAt(0).toUpperCase()+k.slice(1)}</button>
-        ))}
-      </div>
-
-      {/* ── BUILD ── */}
-      {tab==="build"&&<>
-        <div style={{display:"flex",gap:5}}>
-          {[["↩","Undo",undo,!history.length],["↪","Redo",redo,!future.length],["🔄","Reset",reset,false]].map(([ic,lb,fn,dis])=>(
-            <button key={lb} onClick={fn} disabled={dis} style={{
-              flex:1,border:`1px solid ${t.glassBdr}`,
-              background:isNight?"rgba(99,102,241,0.07)":"rgba(255,255,255,0.75)",
-              borderRadius:10,padding:"7px 2px",fontSize:9,fontWeight:700,
-              color:dis?t.textMuted:t.textSub,cursor:dis?"not-allowed":"pointer",
-              transition:"all 0.15s",fontFamily:"'DM Mono',monospace",
+        // ═══════════════════════════════════════════════════════════════
+        // SEPARATE UI HELPER SUB-COMPONENTS
+        // ═══════════════════════════════════════════════════════════════
+        function DayNightToggle({ isNight, onToggle }) {
+          return (
+            <button onClick={onToggle} style={{
+              width:60, height:28, borderRadius:99,
+              background:isNight?"linear-gradient(135deg,#0f172a,#1e293b)":"linear-gradient(135deg,#dbeafe,#bfdbfe)",
+              border:`1px solid ${isNight?"rgba(99,102,241,0.35)":"rgba(147,197,253,0.5)"}`,
+              position:"relative", cursor:"pointer", padding:0, flexShrink:0, transition:"all 0.55s ease",
             }}>
-              <div style={{fontSize:13}}>{ic}</div><div style={{fontSize:8,marginTop:1}}>{lb}</div>
+              <div style={{
+                position:"absolute", top:2, left:isNight?33:3, width:22, height:22, borderRadius:"50%",
+                background:isNight?"linear-gradient(135deg,#e2e8f0,#cbd5e1)":"linear-gradient(135deg,#fde68a,#f59e0b)",
+                transition:"all 0.4s cubic-bezier(0.34,1.56,0.64,1)",
+                display:"flex", alignItems:"center", justifyCenter:"center", fontSize:11, paddingLeft: isNight?2:3, paddingTop:1
+              }}>{isNight?"🌙":"☀️"}</div>
             </button>
-          ))}
-        </div>
-        <div style={{fontSize:9,fontWeight:700,color:t.textMuted,letterSpacing:1.2,fontFamily:"'DM Mono',monospace"}}>SELECT BLOCK</div>
-        <div style={{display:"flex",flexDirection:"column",gap:5}}>
-          {Object.values(BUILDINGS).map(b=>{
-            const active=selected===b.id;
-            const locked=b.unlockAt>moveCount;
-            const isFash=b.id==="FASHION";
-            return(
-              <button key={b.id} className="bld-btn" onClick={()=>setSelected(b.id)} disabled={locked} style={{
-                display:"flex",alignItems:"center",gap:9,
-                border:active?`2px solid ${b.color}`:`2px solid ${isNight?"rgba(255,255,255,0.04)":"transparent"}`,
-                borderRadius:12,padding:"7px 10px",textAlign:"left",cursor:locked?"not-allowed":"pointer",
-                background:active?(isNight?`${b.color}20`:`${b.color}12`):(isNight?"rgba(255,255,255,0.03)":"rgba(255,255,255,0.65)"),
-                boxShadow:active?`0 4px 14px ${b.color}28`:"none",opacity:locked?0.4:1,
-              }}>
-                <span style={{fontSize:15}}>{b.icon}</span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:11,fontWeight:700,fontFamily:"'Syne',sans-serif",
-                    color:isFash&&!locked?"#f472b6":t.text}}>{b.label}</div>
-                  <div style={{fontSize:8,color:t.textMuted,marginTop:1,fontFamily:"'DM Mono',monospace"}}>
-                    {locked?`🔒 Move ${b.unlockAt}`:`💰${b.cost}`}
-                  </div>
-                </div>
-                {active&&!locked&&<div style={{width:5,height:5,borderRadius:"50%",background:b.color,flexShrink:0}}/>}
-              </button>
-            );
-          })}
-        </div>
-        <div style={{fontSize:8,color:t.textMuted,textAlign:"center",fontFamily:"'DM Mono',monospace"}}>
-          TAP = PLACE · LONG PRESS = REMOVE
-        </div>
-      </>}
+          );
+        }
 
-      {/* ── MISSIONS ── */}
-      {tab==="missions"&&(
-        <div style={{display:"flex",flexDirection:"column",gap:7,animation:"fadeUp 0.3s ease"}}>
-          <div style={{fontSize:10,fontWeight:800,color:t.textSub,fontFamily:"'Syne',sans-serif"}}>
-            Active Missions ({completedM.length}/{MISSIONS.length})
-          </div>
-          {MISSIONS.map(m=>(
-            <MissionCard key={m.id} mission={m} done={completedM.includes(m.id)} t={t} isNight={isNight}/>
-          ))}
-          <div style={{borderTop:`1px solid ${t.divider}`,paddingTop:10,marginTop:2}}>
-            <div style={{fontSize:10,fontWeight:800,color:t.textSub,marginBottom:8,fontFamily:"'Syne',sans-serif"}}>Achievements</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-              {ACHIEVEMENTS.map(a=>(
-                <AchievementBadge key={a.id} ach={a} earned={a.check(moveCount)} isNight={isNight} t={t}/>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── ANALYTICS ── */}
-      {tab==="analytics"&&(
-        <div style={{display:"flex",flexDirection:"column",gap:9,animation:"fadeUp 0.3s ease"}}>
-          <div style={card()}>
-            <div style={{fontSize:10,fontWeight:800,color:t.textSub,marginBottom:10,fontFamily:"'Syne',sans-serif"}}>City Metrics</div>
-            <StatBar label="Oxygen"    val={stats.oxygen}    color="#4ade80" icon="🌿" isNight={isNight} t={t}/>
-            <StatBar label="Beauty"    val={stats.beauty}    color="#a78bfa" icon="✨" isNight={isNight} t={t}/>
-            <StatBar label="Pollution" val={stats.pollution} color="#fb923c" icon="💨" isNight={isNight} t={t}/>
-            <StatBar label="Traffic"   val={stats.traffic}   color="#60a5fa" icon="🚦" isNight={isNight} t={t}/>
-            <StatBar label="Energy"    val={stats.energy}    color="#fbbf24" icon="⚡" isNight={isNight} t={t}/>
-          </div>
-          <div style={{...card(),border:`1px solid ${stats.sustainability>65?"rgba(74,222,128,0.3)":stats.sustainability>45?"rgba(251,191,36,0.3)":"rgba(248,113,113,0.3)"}`}}>
-            <div style={{fontSize:9,fontWeight:800,color:t.textMuted,letterSpacing:1.2,fontFamily:"'DM Mono',monospace",marginBottom:6}}>SUSTAINABILITY</div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-              <div style={{fontSize:20,fontWeight:800,fontFamily:"'Syne',sans-serif",
-                color:stats.sustainability>65?"#4ade80":stats.sustainability>45?"#fbbf24":"#f87171"}}>
-                {stats.sustainability}%
-              </div>
-              <div style={{fontSize:9,padding:"3px 8px",borderRadius:99,fontFamily:"'DM Mono',monospace",fontWeight:700,
-                background:stats.sustainability>65?"rgba(74,222,128,0.15)":stats.sustainability>45?"rgba(251,191,36,0.15)":"rgba(248,113,113,0.15)",
-                color:stats.sustainability>65?"#4ade80":stats.sustainability>45?"#fbbf24":"#f87171"}}>
-                {stats.sustainability>65?"🌱 Eco City":stats.sustainability>45?"⚠️ Needs Work":"🔴 Critical"}
-              </div>
-            </div>
-          </div>
-          <div style={card()}>
-            <div style={{fontSize:9,fontWeight:800,color:t.textMuted,letterSpacing:1,fontFamily:"'DM Mono',monospace",marginBottom:6}}>CITY PROFILE</div>
-            <ResponsiveContainer width="100%" height={130}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke={isNight?"rgba(255,255,255,0.07)":"#e2e8f0"}/>
-                <PolarAngleAxis dataKey="subject" tick={{fontSize:9,fill:t.textMuted,fontFamily:"'DM Mono',monospace"}}/>
-                <Radar dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={isNight?0.28:0.15} strokeWidth={2} dot={{r:2,fill:"#6366f1"}}/>
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-          {barData.length>1&&<div style={card()}>
-            <div style={{fontSize:9,fontWeight:800,color:t.textMuted,letterSpacing:1,fontFamily:"'DM Mono',monospace",marginBottom:6}}>GROWTH</div>
-            <ResponsiveContainer width="100%" height={80}>
-              <BarChart data={barData} barGap={2}>
-                <XAxis dataKey="m" tick={{fontSize:8,fill:t.textMuted}} axisLine={false} tickLine={false}/>
-                <YAxis hide/>
-                <Tooltip contentStyle={{background:"rgba(6,9,18,0.96)",border:"none",borderRadius:10,fontSize:10,fontFamily:"'DM Mono',monospace"}} labelStyle={{color:"#fff"}}/>
-                <Bar dataKey="pop" name="Population" fill={isNight?"#6366f1":"#818cf8"} radius={[3,3,0,0]}/>
-                <Bar dataKey="liv" name="Livability"  fill={isNight?"#4ade80":"#86efac"} radius={[3,3,0,0]}/>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>}
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            <button className="act-btn" onClick={downloadBlueprint} style={{
-              border:"none",background:isNight?"linear-gradient(135deg,#312e81,#4c1d95)":"linear-gradient(135deg,#4f46e5,#7c3aed)",
-              color:"#fff",borderRadius:12,padding:"10px 0",fontSize:11,fontWeight:700,cursor:"pointer",
-              fontFamily:"'DM Mono',monospace",letterSpacing:0.8,transition:"all 0.2s",
-              boxShadow:isNight?"0 4px 20px rgba(79,70,229,0.45)":"0 4px 16px rgba(99,102,241,0.3)",
-            }}>📐 DOWNLOAD BLUEPRINT</button>
-            <button className="act-btn" onClick={takeScreenshot} disabled={capturing} style={{
-              border:`1px solid rgba(244,114,182,0.35)`,
-              background:isNight?"rgba(244,114,182,0.1)":"rgba(244,114,182,0.07)",
-              color:"#f472b6",borderRadius:12,padding:"10px 0",fontSize:11,fontWeight:700,
-              cursor:capturing?"wait":"pointer",fontFamily:"'DM Mono',monospace",letterSpacing:0.8,
-              transition:"all 0.2s",opacity:capturing?0.6:1,
-            }}>{capturing?"⏳ CAPTURING...":"📸 SCREENSHOT"}</button>
-          </div>
-        </div>
-      )}
-
-      {/* Portfolio */}
-      <div style={{marginTop:"auto",borderTop:`1px solid ${t.divider}`,paddingTop:10,textAlign:"center"}}>
-        <div style={{fontSize:9,color:t.textMuted,fontWeight:700,letterSpacing:1.2,fontFamily:"'DM Mono',monospace"}}>BUILT BY</div>
-        <div style={{fontSize:13,fontWeight:800,color:"#6366f1",marginTop:2,fontFamily:"'Syne',sans-serif"}}>Khadija Umar Rao</div>
-        <div style={{fontSize:8,color:t.textMuted,marginTop:1,fontFamily:"'DM Mono',monospace"}}>DATA SCIENCE · REACT · FLUTTER</div>
-        <div style={{display:"flex",justifyContent:"center",gap:7,marginTop:6}}>
-          {["GitHub","LinkedIn","Portfolio"].map(l=>(
-            <div key={l} style={{fontSize:8,color:"#6366f1",fontFamily:"'DM Mono',monospace",fontWeight:700,
-              background:isNight?"rgba(99,102,241,0.12)":"rgba(99,102,241,0.08)",
-              padding:"3px 6px",borderRadius:99,cursor:"pointer"}}>↗ {l}</div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════
-// MAIN APP
-// ═══════════════════════════════════════════════════════════════
-export default function CityOS() {
-  const [grid,       setGrid]       = useState(()=>Array(GRID_SIZE).fill(null));
-  const [history,    setHistory]    = useState([]);
-  const [future,     setFuture]     = useState([]);
-  const [coins,      setCoins]      = useState(STARTING_COINS);
-  const [xp,         setXp]         = useState(0);
-  const [selected,   setSelected]   = useState("TREE");
-  const [tab,        setTab]        = useState("build");
-  const [isNight,    setIsNight]    = useState(()=>new Date().getHours()>=18);
-  const [notif,      setNotif]      = useState(null);
-  const [moveCount,  setMoveCount]  = useState(0);
-  const [statsHist,  setStatsHist]  = useState([]);
-  const [completedM, setCompletedM] = useState([]);
-  const [capturing,  setCapturing]  = useState(false);
-  const [showAdModal,setShowAdModal]= useState(false);
-  const [adWatched,  setAdWatched]  = useState(false);
-  // Mobile drawer state
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const gridRef    = useRef(null);
-  const notifTimer = useRef(null);
-  const playSound  = useSound();
-  const { cellPx, isMobile, isTablet } = useResponsive();
-
-  const t     = isNight ? THEMES.dark : THEMES.light;
-  const stats = computeStats(grid);
-  const level = Math.floor(xp/200)+1;
-  const xpPct = ((xp%200)/200)*100;
-  const SIDEBAR_W = isTablet ? 220 : 258;
-
-  // ── Load ───────────────────────────────────────────────
-  useEffect(()=>{
-    const saved=safeLoad(SAVE_KEY);
-    if(saved){
-      setGrid(saved.grid); setCoins(saved.coins??STARTING_COINS);
-      setMoveCount(saved.moveCount??0); setStatsHist(saved.statsHist??[]);
-      setIsNight(saved.isNight??new Date().getHours()>=18);
-      setCompletedM(saved.completedM??[]); setXp(saved.xp??0);
-    }
-  },[]);
-
-  // ── Save ───────────────────────────────────────────────
-  useEffect(()=>{
-    safeSave(SAVE_KEY,{grid,coins,moveCount,statsHist,isNight,completedM,xp});
-  },[grid,coins,moveCount,statsHist,isNight,completedM,xp]);
-
-  // ── Mission checker ────────────────────────────────────
-  useEffect(()=>{
-    MISSIONS.forEach(m=>{
-      if(completedM.includes(m.id)) return;
-      if(m.check(grid,stats)){
-        setCompletedM(p=>[...p,m.id]);
-        setCoins(c=>c+m.reward);
-        setXp(x=>x+m.xp);
-        playSound("mission");
-        notify(`🎯 "${m.title}" +💰${m.reward}!`,"unlock");
-      }
-    });
-  },[grid,stats]);
-
-  // ── Notify ─────────────────────────────────────────────
-  const notify = useCallback((msg,type="success")=>{
-    clearTimeout(notifTimer.current);
-    setNotif({msg,type});
-    notifTimer.current=setTimeout(()=>setNotif(null),2800);
-  },[]);
-
-  // ── Place ──────────────────────────────────────────────
-  const place = useCallback((idx)=>{
-    const b=BUILDINGS[selected];
-    if(b.unlockAt>moveCount){notify(`🔒 Unlock at ${b.unlockAt} moves`,"error");playSound("error");return;}
-    if(grid[idx]===selected)return;
-    if(coins<b.cost){notify("💸 Not enough coins!","error");playSound("error");return;}
-    try{navigator.vibrate?.(12);}catch{}
-    playSound("place");
-    setHistory(h=>[...h.slice(-40),grid]);
-    setFuture([]);
-    const g=[...grid];g[idx]=selected;
-    const nm=moveCount+1;
-    setGrid(g);setCoins(c=>c-b.cost);setMoveCount(nm);
-    setXp(x=>x+10);
-    setStatsHist(sh=>[...sh.slice(-30),{...computeStats(g),move:nm}]);
-    if(nm===5)  setTimeout(()=>{notify("🔓 Tier 2 unlocked!","unlock");playSound("unlock");},300);
-    if(nm===8)  setTimeout(()=>{notify("🔓 Hospital & Academy!","unlock");playSound("unlock");},300);
-    if(nm===12) setTimeout(()=>{notify("🔓 Tier 3 unlocked!","unlock");playSound("unlock");},300);
-    if(nm===15) setTimeout(()=>{notify("✦ Fashion Hub unlocked!","unlock");playSound("unlock");},300);
-  },[grid,selected,coins,moveCount,notify,playSound]);
-
-  const remove=useCallback((idx)=>{
-    if(!grid[idx])return;
-    try{navigator.vibrate?.(12);}catch{}
-    playSound("remove");
-    setHistory(h=>[...h.slice(-40),grid]);setFuture([]);
-    const g=[...grid];g[idx]=null;
-    setGrid(g);setMoveCount(m=>m+1);
-    notify("🗑️ Removed","info");
-  },[grid,notify,playSound]);
-
-  const undo=useCallback(()=>{
-    if(!history.length)return;
-    setFuture(f=>[grid,...f]);setGrid(history[history.length-1]);
-    setHistory(h=>h.slice(0,-1));notify("↩️ Undo","info");
-  },[history,grid,notify]);
-
-  const redo=useCallback(()=>{
-    if(!future.length)return;
-    setHistory(h=>[...h,grid]);setGrid(future[0]);
-    setFuture(f=>f.slice(1));notify("↪️ Redo","info");
-  },[future,grid,notify]);
-
-  const reset=useCallback(()=>{
-    setHistory(h=>[...h,grid]);setGrid(Array(GRID_SIZE).fill(null));
-    setCoins(STARTING_COINS);setStatsHist([]);setMoveCount(0);setFuture([]);setXp(0);setCompletedM([]);
-    notify("🔄 City reset","info");
-  },[grid,notify]);
-
-  const downloadBlueprint=useCallback(()=>{
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([JSON.stringify({grid,stats,coins,moveCount,xp,level,exportedAt:new Date().toISOString(),version:"v5"},null,2)],{type:"application/json"}));
-    a.download="cityos_v5_blueprint.json";a.click();
-    notify("📐 Blueprint downloaded!","success");
-  },[grid,stats,coins,moveCount,xp,level,notify]);
-
-  const takeScreenshot=useCallback(async()=>{
-    if(!gridRef.current)return;
-    setCapturing(true);notify("📸 Capturing...","info");
-    try{
-      const h2c=await loadHtml2Canvas();
-      const canvas=await h2c(gridRef.current,{backgroundColor:isNight?"#0f172a":"#f0f4ff",scale:2,useCORS:true,logging:false});
-      const a=document.createElement("a");
-      a.href=canvas.toDataURL("image/png");
-      a.download=`cityos_${isNight?"night":"day"}_Lv${level}_${Date.now()}.png`;a.click();
-      notify("📸 Saved! Share on LinkedIn 🚀","success");
-    }catch{notify("Use browser screenshot","info");}
-    finally{setCapturing(false);}
-  },[isNight,level,notify]);
-
-  const watchAd=()=>{
-    setShowAdModal(false);
-    setTimeout(()=>{
-      setCoins(c=>c+200);setAdWatched(true);
-      playSound("unlock");
-      notify("🎬 Ad reward: +💰200 coins!","success");
-    },1200);
-  };
-
-  const radarData=[
-    {subject:"O₂",A:stats.oxygen},{subject:"Beauty",A:stats.beauty},
-    {subject:"Clean",A:100-stats.pollution},{subject:"Flow",A:100-stats.traffic},{subject:"Energy",A:stats.energy},
-  ];
-  const barData=statsHist.slice(-12).map(s=>({m:`M${s.move}`,pop:s.population,liv:s.livability}));
-  const livColor=stats.livability>65?"#4ade80":stats.livability>45?"#fbbf24":"#f87171";
-  const livIcon=stats.livability>65?"🟢":stats.livability>45?"🟡":"🔴";
-  const card=(x={})=>({background:t.chartCard,border:`1px solid ${t.glassBdr}`,borderRadius:16,padding:14,...x});
-
-  // Shared sidebar props
-  const sidebarProps = {
-    t, isNight, level, xpPct, xp, coins, moveCount, stats,
-    tab, setTab, history, future, undo, redo, reset,
-    selected, setSelected, completedM, capturing,
-    downloadBlueprint, takeScreenshot,
-    showAdModal, setShowAdModal, adWatched,
-    radarData, barData, livColor, livIcon, card,
-  };
-
-  return (
-    <div style={{minHeight:"100vh",background:t.bg,fontFamily:"'DM Sans',sans-serif",position:"relative",overflow:"hidden",transition:"background 0.8s"}}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
-        @keyframes tooltipIn{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-        @keyframes notifIn{from{opacity:0;transform:translateX(-50%) translateY(-14px) scale(0.93)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
-        @keyframes twinkle{from{opacity:0.3;transform:scale(0.7)}to{opacity:1;transform:scale(1.3)}}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes drawerUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-        @keyframes modalIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
-        *{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#6366f133;border-radius:99px}
-        .bld-btn{transition:all 0.18s cubic-bezier(.16,1,.3,1)!important}
-        .bld-btn:hover:not(:disabled){transform:translateY(-2px) scale(1.03)!important}
-        .act-btn:hover{opacity:.82!important;transform:translateY(-1px)!important}
-      `}</style>
-
-      {/* Orbs */}
-      {[{top:-130,left:-110,size:440,bg:t.orb1},{bottom:-110,right:-110,size:360,bg:t.orb2}].map((o,i)=>(
-        <div key={i} style={{position:"fixed",borderRadius:"50%",pointerEvents:"none",zIndex:0,
-          width:o.size,height:o.size,top:o.top,left:o.left,bottom:o.bottom,right:o.right,
-          background:`radial-gradient(circle,${o.bg} 0%,transparent 70%)`,transition:"background 0.9s"}}/>
-      ))}
-
-      {/* Ad Modal */}
-      {showAdModal&&(
-        <div style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 20px"}}>
-          <div style={{background:isNight?"#0f172a":"#fff",borderRadius:24,padding:28,maxWidth:320,width:"100%",
-            border:`1px solid ${t.glassBdr}`,boxShadow:"0 40px 80px rgba(0,0,0,0.4)",animation:"modalIn 0.25s ease",textAlign:"center"}}>
-            <div style={{fontSize:36,marginBottom:10}}>🎬</div>
-            <div style={{fontSize:17,fontWeight:800,color:t.text,fontFamily:"'Syne',sans-serif",marginBottom:7}}>Watch & Earn</div>
-            <div style={{fontSize:13,color:t.textSub,marginBottom:22}}>Watch a short ad to earn <strong style={{color:"#fbbf24"}}>+💰200 coins</strong></div>
-            <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setShowAdModal(false)} style={{flex:1,border:`1px solid ${t.glassBdr}`,background:"transparent",color:t.textSub,borderRadius:12,padding:"11px 0",cursor:"pointer",fontSize:12,fontWeight:600}}>Cancel</button>
-              <button onClick={watchAd} style={{flex:1,border:"none",background:"linear-gradient(135deg,#fbbf24,#f59e0b)",color:"#000",borderRadius:12,padding:"11px 0",cursor:"pointer",fontSize:12,fontWeight:800}}>Watch Ad ▶</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Notification */}
-      {notif&&(
-        <div style={{position:"fixed",top:16,left:"50%",zIndex:9999,
-          background:t.notif[notif.type]||t.notif.info,
-          color:"#fff",borderRadius:99,padding:"9px 20px",
-          fontSize:12,fontWeight:700,letterSpacing:0.3,
-          boxShadow:"0 8px 30px rgba(0,0,0,0.28)",
-          animation:"notifIn 0.22s cubic-bezier(.16,1,.3,1)",
-          whiteSpace:"nowrap",fontFamily:"'DM Mono',monospace",
-          transform:"translateX(-50%)"}}>{notif.msg}</div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════
-          MOBILE LAYOUT  (< 640px)
-          ══════════════════════════════════════════════════════════ */}
-      {isMobile ? (
-        <div style={{display:"flex",flexDirection:"column",minHeight:"100vh",position:"relative",zIndex:1}}>
-
-          {/* Mobile Top Bar */}
-          <div style={{
-            display:"flex",alignItems:"center",justifyContent:"space-between",
-            padding:"10px 14px",
-            background:t.sidebar,backdropFilter:"blur(30px)",WebkitBackdropFilter:"blur(30px)",
-            borderBottom:`1px solid ${t.sidebarBdr}`,
-            boxShadow:"0 4px 20px rgba(0,0,0,0.1)",
-            zIndex:20,flexShrink:0,
-          }}>
-            <div style={{fontFamily:"'Syne',sans-serif",fontSize:18,fontWeight:800,color:t.text}}>
-              {isNight?"🌃":"🌆"} CityOS
-            </div>
-            {/* Stats pills */}
-            <div style={{display:"flex",gap:6,alignItems:"center"}}>
-              <div style={{fontSize:11,fontWeight:700,color:"#fbbf24",fontFamily:"'Syne',sans-serif"}}>💰{coins}</div>
-              <div style={{fontSize:11,fontWeight:700,color:livColor,fontFamily:"'Syne',sans-serif"}}>{livIcon}{stats.livability}%</div>
-              <DayNightToggle isNight={isNight} onToggle={()=>setIsNight(n=>!n)}/>
-            </div>
-          </div>
-
-          {/* Mobile Stats Bar */}
-          <div style={{
-            display:"flex",gap:0,
-            background:t.glass,backdropFilter:"blur(12px)",
-            borderBottom:`1px solid ${t.glassBdr}`,
-            overflowX:"auto",flexShrink:0,
-          }}>
-            {[
-              {icon:"🌿",lbl:"O₂",val:`${Math.round(stats.oxygen)}%`},
-              {icon:"✨",lbl:"Beauty",val:`${Math.round(stats.beauty)}%`},
-              {icon:"💨",lbl:"Air",val:`${Math.round(100-stats.pollution)}%`},
-              {icon:"⚡",lbl:"Energy",val:`${Math.round(stats.energy)}%`},
-              {icon:"👥",lbl:"Pop.",val:stats.population},
-            ].map(m=>(
-              <div key={m.lbl} style={{textAlign:"center",padding:"6px 12px",flexShrink:0,borderRight:`1px solid ${t.divider}`}}>
-                <div style={{fontSize:8,color:t.textMuted,fontWeight:700,letterSpacing:0.5,fontFamily:"'DM Mono',monospace"}}>{m.icon} {m.lbl}</div>
-                <div style={{fontSize:12,fontWeight:800,color:t.text,fontFamily:"'Syne',sans-serif"}}>{m.val}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Mobile Grid Area */}
-          <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"16px 8px 80px",overflowY:"auto"}}>
-            <div ref={gridRef} style={{perspective:1200,perspectiveOrigin:"50% 28%"}}>
-              <div style={{
-                display:"grid",gridTemplateColumns:`repeat(${GRID_COLS},${cellPx}px)`,gap:3,
-                transform:"rotateX(46deg)",transformStyle:"preserve-3d",
-                background:t.gridBg,backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
-                border:`1px solid ${t.gridBdr}`,borderRadius:12,padding:12,
-                filter:t.gridFilter,
-                boxShadow:isNight?"0 30px 60px rgba(0,0,0,0.55)":"0 30px 60px rgba(0,0,0,0.10)",
-                transition:"background 0.8s,border-color 0.8s,box-shadow 0.8s,filter 0.8s",
-              }}>
-                {grid.map((cell,i)=>(
-                  <IsoCell key={i} building={cell} selected={selected}
-                    onClick={()=>place(i)} onRightClick={()=>remove(i)}
-                    isNight={isNight} t={t} cellPx={cellPx}
-                    locked={BUILDINGS[selected].unlockAt>moveCount}/>
-                ))}
-              </div>
-            </div>
-
-            {/* Progression bar */}
-            <div style={{marginTop:12,display:"flex",gap:6,alignItems:"center"}}>
-              {[{at:0,lbl:"Start",icon:"🌱"},{at:5,lbl:"T2",icon:"⚡"},{at:12,lbl:"T3",icon:"🏙️"},{at:15,lbl:"✦",icon:"👗"}].map((s,i,arr)=>{
-                const done=moveCount>=s.at;
-                const next=arr[i+1];
-                return(
-                  <div key={s.at} style={{display:"flex",alignItems:"center",gap:6}}>
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,opacity:done?1:0.4,transition:"opacity 0.4s"}}>
-                      <div style={{fontSize:13}}>{s.icon}</div>
-                      <div style={{fontSize:7,fontWeight:700,color:done?"#6366f1":t.textMuted,fontFamily:"'DM Mono',monospace"}}>{s.lbl}</div>
-                    </div>
-                    {next&&(
-                      <div style={{width:24,height:2,borderRadius:99,background:t.barBg,overflow:"hidden"}}>
-                        <div style={{
-                          height:"100%",borderRadius:99,
-                          background:"linear-gradient(90deg,#6366f1,#818cf8)",
-                          width:moveCount>=next.at?"100%":`${Math.min(100,((moveCount-s.at)/(next.at-s.at))*100)}%`,
-                          transition:"width 0.5s",
-                        }}/>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Mobile Bottom Bar — quick selected block + drawer button */}
-          <div style={{
-            position:"fixed",bottom:0,left:0,right:0,zIndex:20,
-            background:t.sidebar,backdropFilter:"blur(30px)",WebkitBackdropFilter:"blur(30px)",
-            borderTop:`1px solid ${t.sidebarBdr}`,
-            padding:"10px 14px",
-            display:"flex",alignItems:"center",gap:10,
-          }}>
-            {/* Quick building selector */}
-            <div style={{flex:1,display:"flex",gap:5,overflowX:"auto"}}>
-              {Object.values(BUILDINGS).filter(b=>b.unlockAt<=moveCount).map(b=>(
-                <button key={b.id} onClick={()=>setSelected(b.id)} style={{
-                  flexShrink:0,
-                  width:38,height:38,borderRadius:10,
-                  border:selected===b.id?`2px solid ${b.color}`:`1px solid ${t.glassBdr}`,
-                  background:selected===b.id?(isNight?`${b.color}25`:`${b.color}15`):"transparent",
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:18,cursor:"pointer",
-                  boxShadow:selected===b.id?`0 0 10px ${b.color}40`:"none",
-                }}>
-                  {b.icon}
-                </button>
-              ))}
-            </div>
-            {/* Drawer toggle */}
-            <button onClick={()=>setDrawerOpen(v=>!v)} style={{
-              flexShrink:0,
-              width:42,height:42,borderRadius:12,border:`1px solid ${t.glassBdr}`,
-              background:drawerOpen?"#6366f1":"transparent",
-              color:drawerOpen?"#fff":t.textSub,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:18,cursor:"pointer",
-            }}>☰</button>
-          </div>
-
-          {/* Mobile Drawer (slides up) */}
-          {drawerOpen&&(
-            <>
-              {/* Backdrop */}
-              <div onClick={()=>setDrawerOpen(false)} style={{position:"fixed",inset:0,zIndex:29,background:"rgba(0,0,0,0.4)",backdropFilter:"blur(3px)"}}/>
-              {/* Drawer panel */}
-              <div style={{
-                position:"fixed",bottom:0,left:0,right:0,zIndex:30,
-                maxHeight:"78vh",
-                background:t.sidebar,backdropFilter:"blur(30px)",WebkitBackdropFilter:"blur(30px)",
-                borderTop:`1px solid ${t.sidebarBdr}`,
-                borderRadius:"20px 20px 0 0",
-                padding:"16px 14px 100px",
-                overflowY:"auto",
-                animation:"drawerUp 0.32s cubic-bezier(.16,1,.3,1)",
-                boxShadow:"0 -20px 60px rgba(0,0,0,0.3)",
-              }}>
-                {/* Drag handle */}
-                <div style={{width:36,height:4,borderRadius:99,background:t.textMuted,margin:"0 auto 14px",opacity:0.4}}/>
-                <SidebarContent {...sidebarProps} isMobile={true}/>
-              </div>
-            </>
-          )}
-        </div>
-
-      ) : (
-        /* ══════════════════════════════════════════════════════════
-           TABLET + DESKTOP LAYOUT
-           ══════════════════════════════════════════════════════════ */
-        <div style={{display:"flex",minHeight:"100vh",position:"relative",zIndex:1}}>
-
-          {/* Sidebar */}
-          <div style={{
-            width:SIDEBAR_W,flexShrink:0,overflowY:"auto",zIndex:10,
-            padding:"16px 12px",display:"flex",flexDirection:"column",gap:9,
-            background:t.sidebar,backdropFilter:"blur(30px)",WebkitBackdropFilter:"blur(30px)",
-            borderRight:`1px solid ${t.sidebarBdr}`,
-            boxShadow:isNight?"6px 0 40px rgba(0,0,0,0.4)":"6px 0 40px rgba(99,102,241,0.06)",
-            transition:"background 0.8s,border-color 0.8s",
-          }}>
-            {/* Day/Night toggle in sidebar header for desktop */}
-            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8}}>
-              <div style={{flex:1}}>
-                <SidebarContent {...sidebarProps} isMobile={false}/>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Grid Area */}
-          <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"52px 20px 28px",position:"relative",overflow:"hidden"}}>
-
-            {/* Top bar */}
-            <div style={{position:"absolute",top:12,left:"50%",transform:"translateX(-50%)",
-              background:t.glass,backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",
-              border:`1px solid ${t.glassBdr}`,borderRadius:99,padding:"8px 20px",
-              display:"flex",gap:16,zIndex:50,
-              boxShadow:isNight?"0 4px 24px rgba(0,0,0,0.3)":"0 4px 24px rgba(99,102,241,0.09)"}}>
-              {/* Day/Night toggle here for desktop */}
-              <DayNightToggle isNight={isNight} onToggle={()=>setIsNight(n=>!n)}/>
-              {[{icon:"🌿",lbl:"O₂",val:`${Math.round(stats.oxygen)}%`},
-                {icon:"✨",lbl:"Beauty",val:`${Math.round(stats.beauty)}%`},
-                {icon:"💨",lbl:"Air",val:`${Math.round(100-stats.pollution)}%`},
-                {icon:"⚡",lbl:"Energy",val:`${Math.round(stats.energy)}%`},
-                {icon:"👥",lbl:"Pop.",val:stats.population},
-              ].map(m=>(
-                <div key={m.lbl} style={{textAlign:"center"}}>
-                  <div style={{fontSize:9,color:t.textMuted,fontWeight:700,letterSpacing:0.6,fontFamily:"'DM Mono',monospace"}}>{m.icon} {m.lbl}</div>
-                  <div style={{fontSize:12,fontWeight:800,color:t.text,fontFamily:"'Syne',sans-serif"}}>{m.val}</div>
+        function BlockTooltip({ building }) {
+          const b = BUILDINGS[building];
+          if(!b) return null;
+          const rows=[
+            {k:"Beauty",v:b.beauty,pos:b.beauty>0},{k:"Oxygen",v:b.oxygen,pos:b.oxygen>0},
+            {k:"Pollution",v:b.pollution,pos:b.pollution<0},{k:"Traffic",v:b.traffic,pos:b.traffic<0},
+            {k:"Energy",v:b.energy,pos:b.energy>0},{k:"Pop.",v:b.population,pos:b.population>0},
+          ].filter(r=>r.v!==0);
+          return (
+            <div style={{
+              position:"absolute", bottom:"calc(100% + 8px)", left:"50%", transform:"translateX(-50%)",
+              background:"rgba(6,9,18,0.95)", border:`1px solid ${b.color}77`, borderRadius:8, padding:8, minWidth:120, zIndex:999, pointerEvents:"none",
+            }}>
+              <div style={{fontSize:9, fontWeight:800, color:b.color, marginBottom:4}}>{b.label}</div>
+              <div style={{fontSize:9, color:"#94a3b8", marginBottom:4}}>💰 Cost: {b.cost}</div>
+              {rows.map(r=>(
+                <div key={r.k} style={{display:"flex", justifyContent:"space-between", fontSize:8, marginBottom:2}}>
+                  <span style={{color:"#64748b"}}>{r.k}</span>
+                  <span style={{fontWeight:700, color:r.pos?"#4ade80":"#f87171"}}>{r.v>0?"+":""}{r.v}</span>
                 </div>
               ))}
             </div>
+          );
+        }
 
-            {/* Grid */}
-            <div ref={gridRef} style={{perspective:1400,perspectiveOrigin:"50% 28%",marginTop:20}}>
+        function IsoCell({ building, selected, onClick, onRightClick, isNight, t, locked, sizePx }) {
+          const [hov, setHov] = useState(false);
+          const b = building ? BUILDINGS[building] : null;
+          const sel = BUILDINGS[selected];
+          
+          return (
+            <div 
+              className="tile-container"
+              style={{ position:"relative", width:sizePx, height:sizePx }}
+              onMouseEnter={() => setHov(true)}
+              onMouseLeave={() => setHov(false)}
+              onClick={locked ? undefined : onClick}
+              onContextMenu={(e) => { e.preventDefault(); if(!locked) onRightClick(); }}
+            >
+              <div style={{ position:"absolute", inset:0, transform:"rotateX(52deg)", transformStyle:"preserve-3d" }}>
+                <div style={{
+                  position:"absolute", inset:0, borderRadius: 4,
+                  background: hov && !building ? `${sel.color}33` : building ? (isNight?"#1e293b":"#f1f5f9") : t.cellTop,
+                  border: `1px solid ${hov ? (b||sel).color : (isNight?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)")}`,
+                  transition: "all 0.15s"
+                }}/>
+                <div style={{ position:"absolute", bottom:-5, left:0, right:"50%", height:5, background:t.cellLeft, transformOrigin:"top", transform:"rotateX(-90deg) translateY(-50%)" }}/>
+                <div style={{ position:"absolute", bottom:-5, left:"50%", right:0, height:5, background:t.cellRight, transformOrigin:"top", transform:"rotateX(-90deg) translateY(-50%)" }}/>
+              </div>
               <div style={{
-                display:"grid",gridTemplateColumns:`repeat(${GRID_COLS},${cellPx}px)`,gap:4,
-                transform:"rotateX(46deg)",transformStyle:"preserve-3d",
-                background:t.gridBg,backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
-                border:`1px solid ${t.gridBdr}`,borderRadius:16,padding:17,
-                filter:t.gridFilter,
-                boxShadow:isNight?"0 40px 80px rgba(0,0,0,0.55),0 0 60px rgba(99,102,241,0.08)":"0 40px 80px rgba(0,0,0,0.10),0 20px 40px rgba(99,102,241,0.06)",
-                transition:"background 0.8s,border-color 0.8s,box-shadow 0.8s,filter 0.8s",
-              }}>
-                {grid.map((cell,i)=>(
-                  <IsoCell key={i} building={cell} selected={selected}
-                    onClick={()=>place(i)} onRightClick={()=>remove(i)}
-                    isNight={isNight} t={t} cellPx={cellPx}
-                    locked={BUILDINGS[selected].unlockAt>moveCount}/>
-                ))}
+                position:"absolute", inset:0, display:"flex", alignItems:"center(), justify-content:center", justifyContent:"center",
+                fontSize: sizePx * 0.55, zIndex:2, transform: hov ? "translateY(-5px)" : "translateY(-1px)", transition:"all 0.2s",
+                filter: building ? "drop-shadow(0 4px 6px rgba(0,0,0,0.25))" : "none"
+              }}>{building ? b.icon : (hov && !locked ? sel.icon : "")}</div>
+              {hov && building && <BlockTooltip building={building} />}
+            </div>
+          );
+        }
+
+        function StatBar({ label, val, color, icon, t }) {
+          return (
+            <div style={{ marginBottom:6 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, marginBottom:2 }}>
+                <span style={{ color:t.textSub }}>{icon} {label}</span>
+                <span style={{ fontWeight:700, color }}>{Math.round(val)}%</span>
+              </div>
+              <div style={{ background:t.barBg, height:4, borderRadius:4, overflow:"hidden" }}>
+                <div style={{ width:`${Math.max(0, Math.min(100, val))}%`, height:"100%", background:color, transition:"width 0.4s" }}/>
               </div>
             </div>
+          );
+        }
 
-            {/* Progression */}
-            <div style={{marginTop:16,display:"flex",gap:8,alignItems:"center"}}>
-              {[{at:0,lbl:"Start",icon:"🌱"},{at:5,lbl:"Tier 2",icon:"⚡"},{at:12,lbl:"Tier 3",icon:"🏙️"},{at:15,lbl:"Fashion",icon:"👗"}].map((s,i,arr)=>{
-                const done=moveCount>=s.at;
-                const next=arr[i+1];
-                return(
-                  <div key={s.at} style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,opacity:done?1:0.4,transition:"opacity 0.4s"}}>
-                      <div style={{fontSize:16,filter:done&&isNight?"drop-shadow(0 0 6px rgba(99,102,241,0.6))":"none"}}>{s.icon}</div>
-                      <div style={{fontSize:8,fontWeight:700,color:done?"#6366f1":t.textMuted,fontFamily:"'DM Mono',monospace"}}>{s.lbl}</div>
-                    </div>
-                    {next&&(
-                      <div style={{width:36,height:3,borderRadius:99,background:t.barBg,overflow:"hidden"}}>
-                        <div style={{
-                          height:"100%",borderRadius:99,
-                          background:"linear-gradient(90deg,#6366f1,#818cf8)",
-                          width:moveCount>=next.at?"100%":`${Math.min(100,((moveCount-s.at)/(next.at-s.at))*100)}%`,
-                          transition:"width 0.5s",
-                        }}/>
-                      </div>
-                    )}
+        // ═══════════════════════════════════════════════════════════════
+        // MAIN SMART CITY CONTROLLER MAIN COMPONENT
+        // ═══════════════════════════════════════════════════════════════
+        const CityApp = () => {
+          const [themeMode, setThemeMode] = useState("dark");
+          const [grid, setGrid] = useState(() => {
+            const saved = localStorage.getItem(SAVE_KEY);
+            return saved ? JSON.parse(saved).grid : Array(GRID_SIZE).fill(null);
+          });
+          const [coins, setCoins] = useState(() => {
+            const saved = localStorage.getItem(SAVE_KEY);
+            return saved ? JSON.parse(saved).coins : STARTING_COINS;
+          });
+          const [moveCount, setMoveCount] = useState(() => {
+            const saved = localStorage.getItem(SAVE_KEY);
+            return saved ? JSON.parse(saved).moveCount : 0;
+          });
+          
+          const [selected, setSelected] = useState("TREE");
+          const [tab, setTab] = useState("build");
+          const [history, setHistory] = useState([]);
+          const [future, setFuture] = useState([]);
+
+          const t = THEMES[themeMode];
+          const stats = computeStats(grid);
+          const level = Math.floor(moveCount / 10) + 1;
+          const xp = moveCount * 15;
+          const xpPct = (xp % 200) / 2;
+
+          useEffect(() => {
+            localStorage.setItem(SAVE_KEY, JSON.stringify({ grid, coins, moveCount }));
+          }, [grid, coins, moveCount]);
+
+          const buildCell = (index) => {
+            const b = BUILDINGS[selected];
+            if (grid[index] === selected) return;
+            if (coins < b.cost && !grid[index]) return;
+
+            setHistory(prev => [...prev, { grid, coins, moveCount }]);
+            setFuture([]);
+
+            const newGrid = [...grid];
+            let coinDiff = 0;
+
+            if (newGrid[index]) {
+              const oldB = BUILDINGS[newGrid[index]];
+              coinDiff += Math.round(oldB.cost * 0.5); // 50% refund
+            }
+            
+            coinDiff -= b.cost;
+            newGrid[index] = selected;
+
+            setGrid(newGrid);
+            setCoins(c => c + coinDiff);
+            setMoveCount(m => m + 1);
+          };
+
+          const removeCell = (index) => {
+            if (!grid[index]) return;
+            setHistory(prev => [...prev, { grid, coins, moveCount }]);
+            
+            const newGrid = [...grid];
+            const oldB = BUILDINGS[newGrid[index]];
+            
+            newGrid[index] = null;
+            setGrid(newGrid);
+            setCoins(c => c + Math.round(oldB.cost * 0.5));
+            setMoveCount(m => m + 1);
+          };
+
+          const undo = () => {
+            if (!history.length) return;
+            const previous = history[history.length - 1];
+            setFuture(prev => [{ grid, coins, moveCount }, ...prev]);
+            setGrid(previous.grid);
+            setCoins(previous.coins);
+            setMoveCount(previous.moveCount);
+            setHistory(prev => prev.slice(0, -1));
+          };
+
+          const resetGame = () => {
+            if(window.confirm("Kya aap poori city clear karna chahte hain?")) {
+              setGrid(Array(GRID_SIZE).fill(null));
+              setCoins(STARTING_COINS);
+              setMoveCount(0);
+              setHistory([]);
+              setFuture([]);
+            }
+          };
+
+          // Filtering checked tasks
+          const completedM = MISSIONS.filter(m => m.check(grid, stats)).map(m => m.id);
+
+          // Charts Mapping Data Structs
+          const barData = [
+            { name: 'Oxygen', value: stats.oxygen },
+            { name: 'Beauty', value: stats.beauty },
+            { name: 'Energy', value: stats.energy },
+            { name: 'Traffic', value: stats.traffic },
+            { name: 'Pollution', value: stats.pollution }
+          ];
+
+          return (
+            <div className="app-container" style={{ background: t.bg, color: t.text }}>
+              
+              {/* LEFT DASHBOARD PANEL */}
+              <div className="sidebar" style={{ background: t.sidebar, borderColor: t.sidebarBdr }}>
+                <div>
+                  <h2 style={{ fontFamily:"'Syne', sans-serif", fontSize:20, fontWeight:800 }}>{themeMode === 'dark' ? "🌃" : "🌆"} CityOS Core</h2>
+                  <p style={{ fontSize:9, color:t.textMuted, fontFamily:"'DM Mono'", letterSpacing:1 }}>VERSION 5.0 LIVE</p>
+                </div>
+
+                {/* Level Progress */}
+                <div style={{ background:"rgba(99,102,241,0.08)", padding:10, borderRadius:12, border:"1px solid rgba(99,102,241,0.2)" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, fontWeight:700, color:"#6366f1", marginBottom:4 }}>
+                    <span>PLANNER LEVEL {level}</span>
+                    <span>{xp % 200}/200 XP</span>
                   </div>
-                );
-              })}
+                  <div style={{ background:"rgba(255,255,255,0.1)", height:5, borderRadius:99, overflow:"hidden" }}>
+                    <div style={{ width:`${xpPct}%`, height:"100%", background:"#6366f1" }}/>
+                  </div>
+                </div>
+
+                {/* Budget Indicator */}
+                <div style={{ background: "linear-gradient(135deg,#4f46e5,#7c3aed)", padding:12, borderRadius:14, color:"#fff" }}>
+                  <span style={{ fontSize:9, opacity:0.7, fontFamily:"'DM Mono'" }}>AVAILABLE CASH</span>
+                  <h2 style={{ fontSize:24, fontWeight:800 }}>💰 {coins} Coins</h2>
+                  <div style={{ display:"flex", gap:15, marginTop:8, fontSize:10, opacity:0.9 }}>
+                    <div>👥 Pop: <b>{stats.population}</b></div>
+                    <div>⚡ Score: <b>{stats.score}</b></div>
+                    <div>🛠️ Moves: <b>{moveCount}</b></div>
+                  </div>
+                </div>
+
+                {/* Livability Status */}
+                <div style={{ background: t.chartCard, padding:10, borderRadius:12, border:`1px solid ${t.glassBdr}` }}>
+                  <span style={{ fontSize:9, color:t.textMuted }}>LIVABILITY INDEX</span>
+                  <h3 style={{ fontSize:18, color:"#10b981", fontFamily:"'Syne'" }}>{stats.livability}% 🌟 Excellent</h3>
+                </div>
+
+                {/* Core System Control Buttons */}
+                <div style={{ display:"flex", gap:4 }}>
+                  <button onClick={undo} disabled={!history.length} style={{ flex:1, padding:6, fontSize:10, borderRadius:6, cursor:"pointer" }}>↩ Undo</button>
+                  <button onClick={resetGame} style={{ flex:1, padding:6, fontSize:10, borderRadius:6, cursor:"pointer", background:"#ef4444", color:"#fff", border:"none" }}>🔄 Clear All</button>
+                </div>
+
+                {/* Navigation Menu Tabs */}
+                <div style={{ display:"flex", gap:4, background:"rgba(0,0,0,0.1)", padding:2, borderRadius:8 }}>
+                  {["build", "missions", "analytics"].map(tb => (
+                    <button key={tb} onClick={() => setTab(tb)} style={{ flex:1, padding:"6px 2px", fontSize:10, textTransform:"capitalize", background: tab===tb ? "#6366f1" : "transparent", color: tab===tb ? "#fff" : t.textSub, border:"none", borderRadius:6, cursor:"pointer" }}>{tb}</button>
+                  ))}
+                </div>
+
+                {/* BUILD TAB INTERFACE */}
+                {tab === "build" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:5, overflowY:"auto", maxHeight:"40vh" }}>
+                    {Object.values(BUILDINGS).map(b => {
+                      const active = selected === b.id;
+                      const locked = b.unlockAt > moveCount;
+                      return (
+                        <button key={b.id} className="bld-btn" onClick={() => setSelected(b.id)} disabled={locked} style={{
+                          padding:8, borderRadius:10, border: active ? `2px solid ${b.color}` : "1px solid rgba(0,0,0,0.05)",
+                          background: active ? `${b.color}15` : t.chartCard, color: t.text, opacity: locked ? 0.4 : 1, textAlign:"left"
+                        }}>
+                          <span>{b.icon} <b>{b.label}</b></span>
+                          <span style={{ fontSize:9, float:"right", color: locked ? "#ef4444" : "#10b981", fontFamily:"'DM Mono'" }}>{locked ? `🔒 Move ${b.unlockAt}` : `💰 ${b.cost}`}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* MISSIONS TAB INTERFACE */}
+                {tab === "missions" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:5 }}>
+                    {MISSIONS.map(m => {
+                      const isDone = completedM.includes(m.id);
+                      return (
+                        <div key={m.id} style={{ padding:8, borderRadius:10, background: isDone ? "rgba(16,185,129,0.1)" : t.chartCard, border: `1px solid ${isDone ? "#10b981":"rgba(0,0,0,0.05)"}` }}>
+                          <div style={{ fontSize:11, fontWeight:700, color: isDone ? "#10b981" : t.text }}>{m.icon} {m.title} {isDone ? "✓" : ""}</div>
+                          <div style={{ fontSize:9, color:t.textMuted }}>{m.desc} (+💰{m.reward})</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* ANALYTICS TAB GRAPH INTERFACE */}
+                {tab === "analytics" && (
+                  <div style={{ marginTop:5, display:"flex", flexDirection:"column", gap:10 }}>
+                    <div style={{ background: t.chartCard, padding:8, borderRadius:10 }}>
+                      <span style={{ fontSize:10, fontWeight:700 }}>Metrics Radar Overview</span>
+                      <div style={{ width: '100%', height: 140 }}>
+                        <ResponsiveContainer>
+                          <BarChart data={barData} margin={{ top: 10, right: 10, left: -30, bottom: 0 }}>
+                            <XAxis dataKey="name" stroke={t.textSub} style={{ fontSize: 8 }} />
+                            <YAxis stroke={t.textSub} style={{ fontSize: 8 }} />
+                            <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                    <div>
+                      <StatBar label="Sustainability" val={stats.sustainability} color="#10b981" icon="🌱" t={t} />
+                      <StatBar label="Pollution Index" val={stats.pollution} color="#f97316" icon="💨" t={t} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT VIEWPORT VIEW (THE 3D GRID WORLD) */}
+              <div className="main-content">
+                <div className="top-bar" style={{ background: t.glass, borderColor: t.glassBdr }}>
+                  <div style={{ fontSize:12, fontWeight:600 }}>🌟 Environment Performance Matrix</div>
+                  <DayNightToggle isNight={themeMode === "dark"} onToggle={() => setThemeMode(themeMode === "dark" ? "light" : "dark")} />
+                </div>
+
+                <div className="world-container">
+                  <div className="grid-isometric" style={{ filter: t.gridFilter }}>
+                    {grid.map((cell, idx) => (
+                      <IsoCell 
+                        key={idx} 
+                        building={cell} 
+                        selected={selected} 
+                        isNight={themeMode === "dark"} 
+                        t={t} 
+                        sizePx={44}
+                        onClick={() => buildCell(idx)}
+                        onRightClick={() => removeCell(idx)}
+                        locked={false}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
             </div>
+          );
+        };
 
-            {/* Bottom hints */}
-            <div style={{position:"absolute",bottom:14,right:14,
-              background:t.glass,backdropFilter:"blur(12px)",
-              border:`1px solid ${t.glassBdr}`,borderRadius:12,padding:"7px 12px",
-              fontSize:9,color:"#6366f1",fontWeight:700,letterSpacing:0.5,
-              fontFamily:"'DM Mono',monospace",
-              boxShadow:isNight?"0 4px 16px rgba(0,0,0,0.3)":"0 4px 16px rgba(99,102,241,0.08)"}}>
-              ECS · UNDO/REDO · MISSIONS · SOUND · {isNight?"🌙":"☀️"}
-            </div>
-            <div style={{position:"absolute",bottom:14,left:"50%",transform:"translateX(-50%)",
-              fontSize:9,color:t.textMuted,fontWeight:600,letterSpacing:0.4,
-              fontFamily:"'DM Mono',monospace",whiteSpace:"nowrap"}}>
-              HOVER = DATA OVERLAY · R-CLICK = REMOVE
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-
+        ReactDOM.createRoot(document.getElementById('root')).render(<CityApp />);
+    </script>
+</body>
+</html>
+              
