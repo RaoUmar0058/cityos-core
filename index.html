@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
     <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     
@@ -41,7 +42,8 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip: ChartTooltip } = Recharts;
+        // Safe global extractor for Recharts when using UMD build
+        const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis } = window.Recharts || {};
         const { useState, useEffect, useCallback, useRef } = React;
 
         // ═══════════════════════════════════════════════════════════════
@@ -75,13 +77,6 @@
           { id:"m6", title:"Mega City",        desc:"Reach 150 population",       icon:"🏙️", check:(g,s)=>s.population>=150,                    reward:500, xp:250 },
           { id:"m7", title:"Eco Champion",     desc:"Sustainability above 75%",   icon:"🌱", check:(g,s)=>s.sustainability>75,                  reward:400, xp:200 },
           { id:"m8", title:"Fashion Forward",  desc:"Place Fashion Hub",          icon:"👗", check:(g,s)=>g.some(c=>c==="FASHION"),             reward:600, xp:300 },
-        ];
-
-        const ACHIEVEMENTS = [
-          { id:"a1", icon:"🏆", title:"First Block",    desc:"Place your first block", check:(moves)=>moves>=1   },
-          { id:"a2", icon:"🌟", title:"10 Moves",       desc:"Make 10 moves",          check:(moves)=>moves>=10  },
-          { id:"a3", icon:"💎", title:"Veteran Planner",desc:"Make 25 moves",          check:(moves)=>moves>=25  },
-          { id:"a4", icon:"👑", title:"City Master",    desc:"Make 50 moves",          check:(moves)=>moves>=50  },
         ];
 
         const THEMES = {
@@ -209,7 +204,7 @@
         function StatBar({ label, val, color, icon, t }) {
           return (
             <div style={{ marginBottom:6 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, marginBottom:2 }}>
+              <div style={{ display:"flex", justifyBetween:"space-between", justifyContent:"space-between", fontSize:10, marginBottom:2 }}>
                 <span style={{ color:t.textSub }}>{icon} {label}</span>
                 <span style={{ fontWeight:700, color }}>{Math.round(val)}%</span>
               </div>
@@ -241,7 +236,6 @@
           const [selected, setSelected] = useState("TREE");
           const [tab, setTab] = useState("build");
           const [history, setHistory] = useState([]);
-          const [future, setFuture] = useState([]);
 
           const t = THEMES[themeMode];
           const stats = computeStats(grid);
@@ -259,7 +253,6 @@
             if (coins < b.cost && !grid[index]) return;
 
             setHistory(prev => [...prev, { grid, coins, moveCount }]);
-            setFuture([]);
 
             const newGrid = [...grid];
             let coinDiff = 0;
@@ -293,7 +286,6 @@
           const undo = () => {
             if (!history.length) return;
             const previous = history[history.length - 1];
-            setFuture(prev => [{ grid, coins, moveCount }, ...prev]);
             setGrid(previous.grid);
             setCoins(previous.coins);
             setMoveCount(previous.moveCount);
@@ -306,7 +298,6 @@
               setCoins(STARTING_COINS);
               setMoveCount(0);
               setHistory([]);
-              setFuture([]);
             }
           };
 
@@ -331,7 +322,7 @@
                 </div>
 
                 <div style={{ background:"rgba(99,102,241,0.08)", padding:10, borderRadius:12, border:"1px solid rgba(99,102,241,0.2)" }}>
-                  <div style={{ display:"flex", justifyBetween:"space-between", justifyContent:"space-between", fontSize:9, fontWeight:700, color:"#6366f1", marginBottom:4 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, fontWeight:700, color:"#6366f1", marginBottom:4 }}>
                     <span>PLANNER LEVEL {level}</span>
                     <span>{xp % 200}/200 XP</span>
                   </div>
@@ -400,18 +391,22 @@
 
                 {tab === "analytics" && (
                   <div style={{ marginTop:5, display:"flex", flexDirection:"column", gap:10 }}>
-                    <div style={{ background: t.chartCard, padding:8, borderRadius:10 }}>
-                      <span style={{ fontSize:10, fontWeight:700 }}>Metrics Chart</span>
-                      <div style={{ width: '100%', height: 110, marginTop: 5 }}>
-                        <ResponsiveContainer>
-                          <BarChart data={barData} margin={{ top: 5, right: 5, left: -35, bottom: 0 }}>
-                            <XAxis dataKey="name" stroke={t.textSub} style={{ fontSize: 7 }} />
-                            <YAxis stroke={t.textSub} style={{ fontSize: 7 }} />
-                            <Bar dataKey="value" fill="#6366f1" radius={[2, 2, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
+                    {window.Recharts ? (
+                      <div style={{ background: t.chartCard, padding:8, borderRadius:10 }}>
+                        <span style={{ fontSize:10, fontWeight:700 }}>Metrics Chart</span>
+                        <div style={{ width: '100%', height: 110, marginTop: 5 }}>
+                          <ResponsiveContainer>
+                            <BarChart data={barData} margin={{ top: 5, right: 5, left: -35, bottom: 0 }}>
+                              <XAxis dataKey="name" stroke={t.textSub} style={{ fontSize: 7 }} />
+                              <YAxis stroke={t.textSub} style={{ fontSize: 7 }} />
+                              <Bar dataKey="value" fill="#6366f1" radius={[2, 2, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div style={{ fontSize:10, color:t.textMuted, padding:10 }}>Chart CDN Loading...</div>
+                    )}
                     <div>
                       <StatBar label="Sustainability" val={stats.sustainability} color="#10b981" icon="🌱" t={t} />
                       <StatBar label="Pollution Index" val={stats.pollution} color="#f97316" icon="💨" t={t} />
@@ -454,5 +449,3 @@
     </script>
 </body>
 </html>
-
-     
