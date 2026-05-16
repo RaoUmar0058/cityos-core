@@ -16,21 +16,21 @@
     <style>
         :root { --p: #6366f1; --acc: #10b981; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { margin: 0; padding: 0; overflow: hidden; height: 100vh; }
+        body { margin: 0; padding: 0; overflow: hidden; height: 100vh; background: #060912; }
         
-        /* Layout CSS styling based on your theme rules */
         .app-container { display: flex; height: 100vh; width: 100vw; transition: background 0.5s ease; }
-        .sidebar { width: 280px; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; backdrop-filter: blur(20px); border-right: 1px solid; transition: all 0.5s; }
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; backdrop-filter: blur(10px); z-index: 10; }
+        .sidebar { width: 300px; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; backdrop-filter: blur(20px); border-right: 1px solid; transition: all 0.5s; flex-shrink: 0; }
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; height: 100vh; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; backdrop-filter: blur(10px); z-index: 10; border-bottom: 1px solid; }
         
         /* 3D Isometric Viewport Grid */
-        .world-container { flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; position: relative; }
-        .grid-isometric { display: grid; grid-template-columns: repeat(10, var(--cell-size, 45px)); grid-template-rows: repeat(10, var(--cell-size, 45px)); gap: 4px; transform: rotateX(55deg) rotateZ(-45deg); transform-style: preserve-3d; transition: all 0.4s ease; padding: 20px; }
+        .world-container { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; background: rgba(0,0,0,0.2); }
+        .grid-isometric { display: grid; grid-template-columns: repeat(10, 44px); grid-template-rows: repeat(10, 44px); gap: 4px; transform: rotateX(55deg) rotateZ(-45deg); transform-style: preserve-3d; transition: all 0.4s ease; padding: 20px; }
         
-        /* Animation & Tooltip rules */
-        .bld-btn { width: 100%; border: none; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; }
+        .bld-btn { width: 100%; border: none; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; cursor: pointer; }
         .bld-btn:hover:not(:disabled) { transform: translateX(3px); }
+        
+        .tile-container { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
         
         @keyframes twinkle { from { opacity: 0.3; } to { opacity: 1; } }
         @keyframes tooltipIn { from { opacity: 0; transform: translateX(-50%) translateY(5px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
@@ -41,12 +41,11 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // Extracting components from Recharts Global object for browser-compatible execution
-        const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip: ChartTooltip, RadarChart, Radar, PolarGrid, PolarAngleAxis } = Recharts;
+        const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip: ChartTooltip } = Recharts;
         const { useState, useEffect, useCallback, useRef } = React;
 
         // ═══════════════════════════════════════════════════════════════
-        // ENGINE DATA & CONSTANTS FROM YOUR ORIGINAL CODE
+        // ENGINE DATA & CONSTANTS
         // ═══════════════════════════════════════════════════════════════
         const GRID_COLS = 10;
         const GRID_SIZE = GRID_COLS * GRID_COLS;
@@ -128,7 +127,7 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // SEPARATE UI HELPER SUB-COMPONENTS
+        // SUB-COMPONENTS
         // ═══════════════════════════════════════════════════════════════
         function DayNightToggle({ isNight, onToggle }) {
           return (
@@ -142,7 +141,7 @@
                 position:"absolute", top:2, left:isNight?33:3, width:22, height:22, borderRadius:"50%",
                 background:isNight?"linear-gradient(135deg,#e2e8f0,#cbd5e1)":"linear-gradient(135deg,#fde68a,#f59e0b)",
                 transition:"all 0.4s cubic-bezier(0.34,1.56,0.64,1)",
-                display:"flex", alignItems:"center", justifyCenter:"center", fontSize:11, paddingLeft: isNight?2:3, paddingTop:1
+                display:"flex", alignItems:"center", justifyContent:"center", fontSize:11
               }}>{isNight?"🌙":"☀️"}</div>
             </button>
           );
@@ -198,7 +197,7 @@
                 <div style={{ position:"absolute", bottom:-5, left:"50%", right:0, height:5, background:t.cellRight, transformOrigin:"top", transform:"rotateX(-90deg) translateY(-50%)" }}/>
               </div>
               <div style={{
-                position:"absolute", inset:0, display:"flex", alignItems:"center(), justify-content:center", justifyContent:"center",
+                position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center",
                 fontSize: sizePx * 0.55, zIndex:2, transform: hov ? "translateY(-5px)" : "translateY(-1px)", transition:"all 0.2s",
                 filter: building ? "drop-shadow(0 4px 6px rgba(0,0,0,0.25))" : "none"
               }}>{building ? b.icon : (hov && !locked ? sel.icon : "")}</div>
@@ -222,7 +221,7 @@
         }
 
         // ═══════════════════════════════════════════════════════════════
-        // MAIN SMART CITY CONTROLLER MAIN COMPONENT
+        // MAIN APP COMPROLLER
         // ═══════════════════════════════════════════════════════════════
         const CityApp = () => {
           const [themeMode, setThemeMode] = useState("dark");
@@ -267,7 +266,7 @@
 
             if (newGrid[index]) {
               const oldB = BUILDINGS[newGrid[index]];
-              coinDiff += Math.round(oldB.cost * 0.5); // 50% refund
+              coinDiff += Math.round(oldB.cost * 0.5); 
             }
             
             coinDiff -= b.cost;
@@ -311,12 +310,10 @@
             }
           };
 
-          // Filtering checked tasks
           const completedM = MISSIONS.filter(m => m.check(grid, stats)).map(m => m.id);
 
-          // Charts Mapping Data Structs
           const barData = [
-            { name: 'Oxygen', value: stats.oxygen },
+            { name: 'O2', value: stats.oxygen },
             { name: 'Beauty', value: stats.beauty },
             { name: 'Energy', value: stats.energy },
             { name: 'Traffic', value: stats.traffic },
@@ -333,9 +330,8 @@
                   <p style={{ fontSize:9, color:t.textMuted, fontFamily:"'DM Mono'", letterSpacing:1 }}>VERSION 5.0 LIVE</p>
                 </div>
 
-                {/* Level Progress */}
                 <div style={{ background:"rgba(99,102,241,0.08)", padding:10, borderRadius:12, border:"1px solid rgba(99,102,241,0.2)" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, fontWeight:700, color:"#6366f1", marginBottom:4 }}>
+                  <div style={{ display:"flex", justifyBetween:"space-between", justifyContent:"space-between", fontSize:9, fontWeight:700, color:"#6366f1", marginBottom:4 }}>
                     <span>PLANNER LEVEL {level}</span>
                     <span>{xp % 200}/200 XP</span>
                   </div>
@@ -344,10 +340,9 @@
                   </div>
                 </div>
 
-                {/* Budget Indicator */}
                 <div style={{ background: "linear-gradient(135deg,#4f46e5,#7c3aed)", padding:12, borderRadius:14, color:"#fff" }}>
                   <span style={{ fontSize:9, opacity:0.7, fontFamily:"'DM Mono'" }}>AVAILABLE CASH</span>
-                  <h2 style={{ fontSize:24, fontWeight:800 }}>💰 {coins} Coins</h2>
+                  <h2 style={{ fontSize:22, fontWeight:800 }}>💰 {coins} Coins</h2>
                   <div style={{ display:"flex", gap:15, marginTop:8, fontSize:10, opacity:0.9 }}>
                     <div>👥 Pop: <b>{stats.population}</b></div>
                     <div>⚡ Score: <b>{stats.score}</b></div>
@@ -355,28 +350,24 @@
                   </div>
                 </div>
 
-                {/* Livability Status */}
                 <div style={{ background: t.chartCard, padding:10, borderRadius:12, border:`1px solid ${t.glassBdr}` }}>
                   <span style={{ fontSize:9, color:t.textMuted }}>LIVABILITY INDEX</span>
-                  <h3 style={{ fontSize:18, color:"#10b981", fontFamily:"'Syne'" }}>{stats.livability}% 🌟 Excellent</h3>
+                  <h3 style={{ fontSize:16, color:"#10b981", fontFamily:"'Syne'" }}>{stats.livability}% 🌟 Stable</h3>
                 </div>
 
-                {/* Core System Control Buttons */}
                 <div style={{ display:"flex", gap:4 }}>
                   <button onClick={undo} disabled={!history.length} style={{ flex:1, padding:6, fontSize:10, borderRadius:6, cursor:"pointer" }}>↩ Undo</button>
                   <button onClick={resetGame} style={{ flex:1, padding:6, fontSize:10, borderRadius:6, cursor:"pointer", background:"#ef4444", color:"#fff", border:"none" }}>🔄 Clear All</button>
                 </div>
 
-                {/* Navigation Menu Tabs */}
                 <div style={{ display:"flex", gap:4, background:"rgba(0,0,0,0.1)", padding:2, borderRadius:8 }}>
                   {["build", "missions", "analytics"].map(tb => (
                     <button key={tb} onClick={() => setTab(tb)} style={{ flex:1, padding:"6px 2px", fontSize:10, textTransform:"capitalize", background: tab===tb ? "#6366f1" : "transparent", color: tab===tb ? "#fff" : t.textSub, border:"none", borderRadius:6, cursor:"pointer" }}>{tb}</button>
                   ))}
                 </div>
 
-                {/* BUILD TAB INTERFACE */}
                 {tab === "build" && (
-                  <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:5, overflowY:"auto", maxHeight:"40vh" }}>
+                  <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:5, overflowY:"auto", maxHeight:"35vh" }}>
                     {Object.values(BUILDINGS).map(b => {
                       const active = selected === b.id;
                       const locked = b.unlockAt > moveCount;
@@ -385,15 +376,14 @@
                           padding:8, borderRadius:10, border: active ? `2px solid ${b.color}` : "1px solid rgba(0,0,0,0.05)",
                           background: active ? `${b.color}15` : t.chartCard, color: t.text, opacity: locked ? 0.4 : 1, textAlign:"left"
                         }}>
-                          <span>{b.icon} <b>{b.label}</b></span>
-                          <span style={{ fontSize:9, float:"right", color: locked ? "#ef4444" : "#10b981", fontFamily:"'DM Mono'" }}>{locked ? `🔒 Move ${b.unlockAt}` : `💰 ${b.cost}`}</span>
+                          <span>{b.icon} {b.label}</span>
+                          <span style={{ fontSize:9, float:"right", color: locked ? "#ef4444" : "#10b981", fontFamily:"'DM Mono'" }}>{locked ? `🔒 Lvl ${b.unlockAt}` : `💰 ${b.cost}`}</span>
                         </button>
                       );
                     })}
                   </div>
                 )}
 
-                {/* MISSIONS TAB INTERFACE */}
                 {tab === "missions" && (
                   <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:5 }}>
                     {MISSIONS.map(m => {
@@ -408,17 +398,16 @@
                   </div>
                 )}
 
-                {/* ANALYTICS TAB GRAPH INTERFACE */}
                 {tab === "analytics" && (
                   <div style={{ marginTop:5, display:"flex", flexDirection:"column", gap:10 }}>
                     <div style={{ background: t.chartCard, padding:8, borderRadius:10 }}>
-                      <span style={{ fontSize:10, fontWeight:700 }}>Metrics Radar Overview</span>
-                      <div style={{ width: '100%', height: 140 }}>
+                      <span style={{ fontSize:10, fontWeight:700 }}>Metrics Chart</span>
+                      <div style={{ width: '100%', height: 110, marginTop: 5 }}>
                         <ResponsiveContainer>
-                          <BarChart data={barData} margin={{ top: 10, right: 10, left: -30, bottom: 0 }}>
-                            <XAxis dataKey="name" stroke={t.textSub} style={{ fontSize: 8 }} />
-                            <YAxis stroke={t.textSub} style={{ fontSize: 8 }} />
-                            <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                          <BarChart data={barData} margin={{ top: 5, right: 5, left: -35, bottom: 0 }}>
+                            <XAxis dataKey="name" stroke={t.textSub} style={{ fontSize: 7 }} />
+                            <YAxis stroke={t.textSub} style={{ fontSize: 7 }} />
+                            <Bar dataKey="value" fill="#6366f1" radius={[2, 2, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -431,7 +420,7 @@
                 )}
               </div>
 
-              {/* RIGHT VIEWPORT VIEW (THE 3D GRID WORLD) */}
+              {/* RIGHT VIEWPORT GRAPHICS (THE 3D GRID WORLD) */}
               <div className="main-content">
                 <div className="top-bar" style={{ background: t.glass, borderColor: t.glassBdr }}>
                   <div style={{ fontSize:12, fontWeight:600 }}>🌟 Environment Performance Matrix</div>
