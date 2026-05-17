@@ -1,607 +1,503 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CityOS Matrix v5 - Level 12 Metropolis Expansion</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: linear-gradient(135deg, #05070f 0%, #0b1326 50%, #02040a 100%);
-            --sidebar-dark: rgba(9, 15, 30, 0.96);
-            --glass-border: rgba(99, 102, 241, 0.25);
-            --accent: #6366f1;
-            --accent-glow: rgba(99, 102, 241, 0.45);
-            --text-main: #f8fafc;
-            --text-muted: #64748b;
-            --cell-bg: rgba(13, 22, 43, 0.7);
-        }
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  LineChart, Line, Legend, CartesianGrid
+} from "recharts";
 
-        .light-mode {
-            --bg-dark: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            --sidebar-dark: rgba(255, 255, 255, 0.96);
-            --glass-border: rgba(99, 102, 241, 0.2);
-            --accent: #4f46e5;
-            --accent-glow: rgba(99, 102, 241, 0.15);
-            --text-main: #0f172a;
-            --text-muted: #475569;
-            --cell-bg: rgba(255, 255, 255, 0.8);
-        }
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURATIONS & PARAMETERS (Civil Engineering & Data Science Weights)
+// ═══════════════════════════════════════════════════════════════
+const GRID_COLS = 10;
+const GRID_SIZE = GRID_COLS * GRID_COLS;
+const SAVE_KEY  = "cityos_v5_pro";
+const STARTING_COINS = 1000;
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; display: flex; transition: background 0.3s ease, color 0.3s ease; }
+const BUILDINGS = {
+  TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:12, pollution:-8,  traffic:0,  energy:2,  population:0,  runoffImpact: -15, bearingReq: 1, color:"#4ade80", unlockAt:0 },
+  ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-2, pollution:4,   traffic:-15,energy:-2, population:0,  runoffImpact: 25,  bearingReq: 2, color:"#94a3b8", unlockAt:0 },
+  HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-1, pollution:3,   traffic:5,  energy:-5, population:15, runoffImpact: 10,  bearingReq: 3, color:"#60a5fa", unlockAt:0 },
+  PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  beauty:22, oxygen:15, pollution:-12, traffic:-4, energy:3,  population:5,  runoffImpact: -25, bearingReq: 1, color:"#86efac", unlockAt:0 },
+  SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:35, population:2,  runoffImpact: 5,   bearingReq: 2, color:"#fbbf24", unlockAt:4 },
+  FACTORY:  { id:"FACTORY",  label:"Eco Factory",   icon:"🏭", cost:150, beauty:-8, oxygen:-15,pollution:22,  traffic:10, energy:15, population:12, runoffImpact: 20,  bearingReq: 5, color:"#fb923c", unlockAt:5 },
+  HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:10, oxygen:2,  pollution:-3,  traffic:8,  energy:-10,population:30, runoffImpact: 15,  bearingReq: 4, color:"#f43f5e", unlockAt:8 },
+  SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:14, oxygen:3,  pollution:-2,  traffic:6,  energy:-8, population:16, runoffImpact: 12,  bearingReq: 4, color:"#c084fc", unlockAt:8 },
+  MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:35, oxygen:2,  pollution:-1,  traffic:4,  energy:-4, population:10, runoffImpact: 8,   bearingReq: 4, color:"#a78bfa", unlockAt:12 },
+  TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:25, oxygen:-6, pollution:10,  traffic:12, energy:-20,population:65, runoffImpact: 18,  bearingReq: 5, color:"#38bdf8", unlockAt:12 },
+};
 
-        /* Cinematic Welcome Panel */
-        #welcome-screen {
-            position: fixed; inset: 0; background: linear-gradient(135deg, #05070f 0%, #0b1326 50%, #02040a 100%); z-index: 10000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.4s ease;
-        }
-        .welcome-card {
-            background: rgba(11, 19, 38, 0.85); border: 2px solid var(--accent);
-            padding: 40px; border-radius: 24px; text-align: center; max-width: 500px;
-            box-shadow: 0 0 60px var(--accent-glow); backdrop-filter: blur(24px);
-        }
-        .welcome-card h1 { font-family: 'Syne', sans-serif; font-size: 32px; margin-bottom: 12px; color: #fff; letter-spacing: -1px; }
-        .welcome-card p { color: #94a3b8; font-size: 14px; margin-bottom: 30px; line-height: 1.6; }
-        .start-btn {
-            background: linear-gradient(90deg, #6366f1, #4f46e5); color: white; border: none; padding: 14px 36px;
-            font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer;
-            box-shadow: 0 4px 20px var(--accent-glow); transition: all 0.2s;
-        }
-        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 26px #818cf8; }
+const MISSIONS = [
+  { id:"m1", title:"Hydrology Guard",  desc:"Keep Runoff Risk below 40%", icon:"💧", check:(g,s)=>s.runoffRisk<40, reward:200 },
+  { id:"m2", title:"Green Infrastructure", desc:"Plant 4 Trees & 2 Parks", icon:"🌱", check:(g)=>g.filter(c=>c==="TREE").length>=4 && g.filter(c=>c==="PARK").length>=2, reward:250 },
+  { id:"m3", title:"Structural Density", desc:"Reach 80 population", icon:"👥", check:(g,s)=>s.population>=80, reward:300 },
+];
 
-        /* Level Up Dynamic Banner */
-        #level-toast {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6); padding: 16px 45px;
-            border-radius: 99px; z-index: 9999; font-family: 'Syne', sans-serif; font-size: 22px;
-            font-weight: 800; box-shadow: 0 12px 35px rgba(139, 92, 246, 0.5);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 12px; color: #fff;
-        }
+// ═══════════════════════════════════════════════════════════════
+// THEMES CONFIG (Fixed contrast matching styles)
+// ═══════════════════════════════════════════════════════════════
+const THEMES = {
+  light: {
+    bg:         "linear-gradient(160deg,#f0f4ff 0%,#fafafe 45%,#f5f0ff 100%)",
+    sidebar:    "rgba(255,255,255,0.85)",
+    sidebarBdr: "rgba(99,102,241,0.12)",
+    glass:      "rgba(255,255,255,0.85)",
+    glassBdr:   "rgba(99,102,241,0.15)",
+    gridBg:     "rgba(241,245,249,0.9)",
+    gridBdr:    "rgba(226,232,240,0.8)",
+    cellTop:    "#f1f5f9", cellLeft:"#dde6f0", cellRight:"#c8d5e8",
+    text:       "#1e1b4b", textSub:"#475569", textMuted:"#94a3b8",
+    divider:    "rgba(0,0,0,0.06)", barBg:"rgba(0,0,0,0.06)",
+    chartCard:  "rgba(255,255,255,0.9)",
+    emojiShadow:"drop-shadow(0 5px 8px rgba(0,0,0,0.15))"
+  },
+  dark: {
+    bg:         "linear-gradient(160deg,#060912 0%,#0f172a 55%,#0c0a1e 100%)",
+    sidebar:    "rgba(15,23,42,0.95)",
+    sidebarBdr: "rgba(99,102,241,0.25)",
+    glass:      "rgba(30,41,59,0.7)",
+    glassBdr:   "rgba(99,102,241,0.2)",
+    gridBg:     "rgba(15,23,42,0.6)",
+    gridBdr:    "rgba(99,102,241,0.15)",
+    cellTop:    "#1e293b", cellLeft:"#0f172a", cellRight:"#020617",
+    text:       "#f8fafc", textSub:"#94a3b8", textMuted:"#475569",
+    divider:    "rgba(255,255,255,0.08)", barBg:"rgba(255,255,255,0.1)",
+    chartCard:  "rgba(30,41,59,0.5)",
+    emojiShadow:"drop-shadow(0 0 12px rgba(99,102,241,0.55))"
+  }
+};
 
-        /* Layout Architecture */
-        .app-container { display: flex; width: 100vw; height: 100vh; position: relative; }
+// Math simulation generation for Soil Profiles
+const SOIL_PROFILES = Array.from({length: GRID_SIZE}, (_, i) => {
+  const row = Math.floor(i / GRID_COLS);
+  const col = i % GRID_COLS;
+  // Synthetic bearing simulation capacity (1 to 5 index based on waves)
+  const val = Math.sin(row * 0.7) + Math.cos(col * 0.7);
+  return Math.floor(((val + 2) / 4) * 5) + 1; 
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CORE CALCULATIONS ENGINE
+// ═══════════════════════════════════════════════════════════════
+function computeStats(grid) {
+  let oxygen=40, beauty=30, pollution=20, traffic=30, energy=50, population=0, score=0;
+  let accumulatedRunoffImpact = 20;
+
+  grid.forEach((cell, idx) => {
+    if (!cell) return;
+    const b = BUILDINGS[cell];
+    oxygen = Math.max(0, Math.min(100, oxygen + b.oxygen));
+    beauty = Math.max(0, Math.min(100, beauty + b.beauty));
+    pollution = Math.max(0, Math.min(100, pollution + b.pollution));
+    traffic = Math.max(0, Math.min(100, traffic + b.traffic));
+    energy = Math.max(0, Math.min(100, energy + b.energy));
+    population += b.population;
+    accumulatedRunoffImpact += b.runoffImpact;
+    score += 15 + b.beauty;
+  });
+
+  const livability = Math.round((oxygen + beauty + (100 - pollution) + (100 - traffic) + energy) / 5);
+  const sustainability = Math.round(oxygen * 0.4 + (100 - pollution) * 0.4 + energy * 0.2);
+  const runoffRisk = Math.max(5, Math.min(100, accumulatedRunoffImpact));
+
+  return { oxygen, beauty, pollution, traffic, energy, population, score, livability, sustainability, runoffRisk };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPERT DATA SCIENCE OPTIMIZER (Parametric Simulation Agent)
+// ═══════════════════════════════════════════════════════════════
+function runAgentOptimization(grid, currentCoins) {
+  let bestScoreDiff = -Infinity;
+  let recommendation = { index: -1, buildingId: null, message: "AI Agent analyzes terrain parameters..." };
+
+  // Loop through grid cells to discover mathematically optimal node configuration
+  for (let i = 0; i < GRID_SIZE; i++) {
+    if (grid[i]) continue; // Cell occupied
+
+    const bearingCapacity = SOIL_PROFILES[i];
+
+    for (const bId of Object.keys(BUILDINGS)) {
+      const b = BUILDINGS[bId];
+      if (currentCoins < b.cost) continue;
+      if (bearingCapacity < b.bearingReq) continue; // Failure structural integrity
+
+      // Temporary prediction simulation
+      let tempGrid = [...grid];
+      tempGrid[i] = bId;
+      const nextStats = computeStats(tempGrid);
+
+      // Fitness Objective Function Value Evaluation
+      const fitnessValue = nextStats.livability * 2.0 + nextStats.sustainability * 1.5 - (nextStats.runoffRisk * 0.8);
+
+      if (fitnessValue > bestScoreDiff) {
+        bestScoreDiff = fitnessValue;
+        recommendation.index = i;
+        recommendation.buildingId = bId;
+        recommendation.message = `Deploy ${b.icon} ${b.label} at Cell ${i} to enhance infrastructure stability & eco metrics optimally.`;
+      }
+    }
+  }
+
+  if (recommendation.index === -1) {
+    recommendation.message = "Resource constraint detected or grid saturated. Inject structural budget to re-trigger AI parameters.";
+  }
+  return recommendation;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// APPLICATION MAIN CORE
+// ═══════════════════════════════════════════════════════════════
+export default function ProSmartCityApp() {
+  const [grid, setGrid] = useState(Array(GRID_SIZE).fill(null));
+  const [selected, setSelected] = useState("TREE");
+  const [coins, setCoins] = useState(STARTING_COINS);
+  const [moveCount, setMoveCount] = useState(0);
+  const [isNight, setIsNight] = useState(true);
+  const [tab, setTab] = useState("build");
+  const [history, setHistory] = useState([]);
+  const [aiRecommendation, setAiRecommendation] = useState(null);
+  const [chartDataHistory, setChartDataHistory] = useState([]);
+
+  const t = isNight ? THEMES.dark : THEMES.light;
+  const stats = computeStats(grid);
+
+  // Sync historical metrics for Data Analytics Charts
+  useEffect(() => {
+    setChartDataHistory(prev => {
+      const currentEpoch = prev.length;
+      if (currentEpoch > 0 && prev[currentEpoch - 1].moves === moveCount) return prev;
+      
+      // Calculate future-projected dynamic analytics lines
+      const linearGrowthProjection = Math.min(100, stats.pollution + (stats.population * 0.15));
+
+      return [...prev, {
+        name: `M ${moveCount}`,
+        moves: moveCount,
+        Livability: stats.livability,
+        Sustainability: stats.sustainability,
+        RunoffRisk: stats.runoffRisk,
+        ProjectedPollution: Math.round(linearGrowthProjection)
+      }].slice(-8); // Sliding horizon metric tracker window
+    });
+  }, [moveCount, stats.livability, stats.sustainability, stats.runoffRisk, stats.pollution, stats.population]);
+
+  // Execute AI Parametric Check
+  const triggerAiAgent = useCallback(() => {
+    const advice = runAgentOptimization(grid, coins);
+    setAiRecommendation(advice);
+  }, [grid, coins]);
+
+  const handleCellClick = (idx) => {
+    if (grid[idx]) return; // Occupied. Use right click/long press context to wipe node.
+    const b = BUILDINGS[selected];
+    
+    // Check civil design limits
+    if (coins < b.cost) return alert("Insufficient municipal funds available.");
+    if (SOIL_PROFILES[idx] < b.bearingReq) {
+      return alert(`Structural Error: Soil Bearing Index at block ${idx} is ${SOIL_PROFILES[idx]}. ${b.label} requires ≥ ${b.bearingReq}.`);
+    }
+
+    setHistory(prev => [...prev, [...grid]]);
+    setGrid(prev => {
+      const copy = [...prev];
+      copy[idx] = selected;
+      return copy;
+    });
+    setCoins(prev => prev - b.cost);
+    setMoveCount(prev => prev + 1);
+    setAiRecommendation(null); // Force agent re-calculation prompt
+  };
+
+  const handleCellRemove = (idx) => {
+    if (!grid[idx]) return;
+    setHistory(prev => [...prev, [...grid]]);
+    setGrid(prev => {
+      const copy = [...prev];
+      copy[idx] = null;
+      return copy;
+    });
+    setMoveCount(prev => prev + 1);
+    setAiRecommendation(null);
+  };
+
+  const resetSimulation = () => {
+    if (window.confirm("Initialize state purge and restart architecture simulation?")) {
+      setGrid(Array(GRID_SIZE).fill(null));
+      setCoins(STARTING_COINS);
+      setMoveCount(0);
+      setHistory([]);
+      setChartDataHistory([]);
+      setAiRecommendation(null);
+    }
+  };
+
+  const undoState = () => {
+    if (!history.length) return;
+    const prev = history[history.length - 1];
+    setGrid(prev);
+    setHistory(old => old.slice(0, -1));
+    setMoveCount(c => Math.max(0, c - 1));
+    setAiRecommendation(null);
+  };
+
+  return (
+    <div style={{
+      width: "100vw", minHeight: "100vh", background: t.bg, color: t.text,
+      display: "flex", flexDirection: "row", flexWrap: "wrap", overflowX: "hidden",
+      fontFamily: "'DM Sans', sans-serif", transition: "background 0.5s ease"
+    }}>
+      
+      {/* SIDEBAR CONTROL DASHBOARD */}
+      <div style={{
+        flex: "1 1 320px", background: t.sidebar, borderRight: `1px solid ${t.sidebarBdr}`,
+        padding: "24px", display: "flex", flexDirection: "column", gap: "20px", zIndex: 10
+      }}>
         
-        .sidebar {
-            width: 340px; background: var(--sidebar-dark); border-right: 1px solid var(--glass-border);
-            padding: 24px; display: flex; flex-direction: column; gap: 18px; z-index: 10;
-            backdrop-filter: blur(20px); overflow-y: auto; transition: background 0.3s;
-        }
-        .brand-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .sub-brand { font-family: 'DM Mono', monospace; font-size: 9px; color: #6366f1; letter-spacing: 1.5px; }
-
-        /* Premium Core HUD Data Displays */
-        .stat-card {
-            background: linear-gradient(135deg, #111827, #1e1b4b); border: 1px solid rgba(99, 102, 241, 0.3);
-            padding: 16px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            position: relative; overflow: hidden;
-        }
-        .light-mode .stat-card {
-            background: linear-gradient(135deg, #ffffff, #f8fafc); border: 1px solid rgba(99, 102, 241, 0.2);
-            box-shadow: 0 8px 25px rgba(99,102,241,0.05);
-        }
-        .stat-card.tutorial-highlight {
-            outline: 4px solid #6366f1;
-            transform: scale(1.02);
-            box-shadow: 0 0 30px var(--accent-glow);
-            z-index: 101;
-        }
-        
-        .stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: #a78bfa; letter-spacing: 1px; }
-        .stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-top: 2px; color: #fbbf24; }
-        .passive-ticker { font-family: 'DM Mono', monospace; font-size: 11px; color: #34d399; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
-
-        /* Control Cluster Box */
-        .ctrl-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .ctrl-btn {
-            background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
-            border-radius: 10px; padding: 10px 0; color: var(--text-main); cursor: pointer;
-            font-size: 11px; font-weight: 600; text-align: center; transition: all 0.15s;
-        }
-        .light-mode .ctrl-btn { background: rgba(0,0,0,0.02); }
-        .ctrl-btn:hover:not(:disabled) { background: rgba(99, 102, 241, 0.25); border-color: #818cf8; }
-        .ctrl-btn:disabled { opacity: 0.25; cursor: not-allowed; }
-
-        /* Dynamic Palette Selection Area */
-        .block-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 280px; padding-right: 4px; }
-        .block-item {
-            display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;
-            cursor: pointer; text-align: left; transition: all 0.2s; position: relative; color: var(--text-main);
-        }
-        .light-mode .block-item { background: rgba(0,0,0,0.01); border-color: rgba(0,0,0,0.05); }
-        .block-item:hover:not(.locked):not(:disabled) { background: rgba(255,255,255,0.07); border-color: rgba(99, 102, 241, 0.3); }
-        .light-mode .block-item:hover:not(.locked):not(:disabled) { background: rgba(0,0,0,0.03); }
-        .block-item.active { background: rgba(99,102,241,0.2); border: 1px solid #6366f1; box-shadow: 0 0 15px rgba(99,102,241,0.35); }
-        .block-item.tutorial-highlight-btn {
-            border: 2px solid #34d399 !important;
-            background: rgba(52, 211, 153, 0.15) !important;
-            box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
-        }
-        .block-item.locked, .block-item:disabled { background: rgba(0, 0, 0, 0.2); border-color: rgba(255,255,255,0.01); cursor: not-allowed; opacity: 0.4; }
-        .block-icon { font-size: 22px; }
-        .block-details h4 { font-size: 13px; font-weight: 700; }
-        .block-details p { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); margin-top: 1px; }
-        .lock-overlay { position: absolute; right: 12px; font-size: 10px; color: #f87171; font-family: 'DM Mono', monospace; background: rgba(248,113,113,0.1); padding: 2px 6px; border-radius: 4px; }
-
-        /* True 3D Isometric Viewport Platform */
-        .simulation-viewport {
-            flex: 1; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(circle at 50% 50%, #0e172c 0%, #030712 100%); perspective: 1400px; overflow: hidden;
-            transition: filter 0.3s, opacity 0.3s;
-        }
-        .light-mode .simulation-viewport {
-            background: radial-gradient(circle at 50% 50%, #f8fafc 0%, #cbd5e1 100%);
-        }
-        .simulation-viewport.dimmed { opacity: 0.35; filter: blur(2px); pointer-events: none; }
-
-        /* Isometric Matrix Coordinate Mesh grid configuration */
-        .iso-scene {
-            transform: rotateX(60deg) rotateZ(-45deg);
-            transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-            display: grid; grid-template-columns: repeat(10, 52px); grid-template-rows: repeat(10, 52px); gap: 4px;
-            padding: 24px; background: rgba(99, 102, 241, 0.02); border: 2px dashed rgba(99, 102, 241, 0.2); border-radius: 16px;
-            box-shadow: 0 30px 70px rgba(0,0,0,0.6);
-        }
-
-        /* Dynamic 3D Cells with transform preservation hooks */
-        .grid-cell {
-            width: 52px; height: 52px; background: var(--cell-bg); position: relative;
-            border-radius: 6px; border: 1px solid rgba(99,102,241,0.15); cursor: pointer;
-            transform-style: preserve-3d; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        .grid-cell:hover { background: rgba(99, 102, 241, 0.25); border-color: #818cf8; transform: translateZ(6px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        
-        /* Rendered Building Elements projecting vertical elevation vectors */
-        .voxel-building {
-            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-            font-size: 30px; transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px);
-            filter: drop-shadow(0 12px 12px rgba(0,0,0,0.4)); transform-origin: center bottom;
-            animation: voxelBounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.25);
-        }
-
-        /* HUD Suggestion Box Tracker */
-        .hud-suggestion-box {
-            position: absolute; bottom: 24px; left: 24px; right: 24px;
-            background: rgba(8, 14, 28, 0.9); border: 1px solid var(--glass-border);
-            padding: 16px 24px; border-radius: 14px; backdrop-filter: blur(16px);
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 500;
-        }
-        .light-mode .hud-suggestion-box { background: rgba(255, 255, 255, 0.95); }
-        .hud-suggestion-box.tutorial-focus {
-            border: 2px solid #6366f1;
-            box-shadow: 0 0 25px var(--accent-glow);
-            z-index: 10002;
-        }
-        .hint-text { font-family: 'DM Mono', monospace; font-size: 12px; color: #a5b4fc; font-weight: 500; line-height: 1.4; }
-        .light-mode .hint-text { color: #4f46e5; }
-        .tutorial-next-btn {
-            background: #6366f1; color: white; border: none; padding: 8px 18px;
-            font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; margin-left: 12px;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        @keyframes voxelBounce {
-            0% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px) scale(0); opacity: 0; }
-            75% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px) scale(1.2); }
-            100% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px) scale(1); opacity: 1; }
-        }
-    </style>
-</head>
-<body>
-
-    <div id="welcome-screen">
-        <div class="welcome-card">
-            <h1>Welcome to CityOS Matrix</h1>
-            <p style="color: #94a3b8; font-family: 'DM Mono', monospace; font-size: 11px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Neural Urban Generator</p>
-            <p>Where data science architectures and strategic automation parameters converge. Are you prepared to engineer an optimized metropolis sandbox environment?</p>
-            <button class="start-btn" onclick="initializeEngine()">Initialize Training</button>
+        {/* Brand System */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h1 style={{ fontSize: "24px", fontWeight: 800, margin: 0, letterSpacing: "-1px" }}>
+              {isNight ? "🌃" : "🌆"} CityOS <span style={{ color: "#6366f1", fontSize: "14px" }}>Pro</span>
+            </h1>
+            <p style={{ fontSize: "9px", color: t.textMuted, margin: "4px 0 0 0", fontFamily: "'DM Mono', monospace" }}>
+              UI ENGINE & GEOTECHNICAL SIMULATOR
+            </p>
+          </div>
+          <DayNightToggle isNight={isNight} onToggle={() => setIsNight(!isNight)} />
         </div>
-    </div>
 
-    <div id="level-toast">🚀 STAGE UNLOCKED: LEVEL <span id="toast-lvl">1</span> (+💰600 Matrix Bonus)</div>
-
-    <div class="app-container">
-        <div class="sidebar">
-            <div>
-                <div class="brand-title">⚙️ CityOS Matrix</div>
-                <div class="sub-brand">AUTOMATED PROGRESSION MODULE</div>
-            </div>
-
-            <div class="stat-card" id="wallet-hud-card">
-                <div class="stat-lbl">CORE RESERVES WALLET</div>
-                <div class="stat-val" id="coins-display">💰 40</div>
-                <div class="passive-ticker" id="passive-yield-lbl">📈 Passive Yield: +0/cycle</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 12px; font-family:'DM Mono', monospace; font-size:11px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
-                    <span>MOVES: <b id="moves-lbl">0</b></span>
-                    <span>STAGE: <b id="lvl-lbl" style="color:#6366f1;">1/12</b></span>
-                </div>
-            </div>
-
-            <div class="ctrl-row">
-                <button class="ctrl-btn" onclick="triggerUndo()" id="btn-undo" disabled>↩️ Undo</button>
-                <button class="ctrl-btn" onclick="toggleEnvironmentCycle()" id="btn-cycle">🌙 Night</button>
-                <button class="ctrl-btn" onclick="resetGrid()" style="color: #f87171;">🔄 Format</button>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <h3 style="font-size: 10px; font-family:'DM Mono', monospace; color: var(--text-muted); letter-spacing: 1px;">METROPOLIS CATALOG</h3>
-                <div class="block-list" id="palette-container"></div>
-            </div>
-
-            <div style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); padding: 14px; border-radius: 14px;">
-                <h4 style="font-size: 11px; font-family:'DM Mono', monospace; margin-bottom: 4px; color:#6366f1; display:flex; justify-content:space-between;">
-                    <span>🎯 MATRIX OBJECTIVE</span>
-                    <span id="obj-progress" style="color:#fbbf24;">0%</span>
-                </h4>
-                <div id="objective-desc" style="font-size: 12px; font-weight: 500; line-height:1.4;">Initialize core training sequences.</div>
-            </div>
+        {/* Vital Budget Cards */}
+        <div style={{
+          background: "linear-gradient(135deg,#4f46e5,#7c3aed)", padding: "16px",
+          borderRadius: "16px", color: "#fff", boxShadow: "0 10px 25px rgba(99,102,241,0.3)"
+        }}>
+          <span style={{ fontSize: "10px", opacity: 0.8, fontFamily: "'DM Mono', monospace" }}>MUNICIPAL CAPITAL</span>
+          <div style={{ fontSize: "28px", fontWeight: 800, margin: "4px 0" }}>💰 {coins}</div>
+          <div style={{ display: "flex", gap: "16px", fontSize: "11px", opacity: 0.9, marginTop: "8px" }}>
+            <div>MOVES: <b>{moveCount}</b></div>
+            <div>POP: <b>{stats.population}</b></div>
+            <div>SCORE: <b>{stats.score}</b></div>
+          </div>
         </div>
 
-        <div class="simulation-viewport dimmed" id="viewport-platform">
-            <div class="iso-scene" id="isometric-grid-matrix"></div>
-
-            <div class="hud-suggestion-box" id="assistant-box">
-                <div class="hint-text" id="live-engine-hint">💡 CORE INITIALIZATION: Initialize the neural simulation vector mapping engine.</div>
-                <div id="tutorial-action-area" style="display:none;">
-                    <button class="tutorial-next-btn" onclick="advanceTutorialStep()">Next Step</button>
-                </div>
-            </div>
+        {/* Navigation Tabs */}
+        <div style={{ display: "flex", background: "rgba(0,0,0,0.08)", borderRadius: "8px", padding: "4px" }}>
+          {["build", "analytics", "ai-agent"].map((tabMode) => (
+            <button key={tabMode} onClick={() => setTab(tabMode)} style={{
+              flex: 1, border: "none", padding: "8px", borderRadius: "6px", cursor: "pointer",
+              fontSize: "12px", fontWeight: 600, textTransform: "capitalize",
+              background: tab === tabMode ? "#6366f1" : "transparent",
+              color: tab === tabMode ? "#fff" : t.textSub, transition: "all 0.2s"
+            }}>
+              {tabMode.replace("-", " ")}
+            </button>
+          ))}
         </div>
-    </div>
 
-    <script>
-        const GRID_SIZE = 100; 
-        
-        const MODULE_REGISTRY = {
-            TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  yield:2,   unlockAt:1 },
-            ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  yield:0,   unlockAt:1 },
-            HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, yield:12,  unlockAt:2 },
-            PARK:     { id:"PARK",     label:"Ecotopia Park", icon:"🌿", cost:150, yield:18,  unlockAt:3 },
-            MART:     { id:"MART",     label:"Cyber Mart",    icon:"🏪", cost:220, yield:32,  unlockAt:4 },
-            SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:300, yield:45,  unlockAt:5 },
-            FACTORY:  { id:"FACTORY",  label:"Mega Factory",  icon:"🏭", cost:420, yield:68,  unlockAt:6 },
-            SCHOOL:   { id:"SCHOOL",   label:"Tech Academy",  icon:"🏫", cost:550, yield:95,  unlockAt:7 },
-            HOSPITAL: { id:"HOSPITAL", label:"Med Center",    icon:"🏥", cost:700, yield:130, unlockAt:8 },
-            MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:900, yield:180, unlockAt:9 },
-            TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:1200,yield:260, unlockAt:10 },
-            FASHION:  { id:"FASHION",  label:"AI Couture Hub",icon:"👗", cost:1600,yield:380, unlockAt:11 }
-        };
-
-        let state = {
-            grid: Array(GRID_SIZE).fill(null),
-            coins: 40,
-            moves: 0,
-            level: 1,
-            selectedModule: "TREE",
-            isNight: true,
-            tutorialStep: 0  // 0: Welcome Panel, 1: Budget Intro, 2: Restrictive Tree Placement, 3: Sandbox Sandbox
-        };
-
-        let historicUndoChain = [];
-        let audioCtx = null;
-
-        function initializeEngine() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            document.getElementById("welcome-screen").style.opacity = 0;
-            setTimeout(() => {
-                document.getElementById("welcome-screen").style.display = "none";
-                playbackSynthTone("unlock");
-                runTutorialSequenceStep1();
-            }, 400);
-
-            // Setup resilient background macro looping pipelines
-            setInterval(executePassiveIncomeCycle, 2000);
-        }
-
-        function runTutorialSequenceStep1() {
-            state.tutorialStep = 1;
-            document.getElementById("wallet-hud-card").classList.add("tutorial-highlight");
-            document.getElementById("assistant-box").classList.add("tutorial-focus");
-            document.getElementById("live-engine-hint").innerHTML = "🛰️ <b>TRAINING PROTOCOL:</b> Observe your <b>Core Reserves Wallet</b>. Every modular construction requires capital allocation. You currently hold <b>💰 40 tokens</b>.";
-            document.getElementById("tutorial-action-area").style.display = "block";
-            renderPaletteInterface();
-            renderSimulationGrid();
-        }
-
-        function advanceTutorialStep() {
-            if (state.tutorialStep === 1) {
-                state.tutorialStep = 2;
-                document.getElementById("wallet-hud-card").classList.remove("tutorial-highlight");
-                document.getElementById("viewport-platform").classList.remove("dimmed");
-                document.getElementById("live-engine-hint").innerHTML = "🌳 <b>TACTICAL DEPLOYMENT:</b> Select the highlighted <b>Oak Tree</b> node item (Cost: 💰20) from your modular catalog, then click on any matrix sector cell on the grid viewport field.";
-                document.getElementById("tutorial-action-area").style.display = "none";
-                state.selectedModule = "TREE";
-                renderPaletteInterface();
-            }
-        }
-
-        function concludeTutorialFlow() {
-            state.tutorialStep = 3;
-            document.getElementById("assistant-box").classList.remove("tutorial-focus");
-            document.getElementById("live-engine-hint").innerHTML = "🚀 <b>SANDBOX LIVE:</b> Training sequence terminated successfully. Build freely! Earn net structural revenue scores to compute next tier sequences through Level 12.";
-            playbackSynthTone("unlock");
-            renderPaletteInterface();
-            recalculateMissionObjectivesTexts();
-        }
-
-        function playbackSynthTone(event) {
-            if (!audioCtx) return;
-            try {
-                let osc = audioCtx.createOscillator();
-                let gainNode = audioCtx.createGain();
-                osc.connect(gainNode); gainNode.connect(audioCtx.destination);
-                let now = audioCtx.currentTime;
-
-                if (event === "place") {
-                    osc.frequency.setValueAtTime(587.33, now); 
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-                    gainNode.gain.setValueAtTime(0.12, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                    osc.start(now); osc.stop(now + 0.12);
-                } else if (event === "remove") {
-                    osc.frequency.setValueAtTime(293.66, now);
-                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
-                    gainNode.gain.setValueAtTime(0.15, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                    osc.start(now); osc.stop(now + 0.12);
-                } else if (event === "unlock") {
-                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, index) => {
-                        let o = audioCtx.createOscillator(); let g = audioCtx.createGain();
-                        o.connect(g); g.connect(audioCtx.destination);
-                        o.frequency.setValueAtTime(freq, now + (index * 0.06));
-                        g.gain.setValueAtTime(0.08, now + (index * 0.06));
-                        g.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.2);
-                        o.start(now + (index * 0.06)); o.stop(now + (index * 0.06) + 0.2);
-                    });
-                } else if (event === "error") {
-                    osc.type = "sawtooth"; osc.frequency.setValueAtTime(120, now);
-                    gainNode.gain.setValueAtTime(0.15, now); gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-                    osc.start(now); osc.stop(now + 0.15);
-                }
-            } catch (ex) { console.warn("Synth audio context exception:", ex); }
-        }
-
-        function executePassiveIncomeCycle() {
-            if (state.tutorialStep < 3) return; // Freeze yield execution pipeline during basic onboarding sequence
-
-            let incrementalYield = 0;
-            state.grid.forEach(cellKey => {
-                if(cellKey && MODULE_REGISTRY[cellKey]) {
-                    incrementalYield += MODULE_REGISTRY[cellKey].yield;
-                }
-            });
-
-            if(incrementalYield > 0) {
-                state.coins += incrementalYield;
-                document.getElementById("coins-display").innerText = `💰 ${state.coins}`;
-            }
-            document.getElementById("passive-yield-lbl").innerText = `📈 Passive Yield: +${incrementalYield}/cycle`;
-            evaluateProgressionMilestoneSystems();
-        }
-
-        function renderPaletteInterface() {
-            const container = document.getElementById("palette-container");
-            container.innerHTML = "";
+        {/* TAB 1: NODE MANAGEMENT / STRUCTURAL COMPONENT DEPLOYMENT */}
+        {tab === "build" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={undoState} disabled={!history.length} style={{ flex: 1, padding: "8px", cursor: "pointer" }}>↩ Undo</button>
+              <button onClick={resetSimulation} style={{ flex: 1, padding: "8px", cursor: "pointer", background: "#f87171", color: "#fff", border: "none", borderRadius: "4px" }}>🔄 Purge</button>
+            </div>
             
-            Object.values(MODULE_REGISTRY).forEach(mod => {
-                const isLockedByStage = state.level < mod.unlockAt;
-                const isSelected = state.selectedModule === mod.id;
-                
-                let isRestrictedInTutorial = false;
-                let specialHighlightClass = "";
-                
-                // Onboarding safety restriction wrappers
-                if (state.tutorialStep === 2) {
-                    if (mod.id !== "TREE") isRestrictedInTutorial = true;
-                    else specialHighlightClass = "tutorial-highlight-btn";
-                } else if (state.tutorialStep === 1) {
-                    isRestrictedInTutorial = true;
-                }
-
-                const elementNode = document.createElement("button");
-                elementNode.className = `block-item ${isLockedByStage ? 'locked' : ''} ${isSelected ? 'active' : ''} ${specialHighlightClass}`;
-                elementNode.disabled = isLockedByStage || isRestrictedInTutorial;
-                elementNode.onclick = () => {
-                    state.selectedModule = mod.id;
-                    renderPaletteInterface();
-                };
-
-                elementNode.innerHTML = `
-                    <div class="block-icon">${mod.icon}</div>
-                    <div class="block-details">
-                        <h4>${mod.label}</h4>
-                        <p>${isLockedByStage ? 'LOCKED REGISTRY' : 'COST: 💰 ' + mod.cost + ' | +💰' + mod.yield + '/cyc'}</p>
+            <span style={{ fontSize: "11px", color: t.textSub, fontWeight: 700 }}>INFRASTRUCTURE INVENTORY</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "320px", overflowY: "auto", paddingRight: "4px" }}>
+              {Object.values(BUILDINGS).map((b) => {
+                const isSelected = selected === b.id;
+                return (
+                  <button key={b.id} onClick={() => setSelected(b.id)} style={{
+                    display: "flex", alignItems: "center", justifyItems: "center", gap: "10px",
+                    padding: "10px", borderRadius: "10px", border: isSelected ? `2px solid #6366f1` : `1px solid ${t.glassBdr}`,
+                    background: isSelected ? `${b.color}15` : t.glass, color: t.text, cursor: "pointer", textAlign: "left"
+                  }}>
+                    <span style={{ fontSize: "18px" }}>{b.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "12px", fontWeight: 700 }}>{b.label}</div>
+                      <div style={{ fontSize: "9px", color: t.textMuted }}>Cost: 💰{b.cost} | Soil Req: ≥{b.bearingReq}</div>
                     </div>
-                    ${isLockedByStage ? `<div class="lock-overlay">🔒 Stage ${mod.unlockAt}</div>` : ''}
-                `;
-                container.appendChild(elementNode);
-            });
-        }
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        function renderSimulationGrid() {
-            const viewportMesh = document.getElementById("isometric-grid-matrix");
-            viewportMesh.innerHTML = "";
+        {/* TAB 2: DATA SCIENTIFIC PREDICTIVE GRAPH LAYER */}
+        {tab === "analytics" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ padding: "12px", background: t.chartCard, borderRadius: "12px" }}>
+              <span style={{ fontSize: "11px", color: t.textMuted }}>LIVABILITY ECO INDEX</span>
+              <div style={{ fontSize: "22px", fontWeight: 800, color: "#10b981" }}>{stats.livability}%</div>
+            </div>
+            <div style={{ padding: "12px", background: t.chartCard, borderRadius: "12px" }}>
+              <span style={{ fontSize: "11px", color: t.textMuted }}>RAINWATER RUNOFF RISK (HYDROLOGY)</span>
+              <div style={{ fontSize: "22px", fontWeight: 800, color: stats.runoffRisk > 50 ? "#ef4444" : "#3b82f6" }}>{stats.runoffRisk}%</div>
+            </div>
 
-            state.grid.forEach((blockKey, cellIndex) => {
-                const gridCellNode = document.createElement("div");
-                gridCellNode.className = "grid-cell";
-                gridCellNode.onclick = () => processMatrixCellDeployment(cellIndex);
-                gridCellNode.oncontextmenu = (e) => { e.preventDefault(); processMatrixCellWipeout(cellIndex); };
+            <span style={{ fontSize: "11px", fontWeight: 700 }}>DATA TREND TIME-SERIES FORECASTING</span>
+            <div style={{ width: "100%", height: 180, background: t.chartCard, padding: "8px", borderRadius: "8px" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartDataHistory}>
+                  <XAxis dataKey="name" stroke={t.textMuted} fontSize={9} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="Livability" stroke="#10b981" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="RunoffRisk" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                  <Line type="dashed" dataKey="ProjectedPollution" stroke="#ef4444" strokeWidth={1} name="Projected Pollution" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
-                if (blockKey && MODULE_REGISTRY[blockKey]) {
-                    const metadata = MODULE_REGISTRY[blockKey];
-                    const voxelObject = document.createElement("div");
-                    voxelObject.className = "voxel-building";
-                    voxelObject.innerText = metadata.icon;
-                    gridCellNode.appendChild(voxelObject);
-                }
-                viewportMesh.appendChild(gridCellNode);
-            });
-        }
+        {/* TAB 3: AI MATHEMATICAL OPTIMIZATION MODEL AGENT */}
+        {tab === "ai-agent" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <button onClick={triggerAiAgent} style={{
+              padding: "12px", background: "linear-gradient(90deg,#6366f1,#a855f7)", color: "#fff",
+              border: "none", borderRadius: "8px", fontWeight: 700, cursor: "pointer"
+            }}>
+              🤖 INITIALIZE AI PARAMETRIC CHECK
+            </button>
 
-        function processMatrixCellDeployment(index) {
-            if (state.grid[index] !== null) {
-                playbackSynthTone("error"); return;
-            }
+            {aiRecommendation && (
+              <div style={{
+                padding: "14px", background: "rgba(99,102,241,0.1)", borderRadius: "12px",
+                border: "1px solid #6366f1"
+              }}>
+                <div style={{ fontSize: "11px", fontWeight: 800, color: "#818cf8", fontFamily: "'DM Mono', monospace" }}>
+                  AI RECOMMENDATION ENGINE OUTPUT:
+                </div>
+                <p style={{ fontSize: "12px", color: t.text, margin: "8px 0 0 0", lineHeight: 1.5 }}>
+                  {aiRecommendation.message}
+                </p>
+                {aiRecommendation.index !== -1 && (
+                  <div style={{ marginTop: "10px", fontSize: "10px", color: t.textMuted }}>
+                    Target Grid Coordinate Cell: <b>{aiRecommendation.index}</b>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
-            const selectionMeta = MODULE_REGISTRY[state.selectedModule];
-            if (state.coins < selectionMeta.cost) {
-                playbackSynthTone("error");
-                updateSuggestionEngineTicker("❌ Credits deficit! Let passive matrix tokens generate balance logs.");
-                return;
-            }
+      </div>
 
-            // Capture structural snapshot vectors to historical log frames
-            historicUndoChain.push(JSON.stringify({ grid: [...state.grid], coins: state.coins, moves: state.moves, level: state.level }));
-            document.getElementById("btn-undo").disabled = false;
+      {/* ISOMETRIC GEOTECHNICAL SIMULATION VIEWPORT GRID */}
+      <div style={{
+        flex: "2 1 500px", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", padding: "40px 20px", position: "relative"
+      }}>
+        
+        {/* Terrain Coordinate Map Legend Context for Engineers */}
+        <div style={{ position: "absolute", top: 20, left: 20, fontSize: "11px", color: t.textMuted, fontFamily: "'DM Mono', monospace" }}>
+          ⚡ GRID GEOM: 10x10 ISOMETRIC NODES | STRUCTURAL STATE LAYER ACTIVE
+        </div>
 
-            state.grid[index] = selectionMeta.id;
-            state.coins -= selectionMeta.cost;
-            state.moves += 1;
-
-            playbackSynthTone("place");
-
-            if (state.tutorialStep === 2 && selectionMeta.id === "TREE") {
-                concludeTutorialFlow();
-            }
-
-            synchronizeUINodesView();
-        }
-
-        function processMatrixCellWipeout(index) {
-            if (state.tutorialStep < 3 || state.grid[index] === null) return;
+        {/* MAIN STRUCTURAL MATRIX */}
+        <div style={{
+          display: "grid", gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+          gap: "6px", background: t.gridBg, padding: "24px", borderRadius: "20px",
+          border: `1px solid ${t.gridBdr}`, backdropFilter: "blur(10px)",
+          boxShadow: isNight ? "0 25px 70px rgba(0,0,0,0.5)" : "0 20px 50px rgba(99,102,241,0.05)"
+        }}>
+          {grid.map((buildingId, idx) => {
+            const soilBearingVal = SOIL_PROFILES[idx];
             
-            historicUndoChain.push(JSON.stringify({ grid: [...state.grid], coins: state.coins, moves: state.moves, level: state.level }));
-            document.getElementById("btn-undo").disabled = false;
+            // Generate visual gradient color scheme context based on structural capabilities
+            const soilColorMap = ["#ef4444", "#f97316", "#facc15", "#4ade80", "#10b981"];
+            const contextSoilIndicatorColor = soilColorMap[soilBearingVal - 1];
 
-            state.grid[index] = null;
-            state.moves += 1;
-            playbackSynthTone("remove");
-            synchronizeUINodesView();
-        }
+            // Real-time calculation highlight matching optimization node targeted by reinforcement agent
+            const isTargetedByAi = aiRecommendation && aiRecommendation.index === idx;
 
-        function triggerUndo() {
-            if (historicUndoChain.length === 0) return;
-            let snapshot = JSON.parse(historicUndoChain.pop());
-            state.grid = snapshot.grid; state.coins = snapshot.coins;
-            state.moves = snapshot.moves; state.level = snapshot.level;
+            return (
+              <div key={idx} style={{ position: "relative" }}>
+                <IsoCell
+                  building={buildingId}
+                  selected={selected}
+                  cellPx={50}
+                  isNight={isNight}
+                  t={t}
+                  onClick={() => handleCellClick(idx)}
+                  onRightClick={() => handleCellRemove(idx)}
+                />
+                
+                {/* Structural Capability Indicator Anchor Bar */}
+                <div style={{
+                  position: "absolute", bottom: "-2px", left: "25%", width: "50%", height: "3px",
+                  background: contextSoilIndicatorColor, borderRadius: "99px", opacity: buildingId ? 0.3 : 0.8,
+                  boxShadow: `0 1px 4px ${contextSoilIndicatorColor}`
+                }} title={`Soil Structural Load Bearing Index: ${soilBearingVal}`} />
 
-            if(historicUndoChain.length === 0) document.getElementById("btn-undo").disabled = true;
-            playbackSynthTone("remove"); synchronizeUINodesView();
-        }
+                {/* AI Predictive Targeting Marker overlay */}
+                {isTargetedByAi && (
+                  <div style={{
+                    position: "absolute", inset: -2, border: "2px dashed #a855f7",
+                    borderRadius: "6px", animation: "pulse 1.5s infinite alternate",
+                    pointerEvents: "none", zIndex: 100
+                  }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-        function evaluateProgressionMilestoneSystems() {
-            if (state.tutorialStep < 3) return;
+        {/* FOOTER USER EXPERIENCE LEGEND */}
+        <div style={{ marginTop: "24px", fontSize: "11px", color: t.textMuted, fontFamily: "'DM Mono', monospace", textAlign: "center" }}>
+          💡 <b>Civil Engineering Tip:</b> Check bottom soil strength tags (🔴 to 🟢) before deploying high load weights like Cyber Towers!
+        </div>
+      </div>
 
-            let totalAssetsPlaced = state.grid.filter(c => c !== null).length;
-            let aggregateNetWorth = state.coins + (totalAssetsPlaced * 60);
-            let calculatedTargetStage = 1;
+    </div>
+  );
+}
 
-            if (aggregateNetWorth >= 15000) calculatedTargetStage = 12;
-            else if (aggregateNetWorth >= 12000) calculatedTargetStage = 11;
-            else if (aggregateNetWorth >= 9500)  calculatedTargetStage = 10;
-            else if (aggregateNetWorth >= 7500)  calculatedTargetStage = 9;
-            else if (aggregateNetWorth >= 5800)  calculatedTargetStage = 8;
-            else if (aggregateNetWorth >= 4200)  calculatedTargetStage = 7;
-            else if (aggregateNetWorth >= 2800)  calculatedTargetStage = 6;
-            else if (aggregateNetWorth >= 1800)  calculatedTargetStage = 5;
-            else if (aggregateNetWorth >= 1000)  calculatedTargetStage = 4; 
-            else if (aggregateNetWorth >= 500)   calculatedTargetStage = 3;
-            else if (aggregateNetWorth >= 200)   calculatedTargetStage = 2;
+// ═══════════════════════════════════════════════════════════════
+// LIGHTWEIGHT ATOMIC SUBCOMPONENTS
+// ═══════════════════════════════════════════════════════════════
+function DayNightToggle({ isNight, onToggle }) {
+  return (
+    <button onClick={onToggle} style={{
+      width: 54, height: 26, borderRadius: 99, cursor: "pointer", border: "none",
+      background: isNight ? "#1e293b" : "#dbeafe", position: "relative",
+      display: "flex", alignItems: "center", justifyContent: isNight ? "flex-end" : "flex-start", padding: "4px"
+    }}>
+      <span>{isNight ? "🌙" : "☀️"}</span>
+    </button>
+  );
+}
 
-            if (calculatedTargetStage > state.level && state.level < 12) {
-                state.level = calculatedTargetStage;
-                state.coins += 600; 
-                triggerDynamicLevelUpCelebrationBanner(state.level);
-                synchronizeUINodesView();
-            }
-        }
+function IsoCell({ building, selected, onClick, onRightClick, isNight, t, cellPx }) {
+  const [hov, setHov] = useState(false);
+  const b = building ? BUILDINGS[building] : null;
+  const sel = BUILDINGS[selected];
 
-        function triggerDynamicLevelUpCelebrationBanner(lvl) {
-            playbackSynthTone("unlock");
-            const element = document.getElementById("level-toast");
-            document.getElementById("toast-lvl").innerText = lvl;
-            element.style.top = "24px";
-            setTimeout(() => { element.style.top = "-100px"; }, 4000);
-        }
-
-        function synchronizeUINodesView() {
-            document.getElementById("coins-display").innerText = `💰 ${state.coins}`;
-            document.getElementById("moves-lbl").innerText = state.moves;
-            document.getElementById("lvl-lbl").innerText = `${state.level}/12`;
-            renderPaletteInterface();
-            renderSimulationGrid();
-            recalculateMissionObjectivesTexts();
-        }
-
-        function recalculateMissionObjectivesTexts() {
-            const descNode = document.getElementById("objective-desc");
-            const percentageNode = document.getElementById("obj-progress");
-            if (!descNode || !percentageNode) return;
-
-            if (state.tutorialStep < 3) {
-                descNode.innerHTML = "Execute interactive training sequence modules.";
-                percentageNode.innerText = "0%";
-                return;
-            }
-
-            let countVillas = state.grid.filter(c => c === "HOUSE").length;
-            let countMarts = state.grid.filter(c => c === "MART").length;
-
-            if (state.level === 1) {
-                let progressionValue = Math.min(100, Math.round((state.coins / 200) * 100));
-                descNode.innerHTML = "Accumulate 💰200 total net credits logs to advance structural matrix to Stage 2.";
-                percentageNode.innerText = `${progressionValue}%`;
-                updateSuggestionEngineTicker("💡 MISSION HINT: Place Oak Trees to safely secure steady, passive algorithmic token streams.");
-            } else if (state.level === 2) {
-                let progressionValue = Math.min(100, Math.round((countVillas / 2) * 100));
-                descNode.innerHTML = `Construct 2 Modern Villa residential hubs to amplify capital extraction. (${countVillas}/2)`;
-                percentageNode.innerText = `${progressionValue}%`;
-                updateSuggestionEngineTicker("💡 MISSION HINT: Modern Villas scale passive returns drastically. Build them once unlocked.");
-            } else if (state.level <= 5) {
-                let progressionValue = Math.min(100, Math.round((countMarts / 2) * 100));
-                descNode.innerHTML = `Erect 2 Cyber Mart infrastructure networks to bypass capital deficit locks. (${countMarts}/2)`;
-                percentageNode.innerText = `${progressionValue}%`;
-                updateSuggestionEngineTicker("💡 MISSION HINT: Scale energy fields using Solar Farms to support expanding logic clusters.");
-            } else {
-                descNode.innerHTML = `Sandbox Metropolis active. Route matrix expansion nodes to hit maximum level targets.`;
-                percentageNode.innerText = `${Math.min(100, state.level * 8.3)}%`;
-            }
-        }
-
-        function toggleEnvironmentCycle() {
-            state.isNight = !state.isNight;
-            const btn = document.getElementById("btn-cycle");
-            if (state.isNight) {
-                document.body.classList.remove("light-mode");
-                btn.innerText = "🌙 Night";
-                btn.style.background = "rgba(255,255,255,0.04)";
-            } else {
-                document.body.classList.add("light-mode");
-                btn.innerText = "☀️ Day";
-                btn.style.background = "rgba(0,0,0,0.08)";
-            }
-            playbackSynthTone("place");
-        }
-
-        function updateSuggestionEngineTicker(text) {
-            document.getElementById("live-engine-hint").innerHTML = text;
-        }
-
-        function resetGrid() {
-            if(confirm("Confirm structural simulation format procedures? All tracking logs will fall back to baseline Stage 1 vectors.")) {
-                state.grid = Array(GRID_SIZE).fill(null); state.coins = 40; state.moves = 0; state.level = 1;
-                state.tutorialStep = 3; historicUndoChain = [];
-                document.getElementById("btn-undo").disabled = true;
-                synchronizeUINodesView(); playbackSynthTone("error");
-            }
-        }
-
-        renderPaletteInterface();
-        renderSimulationGrid();
-    </script>
-</body>
-</html>
+  return (
+    <div
+      style={{ position: "relative", width: cellPx, height: cellPx, cursor: "pointer" }}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      onClick={onClick}
+      onContextMenu={(e) => { e.preventDefault(); onRightClick(); }}
+    >
+      <div style={{ position: "absolute", inset: 0, transform: "rotateX(52deg)", transformStyle: "preserve-3d" }}>
+        <div style={{
+          position: "absolute", inset: 0, borderRadius: 4,
+          background: hov && !building ? `${sel.color}35` : building ? (isNight ? "#1e293b" : "#fff") : t.cellTop,
+          border: `1px solid ${hov ? (b || sel).color : (isNight ? "rgba(99,102,241,0.2)" : "rgba(0,0,0,0.1)")}`,
+          transition: "all 0.1s ease"
+        }} />
+        <div style={{ position: "absolute", bottom: -5, left: 0, right: "50%", height: 5, background: t.cellLeft }} />
+        <div style={{ position: "absolute", bottom: -5, left: "50%", right: 0, height: 5, background: t.cellRight }} />
+      </div>
+      
+      <div style={{
+        position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "20px", zIndex: 5, transform: hov ? "translateY(-6px)" : "translateY(-2px)", transition: "transform 0.2s ease"
+      }}>
+        {building ? b.icon : (hov ? sel.icon : "")}
+      </div>
+    </div>
+  );
+}
+            
