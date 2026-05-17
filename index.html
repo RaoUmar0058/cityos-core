@@ -59,6 +59,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // Inject global environment variable required by Recharts in CDN environments
+        window.process = { env: { NODE_ENV: 'production' } };
+
         const { useState, useEffect, useCallback, useMemo } = React;
         const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
 
@@ -70,15 +73,15 @@
         const STARTING_COINS = 800;
 
         const BUILDINGS = {
-            TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:15, pollution:-10, traffic:0,  energy:2,  population:0,  runoffImpact: -20, bearingReq: 1, color:"#10b981" },
-            ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-4, pollution:5,   traffic:-20,energy:-2, population:0,  runoffImpact: 30,  bearingReq: 2, color:"#64748b" },
-            HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-2, pollution:4,   traffic:8,  energy:-6, population:12, runoffImpact: 15,  bearingReq: 3, color:"#3b82f6" },
-            PARK:     { id:"PARK",     label:"Ecotopia Park", icon:"🌿", cost:60,  beauty:25, oxygen:20, pollution:-15, traffic:-5, energy:4,  population:4,  runoffImpact: -30, bearingReq: 1, color:"#22c55e" },
-            MART:     { id:"MART",     label:"Cyber Mart",    icon:"🏪", cost:160, beauty:8,  oxygen:-5, pollution:12,  traffic:15, energy:-12,population:25, runoffImpact: 20,  bearingReq: 4, color:"#a855f7" },
-            SOLAR:    { id:"SOLAR",    label:"Solar Array",   icon:"☀️", cost:200, beauty:5,  oxygen:6,  pollution:-20, traffic:0,  energy:45, population:2,  runoffImpact: 8,   bearingReq: 2, color:"#eab308" },
-            FACTORY:  { id:"FACTORY",  label:"Algae Factory", icon:"🏭", cost:250, beauty:-12,oxygen:-20,pollution:30,  traffic:18, energy:25, population:15, runoffImpact: 35,  bearingReq: 5, color:"#f97316" },
-            TOWER:    { id:"TOWER",    label:"Matrix Tower",  icon:"🏙️", cost:450, beauty:35, oxygen:-10,pollution:15,  traffic:25, energy:-35,population:80, runoffImpact: 25,  bearingReq: 5, color:"#06b6d4" },
-            FASHION:  { id:"FASHION",  label:"AI Couture Hub",icon:"👗", cost:300, beauty:40, oxygen:5,  pollution:-2,  traffic:10, energy:-10,population:30, runoffImpact: 12,  bearingReq: 3, color:"#ec4899" }
+            TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:15, pollution:-10, traffic:0,  energy:2,  population:0,  runoffImpact: -20, bearingReq: 1, color:"#10b981", unlockAt: 1 },
+            ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-4, pollution:5,   traffic:-20,energy:-2, population:0,  runoffImpact: 30,  bearingReq: 2, color:"#64748b", unlockAt: 1 },
+            HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-2, pollution:4,   traffic:8,  energy:-6, population:12, runoffImpact: 15,  bearingReq: 3, color:"#3b82f6", unlockAt: 1 },
+            PARK:     { id:"PARK",     label:"Ecotopia Park", icon:"🌿", cost:60,  beauty:25, oxygen:20, pollution:-15, traffic:-5, energy:4,  population:4,  runoffImpact: -30, bearingReq: 1, color:"#22c55e", unlockAt: 2 },
+            MART:     { id:"MART",     label:"Cyber Mart",    icon:"🏪", cost:160, beauty:8,  oxygen:-5, pollution:12,  traffic:15, energy:-12,population:25, runoffImpact: 20,  bearingReq: 4, color:"#a855f7", unlockAt: 3 },
+            SOLAR:    { id:"SOLAR",    label:"Solar Array",   icon:"☀️", cost:200, beauty:5,  oxygen:6,  pollution:-20, traffic:0,  energy:45, population:2,  runoffImpact: 8,   bearingReq: 2, color:"#eab308", unlockAt: 4 },
+            FACTORY:  { id:"FACTORY",  label:"Algae Factory", icon:"🏭", cost:250, beauty:-12,oxygen:-20,pollution:30,  traffic:18, energy:25, population:15, runoffImpact: 35,  bearingReq: 5, color:"#f97316", unlockAt: 5 },
+            TOWER:    { id:"TOWER",    label:"Matrix Tower",  icon:"🏙️", cost:450, beauty:35, oxygen:-10,pollution:15,  traffic:25, energy:-35,population:80, runoffImpact: 25,  bearingReq: 5, color:"#06b6d4", unlockAt: 6 },
+            FASHION:  { id:"FASHION",  label:"AI Couture Hub",icon:"👗", cost:300, beauty:40, oxygen:5,  pollution:-2,  traffic:10, energy:-10,population:30, runoffImpact: 12,  bearingReq: 3, color:"#ec4899", unlockAt: 4 }
         };
 
         const THEMES = {
@@ -314,7 +317,7 @@
 
             return (
                 <div style={{
-                    width: "100vw", height: "100vh", background: currentTheme.bg, color: currentTheme.text,
+                    width: "100vw", height: "100%", background: currentTheme.bg, color: currentTheme.text,
                     display: "flex", flexDirection: "row", position: "relative", transition: "all 0.4s ease"
                 }}>
                     
