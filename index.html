@@ -416,15 +416,13 @@
 </body>
 </html>
 // ============================================================================
-// LEVEL 2 ENGINE EXPANSION: FIXED MOVES MANAGEMENT & STATE TRANSITIONS
+// LEVEL 2 ENGINE EXPANSION: ULTRA-CLEAN BUG FIX & TRANSITIONS
 // ============================================================================
 
 engineState.levelTwoMovesLeft = 10; 
 engineState.isLevelTwoActive = false;
 
 function injectLevelTwoUIElements() {
-    const sidebar = document.querySelector(".sidebar");
-    
     // Create a Move Tracker HUD Widget
     const moveTracker = document.createElement("div");
     moveTracker.id = "level2-move-card";
@@ -441,7 +439,7 @@ function injectLevelTwoUIElements() {
     `;
     
     const walletCard = document.getElementById("wallet-card") || document.querySelector(".stat-card");
-    if(walletCard) {
+    if(walletCard && walletCard.parentNode) {
         walletCard.parentNode.insertBefore(moveTracker, walletCard.nextSibling);
     }
 
@@ -492,9 +490,8 @@ function injectLevelTwoUIElements() {
 function processLevelOneCompletionCheck() {
     let builtNodeCount = engineState.gridArray.filter(cell => cell !== null && cell !== undefined && cell !== "").length;
     
-    // Level 1 passes when 4 assets are on the grid mesh
     if (!engineState.isLevelTwoActive && builtNodeCount >= 4) {
-        triggerSynthBeep(783.99, 0.2);
+        if (typeof triggerSynthBeep === "function") triggerSynthBeep(783.99, 0.2);
         if (typeof appendTelemetryLog === "function") {
             appendTelemetryLog("[SYSTEM EVENT]: Level 1 optimization conditions achieved. Pausing core simulation clocks.");
         }
@@ -506,12 +503,13 @@ function startLevelTwoCoreEngine() {
     engineState.isLevelTwoActive = true;
     engineState.levelTwoMovesLeft = 10;
     engineState.walletBal = 600; 
-    engineState.gridArray = Array(GRID_SIZE || 36).fill(null); 
+    engineState.gridArray = Array(typeof GRID_SIZE !== 'undefined' ? GRID_SIZE : 36).fill(null); 
     
-    triggerSynthBeep(523.25, 0.15);
+    if (typeof triggerSynthBeep === "function") triggerSynthBeep(523.25, 0.15);
     
     document.getElementById("level2-celebration-modal").style.display = "none";
     
+    // FIX: `.style.style` ki mistake ko yahan correct kiya gaya hai
     const moveTracker = document.getElementById("level2-move-card");
     if(moveTracker) moveTracker.style.display = "block";
     
@@ -537,7 +535,7 @@ if (typeof implementStructuralAsset === "function") {
         
         if (engineState.isLevelTwoActive) {
             if (engineState.levelTwoMovesLeft <= 0) {
-                triggerSynthBeep(120, 0.4);
+                if (typeof triggerSynthBeep === "function") triggerSynthBeep(120, 0.4);
                 if (typeof appendTelemetryLog === "function") {
                     appendTelemetryLog("[CRITICAL FAILURE]: Out of moves structural error context vector!", "error");
                 }
@@ -546,7 +544,6 @@ if (typeof implementStructuralAsset === "function") {
 
             baseStructuralAssetImplementation(index);
             
-            // Validate if structural placement occurred smoothly
             if (engineState.gridArray[index] !== null) {
                 engineState.levelTwoMovesLeft--;
                 const movesDisp = document.getElementById("moves-display");
@@ -556,18 +553,17 @@ if (typeof implementStructuralAsset === "function") {
                     appendTelemetryLog(`[LEVEL 2]: Move tracked. Constraints remaining: ${engineState.levelTwoMovesLeft}`);
                 }
 
-                // Level 2 Win Condition: Build 3 assets within the 10 moves
                 let currentBuildings = engineState.gridArray.filter(cell => cell !== null).length;
                 if (currentBuildings >= 3) {
                     setTimeout(() => {
-                        triggerSynthBeep(1046.50, 0.4);
+                        if (typeof triggerSynthBeep === "function") triggerSynthBeep(1046.50, 0.4);
                         document.getElementById("level2-end-modal").style.display = "flex";
                     }, 500);
                     return;
                 }
 
                 if (engineState.levelTwoMovesLeft <= 0 && currentBuildings < 3) {
-                    triggerSynthBeep(90, 0.6);
+                    if (typeof triggerSynthBeep === "function") triggerSynthBeep(90, 0.6);
                     const hudMsg = document.getElementById("hud-message-text");
                     if(hudMsg) hudMsg.innerHTML = "❌ <b>LEVEL TWO FAILED:</b> Moves exhausted! Refresh to reload simulation pipeline analytics maps.";
                 }
@@ -582,3 +578,4 @@ if (typeof implementStructuralAsset === "function") {
 setTimeout(() => {
     injectLevelTwoUIElements();
 }, 500);
+                    
