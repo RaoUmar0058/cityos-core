@@ -13,20 +13,14 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
 
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; background: #060912; font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #060912; font-family: 'DM Sans', sans-serif; overflow-x: hidden; color: #f1f5f9; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
         ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
-        @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 1; } }
-        @keyframes tooltipIn { 0% { opacity: 0; transform: translate(-50%, 8px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
-        @keyframes fadeUp { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -34,26 +28,27 @@
 
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef } = React;
-        const { BarChart, Bar, XAxis, YAxis, Tooltip: ChartTooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis } = Recharts;
 
-        // Constants & Buildings Engine Data [cite: 1, 2, 3, 4, 5, 6]
+        // ═══════════════════════════════════════════════════════════════
+        // ENGINE GAME DATA CONFIGURATIONS
+        // ═══════════════════════════════════════════════════════════════
         const GRID_COLS = 10;
         const GRID_SIZE = GRID_COLS * GRID_COLS;
-        const SAVE_KEY  = "cityos_v5";
+        const SAVE_KEY  = "cityos_v5_save";
         const STARTING_COINS = 800;
 
         const BUILDINGS = {
-          TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:8,  pollution:-6,  traffic:0,  energy:2,  population:0,  color:"#4ade80", unlockAt:0,  tier:1 },
-          ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-2, pollution:4,   traffic:-10,energy:-2, population:0,  color:"#94a3b8", unlockAt:0,  tier:1 },
-          HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-1, pollution:3,   traffic:4,  energy:-5, population:15, color:"#60a5fa", unlockAt:0,  tier:1 },
-          PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  beauty:20, oxygen:12, pollution:-10, traffic:-3, energy:3,  population:5,  color:"#86efac", unlockAt:0,  tier:1 },
-          SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:25, population:2,  color:"#fbbf24", unlockAt:5,  tier:2 },
-          FACTORY:  { id:"FACTORY",  label:"Factory",       icon:"🏭", cost:150, beauty:-5, oxygen:-12,pollution:18,  traffic:8,  energy:15, population:10, color:"#fb923c", unlockAt:5,  tier:2 },
-          HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:8,  oxygen:2,  pollution:-4,  traffic:6,  energy:-8, population:25, color:"#f43f5e", unlockAt:8,  tier:2 },
-          SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:12, oxygen:3,  pollution:-3,  traffic:4,  energy:-6, population:12, color:"#c084fc", unlockAt:8,  tier:2 },
-          MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:30, oxygen:2,  pollution:-2,  traffic:3,  energy:-3, population:8,  color:"#a78bfa", unlockAt:12, tier:3 },
-          TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:20, oxygen:-5, pollution:8,   traffic:10, energy:-15,population:50, color:"#38bdf8", unlockAt:12, tier:3 },
-          FASHION:  { id:"FASHION",  label:"Fashion Hub ✦", icon:"👗", cost:400, beauty:40, oxygen:1,  pollution:-5,  traffic:8,  energy:-10,population:30, color:"#f472b6", unlockAt:15, tier:3 },
+          TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:8,  pollution:-6,  traffic:0,  energy:2,  population:0,  color:"#4ade80", unlockAt:0 },
+          ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-2, pollution:4,   traffic:-10,energy:-2, population:0,  color:"#94a3b8", unlockAt:0 },
+          HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-1, pollution:3,   traffic:4,  energy:-5, population:15, color:"#60a5fa", unlockAt:0 },
+          PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  beauty:20, oxygen:12, pollution:-10, traffic:-3, energy:3,  population:5,  color:"#86efac", unlockAt:0 },
+          SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:25, population:2,  color:"#fbbf24", unlockAt:5 },
+          FACTORY:  { id:"FACTORY",  label:"Factory",       icon:"🏭", cost:150, beauty:-5, oxygen:-12,pollution:18,  traffic:8,  energy:15, population:10, color:"#fb923c", unlockAt:5 },
+          HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:8,  oxygen:2,  pollution:-4,  traffic:6,  energy:-8, population:25, color:"#f43f5e", unlockAt:8 },
+          SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:12, oxygen:3,  pollution:-3,  traffic:4,  energy:-6, population:12, color:"#c084fc", unlockAt:8 },
+          MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:30, oxygen:2,  pollution:-2,  traffic:3,  energy:-3, population:8,  color:"#a78bfa", unlockAt:12 },
+          TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:20, oxygen:-5, pollution:8,   traffic:10, energy:-15,population:50, color:"#38bdf8", unlockAt:12 },
+          FASHION:  { id:"FASHION",  label:"Fashion Hub ✦", icon:"👗", cost:400, beauty:40, oxygen:1,  pollution:-5,  traffic:8,  energy:-10,population:30, color:"#f472b6", unlockAt:15 },
         };
 
         const MISSIONS = [
@@ -62,520 +57,335 @@
           { id:"m3", title:"City Builder",     desc:"Reach 50 population",        icon:"👥", check:(g,s)=>s.population>=50,                  reward:200, xp:100 },
           { id:"m4", title:"Energy Surplus",   desc:"Energy above 60%",           icon:"⚡", check:(g,s)=>s.energy>60,                          reward:180, xp:90  },
           { id:"m5", title:"Beautiful City",   desc:"Beauty score above 60%",     icon:"✨", check:(g,s)=>s.beauty>60,                         reward:200, xp:100 },
-          { id:"m6", title:"Mega City",        desc:"Reach 150 population",       icon:"🏙️", check:(g,s)=>s.population>=150,                   reward:500, xp:250 },
-          { id:"m7", title:"Eco Champion",     desc:"Sustainability above 75%",   icon:"🌱", check:(g,s)=>s.sustainability>75,                  reward:400, xp:200 },
-          { id:"m8", title:"Fashion Forward",  desc:"Place Fashion Hub",          icon:"👗", check:(g,s)=>g.some(c=>c==="FASHION"),             reward:600, xp:300 },
-        ];
-
-        const ACHIEVEMENTS = [
-          { id:"a1", icon:"🏆", title:"First Block",    desc:"Place your first block", check:(moves)=>moves>=1  },
-          { id:"a2", icon:"🌟", title:"10 Moves",       desc:"Make 10 moves",          check:(moves)=>moves>=10 },
-          { id:"a3", icon:"💎", title:"Veteran Planner",desc:"Make 25 moves",          check:(moves)=>moves>=25 },
-          { id:"a4", icon:"👑", title:"City Master",    desc:"Make 50 moves",          check:(moves)=>moves>=50 },
         ];
 
         const THEMES = {
-          light: {
-            bg:         "linear-gradient(160deg,#f0f4ff 0%,#fafafe 45%,#f5f0ff 100%)",
-            sidebar:    "rgba(255,255,255,0.75)", sidebarBdr: "rgba(99,102,241,0.10)",
-            glass:      "rgba(255,255,255,0.82)", glassBdr:   "rgba(99,102,241,0.12)",
-            gridBg:     "rgba(241,245,249,0.82)", gridBdr:    "rgba(255,255,255,0.92)",
-            cellTop:    "#f1f5f9", cellLeft:"#dde6f0", cellRight:"#c8d5e8",
-            text:       "#1e1b4b", textSub:"#475569", textMuted:"#94a3b8",
-            divider:    "rgba(0,0,0,0.06)", barBg:"rgba(0,0,0,0.06)", chartCard: "rgba(255,255,255,0.78)",
-            emojiShadow:"drop-shadow(0 5px 8px rgba(0,0,0,0.18))", gridFilter: "none", orb1:"#c7d2fe33", orb2:"#f5d0fe22",
-            notif:{ success:"#16a34a", error:"#dc2626", info:"#4f46e5", unlock:"#f472b6" }
-          },
           dark: {
-            bg:         "linear-gradient(160deg,#060912 0%,#0f172a 55%,#0c0a1e 100%)",
-            sidebar:    "rgba(8,12,28,0.97)", sidebarBdr: "rgba(99,102,241,0.18)",
-            glass:      "rgba(8,12,28,0.88)", glassBdr:   "rgba(99,102,241,0.18)",
-            gridBg:     "rgba(8,12,28,0.78)", gridBdr:    "rgba(99,102,241,0.14)",
-            cellTop:    "#1a2540", cellLeft:"#121c32", cellRight:"#0d1626",
-            text:       "#f1f5f9", textSub:"#94a3b8", textMuted:"#475569",
-            divider:    "rgba(255,255,255,0.05)", barBg:"rgba(255,255,255,0.06)", chartCard: "rgba(255,255,255,0.03)",
-            emojiShadow:"drop-shadow(0 0 12px rgba(99,102,241,0.65)) drop-shadow(0 5px 10px rgba(0,0,0,0.6))",
-            gridFilter: "saturate(1.25) brightness(1.06)", orb1:"#6366f11a", orb2:"#a855f714",
-            notif:{ success:"#15803d", error:"#b91c1c", info:"#4338ca", unlock:"#be185d" }
+            bg: "linear-gradient(160deg,#060912 0%,#0f172a 55%,#0c0a1e 100%)",
+            sidebar: "rgba(8,12,28,0.96)",
+            sidebarBdr: "rgba(99,102,241,0.15)",
+            gridBg: "rgba(8,12,28,0.75)",
+            gridBdr: "rgba(99,102,241,0.12)",
+            cellTop: "#1a2540", cellLeft: "#121c32", cellRight: "#0d1626",
+            text: "#f1f5f9", textSub: "#94a3b8", textMuted: "#475569",
+            barBg: "rgba(255,255,255,0.06)",
+            cardBg: "rgba(255,255,255,0.03)"
+          },
+          light: {
+            bg: "linear-gradient(160deg,#f0f4ff 0%,#fafafe 45%,#f5f0ff 100%)",
+            sidebar: "rgba(255,255,255,0.85)",
+            sidebarBdr: "rgba(99,102,241,0.1)",
+            gridBg: "rgba(241,245,249,0.85)",
+            gridBdr: "rgba(255,255,255,0.9)",
+            cellTop: "#f1f5f9", cellLeft: "#dde6f0", cellRight: "#c8d5e8",
+            text: "#1e1b4b", textSub: "#475569", textMuted: "#94a3b8",
+            barBg: "rgba(0,0,0,0.05)",
+            cardBg: "rgba(0,0,0,0.02)"
           }
         };
 
-        // Responsive Hook [cite: 9, 10, 11, 12]
-        function useResponsive() {
-          const [size, setSize] = useState({ cellPx: 54, isMobile: false, isTablet: false, vw: window.innerWidth });
-          useEffect(() => {
-            function update() {
-              const vw = window.innerWidth;
-              const vh = window.innerHeight;
-              const isMobile  = vw < 640;
-              const isTablet  = vw >= 640 && vw < 1024;
-              let availableW;
-              if (isMobile) { availableW = vw - 34; }
-              else if (isTablet) { availableW = vw - 240 - 40; }
-              else { availableW = vw - 258 - 80; }
-              let cellByW = Math.floor((availableW - 40) / GRID_COLS);
-              const maxCellByH = isMobile ? Math.floor((vh * 0.45) / 7.2) : Math.floor((vh * 0.68) / 7.2);
-              let cellPx = Math.min(cellByW, maxCellByH, 54);
-              cellPx = Math.max(cellPx, isMobile ? 26 : 32);
-              setSize({ cellPx, isMobile, isTablet, vw });
+        // ═══════════════════════════════════════════════════════════════
+        // SOUND ENGINE CONTEXT
+        // ═══════════════════════════════════════════════════════════════
+        function playAudioTone(type) {
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            const now = ctx.currentTime;
+
+            if (type === "place") {
+              osc.frequency.setValueAtTime(440, now);
+              osc.frequency.exponentialRampToValueAtTime(660, now + 0.1);
+              gain.gain.setValueAtTime(0.1, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+              osc.start(now); osc.stop(now + 0.15);
+            } else if (type === "remove") {
+              osc.frequency.setValueAtTime(320, now);
+              osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+              gain.gain.setValueAtTime(0.08, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+              osc.start(now); osc.stop(now + 0.12);
+            } else if (type === "mission") {
+              osc.frequency.setValueAtTime(523, now);
+              osc.frequency.setValueAtTime(659, now + 0.08);
+              osc.frequency.setValueAtTime(784, now + 0.16);
+              gain.gain.setValueAtTime(0.12, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+              osc.start(now); osc.stop(now + 0.3);
             }
-            update();
-            window.addEventListener("resize", update);
-            return () => window.removeEventListener("resize", update);
-          }, []);
-          return size;
+          } catch (e) {}
         }
 
-        // Logic & Engines [cite: 13, 14, 15, 16]
+        // Stats Engine Calculator
         function computeStats(grid) {
-          let oxygen=40,beauty=30,pollution=20,traffic=30,energy=50,population=0,score=0;
-          grid.forEach(cell=>{
-            if(!cell)return;
-            const b=BUILDINGS[cell];
-            oxygen=Math.max(0,Math.min(100,oxygen+b.oxygen));
-            beauty=Math.max(0,Math.min(100,beauty+b.beauty));
-            pollution=Math.max(0,Math.min(100,pollution+b.pollution));
-            traffic=Math.max(0,Math.min(100,traffic+b.traffic));
-            energy=Math.max(0,Math.min(100,energy+b.energy));
-            population+=b.population; score+=10+b.beauty;
+          let oxygen=40, beauty=30, pollution=20, traffic=30, energy=50, population=0, score=0;
+          grid.forEach(cell => {
+            if (!cell) return;
+            const b = BUILDINGS[cell];
+            oxygen = Math.max(0, Math.min(100, oxygen + b.oxygen));
+            beauty = Math.max(0, Math.min(100, beauty + b.beauty));
+            pollution = Math.max(0, Math.min(100, pollution + b.pollution));
+            traffic = Math.max(0, Math.min(100, traffic + b.traffic));
+            energy = Math.max(0, Math.min(100, energy + b.energy));
+            population += b.population;
+            score += 10 + b.beauty;
           });
-          const livability=Math.round((oxygen+beauty+(100-pollution)+(100-traffic)+energy)/5);
-          const sustainability=Math.round(oxygen*0.35+(100-pollution)*0.35+energy*0.3);
-          return{oxygen,beauty,pollution,traffic,energy,population,score,livability,sustainability};
+          const livability = Math.round((oxygen + beauty + (100 - pollution) + (100 - traffic) + energy) / 5);
+          const sustainability = Math.round(oxygen * 0.35 + (100 - pollution) * 0.35 + energy * 0.3);
+          return { oxygen, beauty, pollution, traffic, energy, population, score, livability, sustainability };
         }
 
-        function safeLoad(key){
-          try{
-            const raw=localStorage.getItem(key);
-            if(!raw)return null;
-            const p=JSON.parse(raw);
-            if(!Array.isArray(p.grid)||p.grid.length!==GRID_SIZE)throw new Error("bad");
-            return p;
-          }catch(e){localStorage.removeItem(key);return null;}
-        }
-        function safeSave(key,data){try{localStorage.setItem(key,JSON.stringify(data));}catch{}}
-
-        // Sound Hook [cite: 16, 17, 18, 19, 20, 21]
-        function useSound() {
-          const ctx = useRef(null);
-          const ensure = () => {
-            if (!ctx.current) ctx.current = new (window.AudioContext || window.webkitAudioContext)();
-            return ctx.current;
-          };
-          const play = useCallback((type) => {
-            try {
-              const ac = ensure();
-              const o = ac.createOscillator();
-              const g = ac.createGain();
-              o.connect(g); g.connect(ac.destination);
-              const now = ac.currentTime;
-              if (type === "place") {
-                o.frequency.setValueAtTime(440, now);
-                o.frequency.exponentialRampToValueAtTime(660, now + 0.1);
-                g.gain.setValueAtTime(0.15, now);
-                g.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-                o.start(now); o.stop(now + 0.18);
-              } else if (type === "remove") {
-                o.frequency.setValueAtTime(300, now);
-                o.frequency.exponentialRampToValueAtTime(180, now + 0.12);
-                g.gain.setValueAtTime(0.1, now);
-                g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-                o.start(now); o.stop(now + 0.15);
-              } else if (type === "unlock") {
-                [0,0.1,0.2].forEach((d,i)=>{
-                  const o2=ac.createOscillator(); const g2=ac.createGain();
-                  o2.connect(g2); g2.connect(ac.destination);
-                  o2.frequency.setValueAtTime([523,659,784][i],now+d);
-                  g2.gain.setValueAtTime(0.15,now+d);
-                  g2.gain.exponentialRampToValueAtTime(0.001,now+d+0.25);
-                  o2.start(now+d); o2.stop(now+d+0.25);
-                });
-              } else if (type === "mission") {
-                [0,0.08,0.16,0.24].forEach((d,i)=>{
-                  const o2=ac.createOscillator(); const g2=ac.createGain();
-                  o2.connect(g2); g2.connect(ac.destination);
-                  o2.frequency.setValueAtTime([523,659,784,1047][i],now+d);
-                  g2.gain.setValueAtTime(0.18,now+d);
-                  g2.gain.exponentialRampToValueAtTime(0.001,now+d+0.3);
-                  o2.start(now+d); o2.stop(now+d+0.3);
-                });
-              } else if (type === "error") {
-                o.frequency.setValueAtTime(220, now); g.gain.setValueAtTime(0.1, now);
-                g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                o.start(now); o.stop(now + 0.2);
-              }
-            } catch {}
-          }, []);
-          return play;
-        }
-
-        // Sub-Components [cite: 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]
-        function DayNightToggle({ isNight, onToggle }) {
-          return (
-            <button onClick={onToggle} style={{
-              width:60,height:28,borderRadius:99,
-              background:isNight?"linear-gradient(135deg,#0f172a,#1e293b)":"linear-gradient(135deg,#dbeafe,#bfdbfe)",
-              border:`1px solid ${isNight?"rgba(99,102,241,0.35)":"rgba(147,197,253,0.5)"}`,
-              position:"relative",cursor:"pointer",padding:0,flexShrink:0,
-              transition:"all 0.55s ease",
-            }}>
-              <div style={{ position:"absolute",top:3,left:isNight?33:3,width:22,height:22,borderRadius:"50%",
-                background:isNight?"linear-gradient(135deg,#e2e8f0,#cbd5e1)":"linear-gradient(135deg,#fde68a,#f59e0b)",
-                display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,transition:"all 0.4s" }}>
-                {isNight?"🌙":"☀️"}
-              </div>
-            </button>
-          );
-        }
-
-        function BlockTooltip({ building, cellPx }) {
-          const b = BUILDINGS[building];
-          const rows=[
-            {k:"Beauty",v:b.beauty,pos:b.beauty>0},{k:"Oxygen",v:b.oxygen,pos:b.oxygen>0},
-            {k:"Pollution",v:b.pollution,pos:b.pollution<0},{k:"Traffic",v:b.traffic,pos:b.traffic<0},
-            {k:"Energy",v:b.energy,pos:b.energy>0},{k:"Pop.",v:b.population,pos:b.population>0},
-          ].filter(r=>r.v!==0);
-          const isSmall = cellPx < 36;
-          return (
-            <div style={{
-              position:"absolute",bottom: isSmall ? "auto" : "calc(100% + 10px)",top: isSmall ? "calc(100% + 4px)" : "auto",
-              left:"50%",transform:"translateX(-50%)",background:"rgba(6,9,18,0.97)",border:`1px solid ${b.color}55`,
-              borderRadius:12,padding:"10px 12px",minWidth:140,zIndex:9999,boxShadow:`0 16px 40px rgba(0,0,0,0.6)`
-            }}>
-              <div style={{fontSize:9,fontWeight:800,color:b.color,fontFamily:"'DM Mono',monospace"}}>{b.label}</div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"'DM Mono',monospace"}}>💰 {b.cost}</div>
-              {rows.map(r=>(
-                <div key={r.k} style={{display:"flex",justifyContent:"space-between",fontSize:9,fontFamily:"'DM Mono',monospace"}}>
-                  <span style={{color:"rgba(255,255,255,0.4)"}}>{r.k}</span>
-                  <span style={{fontWeight:700,color:r.pos?"#4ade80":"#f87171"}}>{r.v>0?"+":""}{r.v}</span>
-                </div>
-              ))}
-            </div>
-          );
-        }
-
-        function IsoCell({ building, selected, onClick, onRightClick, isNight, t, locked, cellPx }) {
-          const [hov,setHov]=useState(false);
-          const b=building?BUILDINGS[building]:null;
-          const sel=BUILDINGS[selected];
-          const fontSize = Math.max(10, Math.round(cellPx * 0.38));
-          const hoverFontSize = Math.max(8, Math.round(cellPx * 0.26));
-          const longPressTimer = useRef(null);
-          
-          const handleTouchStart = () => { longPressTimer.current = setTimeout(() => { if (!locked) onRightClick(); }, 500); };
-          const handleTouchEnd = () => clearTimeout(longPressTimer.current);
-
-          return (
-            <div
-              style={{position:"relative",width:cellPx,height:cellPx,touchAction:"manipulation"}}
-              onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)} onClick={locked?undefined:onClick}
-              onContextMenu={e=>{e.preventDefault();if(!locked)onRightClick();}}
-              onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchMove={handleTouchEnd}
-            >
-              <div style={{position:"absolute",inset:0,transform:"rotateX(52deg)",transformStyle:"preserve-3d"}}>
-                <div style={{
-                  position:"absolute",inset:0,borderRadius:Math.max(3,cellPx*0.09),
-                  background:hov&&!building?(isNight?`${sel.color}28`:`${sel.color}1a`):building?(isNight?"#1a2744":"#f8fafc"):t.cellTop,
-                  border:`${cellPx>40?1.5:1}px solid ${hov?`${(b||sel).color}99`:building?(isNight?"#253655":"#e0e9f5"):(isNight?"rgba(99,102,241,0.09)":"rgba(148,163,184,0.16)")}`,
-                  transition:"all 0.13s ease"
-                }}/>
-                <div style={{position:"absolute",bottom:-Math.round(cellPx*0.13),left:0,right:"50%",height:Math.round(cellPx*0.13),background:t.cellLeft,transformOrigin:"top",transform:"rotateX(-90deg) translateY(-50%)"}}/>
-                <div style={{position:"absolute",bottom:-Math.round(cellPx*0.13),left:"50%",right:0,height:Math.round(cellPx*0.13),background:t.cellRight,transformOrigin:"top",transform:"rotateX(-90deg) translateY(-50%)"}}/>
-              </div>
-              <div style={{
-                position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:building?fontSize:hoverFontSize,zIndex:2,
-                transform:building?(hov?"translateY(-8px)":"translateY(-3px)"):(hov?"translateY(-2px)":"translateY(-1px)"),transition:"all 0.22s"
-              }}>{building?b.icon:(hov&&!locked?sel.icon:"")}</div>
-              {locked&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.max(8,cellPx*0.22),zIndex:5,opacity:0.35}}>🔒</div>}
-              {hov&&building&&<BlockTooltip building={building} cellPx={cellPx}/>}
-            </div>
-          );
-        }
-
-        function StatBar({label,val,color,icon,isNight,t}){
-          const pct=Math.max(0,Math.min(100,val));
-          return(
-            <div style={{marginBottom:8}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                <span style={{fontSize:10,fontWeight:600,color:t.textSub,fontFamily:"'DM Mono',monospace"}}>{icon} {label}</span>
-                <span style={{fontSize:10,fontWeight:800,color,fontFamily:"'DM Mono',monospace"}}>{Math.round(pct)}%</span>
-              </div>
-              <div style={{background:t.barBg,borderRadius:99,height:5,overflow:"hidden"}}>
-                <div style={{width:`${pct}%`,height:"100%",background:`linear-gradient(90deg,${color}77,${color})`,transition:"width 0.65s"}}/>
-              </div>
-            </div>
-          );
-        }
-
-        function MissionCard({mission,done,t,isNight}){
-          return(
-            <div style={{
-              display:"flex",alignItems:"center",gap:9,padding:"9px 11px",borderRadius:12,
-              background:done?(isNight?"rgba(34,197,94,0.1)":"rgba(34,197,94,0.08)"):t.chartCard,
-              border:`1px solid ${done?"rgba(34,197,94,0.3)":t.glassBdr}`,marginBottom:6
-            }}>
-              <span style={{fontSize:16}}>{mission.icon}</span>
-              <div style={{flex:1}}>
-                <div style={{fontSize:11,fontWeight:700,color:done?"#4ade80":t.text,fontFamily:"'Syne',sans-serif"}}>{mission.title}</div>
-                <div style={{fontSize:9,color:t.textMuted,fontFamily:"'DM Mono',monospace"}}>{mission.desc}</div>
-              </div>
-              <div>{done?<span style={{color:"#4ade80",fontSize:9}}>✓ DONE</span>:<span style={{fontSize:9,color:t.textMuted}}>+💰{mission.reward}</span>}</div>
-            </div>
-          );
-        }
-
-        function AchievementBadge({ach,earned,isNight,t}){
-          return(
-            <div style={{ textAlign:"center",padding:"10px 6px",borderRadius:12,background:earned?"rgba(251,191,36,0.1)":"transparent",border:`1px solid ${t.glassBdr}`,opacity:earned?1:0.35 }}>
-              <div style={{fontSize:20}}>{ach.icon}</div>
-              <div style={{fontSize:9,fontWeight:700,color:t.textMuted}}>{ach.title}</div>
-            </div>
-          );
-        }
-
-        // Shared Sidebar Structure [cite: 34, 35, 36, 37, 38, 39]
-        function SidebarContent({ t, isNight, level, xp, coins, moveCount, stats, tab, setTab, history, future, undo, redo, reset, selected, setSelected, completedM, card, isMobile, setShowAdModal }) {
-          const xpPct = ((xp % 200) / 200) * 100;
-          const livColor = stats.livability > 65 ? "#4ade80" : stats.livability > 45 ? "#fbbf24" : "#f87171";
-          const livIcon = stats.livability > 65 ? "👑" : stats.livability > 45 ? "⚡" : "⚠️";
-
-          return (
-            <div style={{display:"flex",flexDirection:"column",gap:14}}>
-              <div>
-                <div style={{fontFamily:"'Syne',sans-serif",fontSize:isMobile?17:20,fontWeight:800,color:t.text}}>{isNight?"🌃":"🌆"} CityOS</div>
-                <div style={{fontSize:8,color:t.textMuted,fontFamily:"'DM Mono',monospace"}}>SMART CITY SIMULATOR v5</div>
-              </div>
-
-              <div style={{background:isNight?"rgba(99,102,241,0.1)":"rgba(99,102,241,0.07)",borderRadius:14,padding:"9px 12px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:9,fontFamily:"'DM Mono',monospace"}}>
-                  <span style={{color:"#6366f1"}}>LEVEL {level} PLANNER</span>
-                  <span style={{color:t.textMuted}}>{xp%200}/200 XP</span>
-                </div>
-                <div style={{background:"rgba(99,102,241,0.15)",borderRadius:99,height:5,marginTop:4,overflow:"hidden"}}>
-                  <div style={{width:`${xpPct}%`,height:"100%",background:"linear-gradient(90deg,#818cf8,#6366f1)"}}/>
-                </div>
-              </div>
-
-              <div style={{borderRadius:14,padding:"12px 14px",color:"#fff",background:isNight?"linear-gradient(135deg,#312e81,#4c1d95)":"linear-gradient(135deg,#4f46e5,#7c3aed)"}}>
-                <div style={{fontSize:8,opacity:0.6,fontFamily:"'DM Mono',monospace"}}>CITY BUDGET</div>
-                <div style={{display:"flex",alignItems:"center",gap:10,fontSize:22,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>
-                  💰 {coins}
-                  <button onClick={()=>setShowAdModal(true)} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:99,padding:"2px 8px",color:"#fff",fontSize:9,cursor:"pointer"}}>+AD</button>
-                </div>
-                <div style={{display:"flex",gap:12,marginTop:6,fontSize:11,fontFamily:"'DM Mono',monospace"}}>
-                  <div>MOVES: {moveCount}</div><div>POP: {stats.population}</div><div>SCORE: {stats.score}</div>
-                </div>
-              </div>
-
-              <div style={{border:`1.5px solid ${livColor}44`,borderRadius:12,padding:"9px 12px"}}>
-                <div style={{fontSize:8,color:t.textMuted,fontFamily:"'DM Mono',monospace"}}>LIVABILITY INDEX</div>
-                <div style={{fontSize:20,fontWeight:800,color:livColor,fontFamily:"'Syne',sans-serif"}}>{stats.livability}% {livIcon}</div>
-              </div>
-
-              <div style={{display:"flex",gap:3,background:"rgba(0,0,0,0.06)",borderRadius:11,padding:3}}>
-                {["build","missions","analytics"].map(k=>(
-                  <button key={k} onClick={()=>setTab(k)} style={{flex:1,background:tab===k?"#6366f1":"transparent",color:tab===k?"#fff":t.textMuted,border:"none",padding:"5px",borderRadius:8,fontSize:10,cursor:"pointer"}}>
-                    {k.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-
-              {tab==="build" && (
-                <>
-                  <div style={{display:"flex",gap:4}}>
-                    <button onClick={undo} disabled={!history.length} style={{flex:1,padding:"6px",fontSize:10}}>↩ Undo</button>
-                    <button onClick={redo} disabled={!future.length} style={{flex:1,padding:"6px",fontSize:10}}>↪ Redo</button>
-                    <button onClick={reset} style={{flex:1,padding:"6px",fontSize:10}}>🔄 Reset</button>
-                  </div>
-                  <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:"260px",overflowY:"auto"}}>
-                    {Object.values(BUILDINGS).map(b=>{
-                      const active = selected===b.id;
-                      const locked = b.unlockAt > moveCount;
-                      return (
-                        <button key={b.id} onClick={()=>setSelected(b.id)} disabled={locked} style={{
-                          display:"flex",alignItems:"center",gap:8,padding:"6px",border:active?`2px solid ${b.color}`:"1px solid transparent",
-                          background:active?"rgba(99,102,241,0.1)":"transparent",opacity:locked?0.4:1,cursor:"pointer",textAlign:"left"
-                        }}>
-                          <span>{b.icon}</span>
-                          <div style={{fontSize:11,color:t.text}}>{b.label} <span style={{fontSize:9,color:t.textMuted}}>{locked?`🔒 Lvl ${b.unlockAt}`:`💰${b.cost}`}</span></div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-
-              {tab==="missions" && (
-                <div>
-                  {MISSIONS.map(m=><MissionCard key={m.id} mission={m} done={completedM.includes(m.id)} t={t} isNight={isNight}/>)}
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginTop:8}}>
-                    {ACHIEVEMENTS.map(a=><AchievementBadge key={a.id} ach={a} earned={a.check(moveCount)} isNight={isNight} t={t}/>)}
-                  </div>
-                </div>
-              )}
-
-              {tab==="analytics" && (
-                <div>
-                  <StatBar label="Oxygen" val={stats.oxygen} color="#4ade80" icon="🌿" isNight={isNight} t={t}/>
-                  <StatBar label="Beauty" val={stats.beauty} color="#a78bfa" icon="✨" isNight={isNight} t={t}/>
-                  <StatBar label="Pollution" val={stats.pollution} color="#fb923c" icon="💨" isNight={isNight} t={t}/>
-                  <StatBar label="Traffic" val={stats.traffic} color="#60a5fa" icon="🚦" isNight={isNight} t={t}/>
-                  <StatBar label="Energy" val={stats.energy} color="#fbbf24" icon="⚡" isNight={isNight} t={t}/>
-                </div>
-              )}
-            </div>
-          );
-        }
-
-        // Main App Component
-        function App() {
-          const res = useResponsive();
-          const playSound = useSound();
+        // ═══════════════════════════════════════════════════════════════
+        // MAIN APPLICATION UI ENGINE
+        // ═══════════════════════════════════════════════════════════════
+        function CityOSApp() {
           const [isNight, setIsNight] = useState(true);
           const [grid, setGrid] = useState(() => {
-            const saved = safeLoad(SAVE_KEY);
-            return saved ? saved.grid : Array(GRID_SIZE).fill(null);
+            try {
+              const item = localStorage.getItem(SAVE_KEY);
+              return item ? JSON.parse(item) : Array(GRID_SIZE).fill(null);
+            } catch(e) { return Array(GRID_SIZE).fill(null); }
           });
-          const [coins, setCoins] = useState(() => {
-            const saved = safeLoad(SAVE_KEY);
-            return saved ? saved.coins : STARTING_COINS;
-          });
-          const [moveCount, setMoveCount] = useState(() => {
-            const saved = safeLoad(SAVE_KEY);
-            return saved ? saved.moveCount : 0;
-          });
-          const [xp, setXp] = useState(() => {
-            const saved = safeLoad(SAVE_KEY);
-            return saved ? saved.xp : 0;
-          });
+
+          const [coins, setCoins] = useState(STARTING_COINS);
+          const [moveCount, setMoveCount] = useState(0);
+          const [xp, setXp] = useState(0);
           const [selected, setSelected] = useState("TREE");
           const [tab, setTab] = useState("build");
-          const [history, setHistory] = useState([]);
-          const [future, setFuture] = useState([]);
           const [completedM, setCompletedM] = useState([]);
-          const [showAdModal, setShowAdModal] = useState(false);
+          const [showAd, setShowAd] = useState(false);
+          const [cellPx, setCellPx] = useState(42);
 
           const t = isNight ? THEMES.dark : THEMES.light;
           const stats = computeStats(grid);
           const level = Math.floor(xp / 200) + 1;
+          const xpPct = ((xp % 200) / 200) * 100;
 
+          // Sync Screen Responsiveness Window Resize
           useEffect(() => {
-            safeSave(SAVE_KEY, { grid, coins, moveCount, xp });
-            
-            // Real-time mission tracking
-            const done = [];
+            function handleResize() {
+              const width = window.innerWidth;
+              if (width < 640) setCellPx(28);
+              else if (width < 1024) setCellPx(36);
+              else setCellPx(44);
+            }
+            handleResize();
+            window.addEventListener("resize", handleResize);
+            return () => window.removeEventListener("resize", handleResize);
+          }, []);
+
+          // Auto State Save Engine
+          useEffect(() => {
+            try { localStorage.setItem(SAVE_KEY, JSON.stringify(grid)); } catch(e){}
+          }, [grid]);
+
+          // Real-time Mission Completer Rule engine
+          useEffect(() => {
+            let newlyDone = [];
             MISSIONS.forEach(m => {
-              if (m.check(grid, stats)) {
-                done.push(m.id);
-                if (!completedM.includes(m.id)) {
-                  setCoins(prev => prev + m.reward);
-                  setXp(prev => prev + m.xp);
-                  playSound("mission");
-                }
+              if (m.check(grid, stats) && !completedM.includes(m.id)) {
+                newlyDone.push(m.id);
               }
             });
-            if (done.length !== completedM.length) setCompletedM(done);
-          }, [grid, coins, moveCount, xp]);
-
-          const undo = () => {
-            if (!history.length) return;
-            const prev = history[history.length - 1];
-            setFuture(f => [grid, ...f]);
-            setGrid(prev);
-            setHistory(h => h.slice(0, -1));
-            playSound("remove");
-          };
-
-          const redo = () => {
-            if (!future.length) return;
-            const next = future[0];
-            setHistory(h => [...h, grid]);
-            setGrid(next);
-            setFuture(f => f.slice(1));
-            playSound("place");
-          };
-
-          const reset = () => {
-            if (window.confirm("Reset city?")) {
-              setGrid(Array(GRID_SIZE).fill(null));
-              setCoins(STARTING_COINS);
-              setMoveCount(0);
-              setXp(0);
-              setHistory([]);
-              setFuture([]);
+            if (newlyDone.length > 0) {
+              setCompletedM(prev => [...prev, ...newlyDone]);
+              setCoins(c => c + 150);
+              setXp(x => x + 60);
+              playAudioTone("mission");
             }
-          };
+          }, [grid, stats, completedM]);
 
-          const handleCellClick = (index) => {
+          const handleCellClick = (idx) => {
             const b = BUILDINGS[selected];
-            if (grid[index] === selected) return;
-            if (coins < b.cost) { playSound("error"); return; }
+            if (grid[idx]) return; 
+            if (coins < b.cost) return;
 
-            setHistory(h => [...h, grid]);
-            setFuture([]);
-            
             const nextGrid = [...grid];
-            nextGrid[index] = selected;
+            nextGrid[idx] = selected;
             setGrid(nextGrid);
             setCoins(c => c - b.cost);
             setMoveCount(m => m + 1);
             setXp(x => x + 15);
-            playSound("place");
+            playAudioTone("place");
           };
 
-          const handleCellRightClick = (index) => {
-            if (!grid[index]) return;
-            setHistory(h => [...h, grid]);
-            setFuture([]);
+          const handleCellRightClick = (idx, e) => {
+            if(e) e.preventDefault();
+            if (!grid[idx]) return;
 
             const nextGrid = [...grid];
-            nextGrid[index] = null;
+            nextGrid[idx] = null;
             setGrid(nextGrid);
             setMoveCount(m => m + 1);
-            playSound("remove");
+            playAudioTone("remove");
           };
 
-          const cardStyle = () => ({
-            background: t.chartCard, border: `1px solid ${t.glassBdr}`, borderRadius: 12, padding: "10px"
-          });
+          const triggerAdReward = () => {
+            setShowAd(true);
+            setTimeout(() => {
+              setCoins(c => c + 250);
+              setShowAd(false);
+              playAudioTone("mission");
+            }, 2000);
+          };
 
           return (
-            <div style={{ display:"flex", flexDirection: res.isMobile?"column":"row", minHeight:"100vh", background: t.bg, color: t.text, padding: res.isMobile?"10px":"20px", gap: "20px" }}>
+            <div style={{
+              display: "flex", flexDirection: window.innerWidth < 768 ? "column" : "row",
+              minHeight: "100vh", background: t.bg, color: t.text, padding: "16px", gap: "16px"
+            }}>
               
-              {/* Sidebar layout wrapper */}
-              <div style={{ width: res.isMobile?"100%":res.isTablet?"240px":"280px", background: t.sidebar, border: `1px solid ${t.sidebarBdr}`, borderRadius: 16, padding: "16px", height: res.isMobile?"auto":"calc(100vh - 40px)", overflowY: "auto" }}>
-                <SidebarContent t={t} isNight={isNight} level={level} xp={xp} coins={coins} moveCount={moveCount} stats={stats} tab={tab} setTab={setTab} history={history} future={future} undo={undo} redo={redo} reset={reset} selected={selected} setSelected={setSelected} completedM={completedM} card={cardStyle} isMobile={res.isMobile} setShowAdModal={setShowAdModal}/>
-                <div style={{ marginTop: "14px", display: "flex", justifyContent: "space-between", alignItems:"center" }}>
-                  <span style={{ fontSize: 10, color: t.textMuted }}>Theme Mode</span>
-                  <DayNightToggle isNight={isNight} onToggle={() => setIsNight(!isNight)}/>
+              {/* SIDEBAR DASHBOARD CONTROL */}
+              <div style={{
+                width: window.innerWidth < 768 ? "100%" : "300px", background: t.sidebar,
+                border: `1px solid ${t.sidebarBdr}`, borderRadius: "16px", padding: "16px",
+                display: "flex", flexDirection: "column", gap: "12px"
+              }}>
+                <div>
+                  <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "20px" }}>CityOS Simulator 🌆</h2>
+                  <p style={{ fontSize: "10px", color: t.textMuted, fontFamily: "'DM Mono', monospace" }}>PORTFOLIO DATA INFRASTRUCTURE</p>
                 </div>
-              </div>
 
-              {/* Isometric Simulator Grid Center Container */}
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center", position: "relative", minHeight: res.isMobile?"50vh":"auto", background: t.gridBg, border: `1px solid ${t.gridBdr}`, borderRadius: 16, overflow: "hidden" }}>
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${GRID_COLS}, ${res.cellPx}px)`, gap: "4px", padding: "20px", filter: t.gridFilter }}>
-                  {grid.map((cell, idx) => (
-                    <IsoCell key={idx} building={cell} selected={selected} cellPx={res.cellPx} isNight={isNight} t={t} onClick={() => handleCellClick(idx)} onRightClick={() => handleCellRightClick(idx)} locked={false} />
+                {/* LEVEL SUMMARY */}
+                <div style={{ background: "rgba(99,102,241,0.08)", padding: "10px", borderRadius: "12px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:"10px", fontFamily:"'DM Mono',monospace" }}>
+                    <span>PLANNER LEVEL {level}</span>
+                    <span>{Math.round(xpPct)}%</span>
+                  </div>
+                  <div style={{ background: t.barBg, height: "4px", borderRadius: "99px", marginTop: "4px", overflow:"hidden" }}>
+                    <div style={{ width: `${xpPct}%`, height: "100%", background: "#6366f1" }}/>
+                  </div>
+                </div>
+
+                {/* STAT VALUES */}
+                <div style={{ background: "#4f46e5", color: "#fff", padding: "12px", borderRadius: "12px" }}>
+                  <div style={{ fontSize: "10px", opacity: 0.8 }}>BUDGET POOL</div>
+                  <div style={{ fontSize: "24px", fontWeight: "800", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <span>💰 {coins}</span>
+                    <button onClick={triggerAdReward} style={{ background:"rgba(255,255,255,0.2)", border:"none", color:"#fff", fontSize:"10px", padding:"4px 8px", borderRadius:"6px", cursor:"pointer" }}>+ FUND</button>
+                  </div>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "6px", fontSize: "10px", fontFamily: "'DM Mono', monospace" }}>
+                    <span>MOVES: {moveCount}</span>
+                    <span>POP: {stats.population}</span>
+                  </div>
+                </div>
+
+                {/* LIVABILITY BAR METER */}
+                <div style={{ border: `1px solid ${stats.livability > 50 ? "#4ade80" : "#fb923c"}`, padding: "8px 12px", borderRadius: "12px", fontSize: "13px" }}>
+                  📊 Livability Score: <strong>{stats.livability}%</strong>
+                </div>
+
+                {/* TAB SWITCH SYSTEM */}
+                <div style={{ display: "flex", background: "rgba(0,0,0,0.15)", borderRadius: "8px", padding: "2px" }}>
+                  {["build", "missions", "metrics"].map(tb => (
+                    <button key={tb} onClick={() => setTab(tb)} style={{
+                      flex: 1, padding: "6px 0", fontSize: "11px", border: "none", borderRadius: "6px", cursor: "pointer",
+                      background: tab === tb ? "#6366f1" : "transparent", color: tab === tb ? "#fff" : t.textSub
+                    }}>{tb.toUpperCase()}</button>
                   ))}
                 </div>
+
+                {/* CONDITIONAL SUB MENU VIEW */}
+                {tab === "build" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "240px", overflowY: "auto" }}>
+                    {Object.values(BUILDINGS).map(b => {
+                      const active = selected === b.id;
+                      const isLocked = b.unlockAt > moveCount;
+                      return (
+                        <button key={b.id} onClick={() => !isLocked && setSelected(b.id)} style={{
+                          display: "flex", justifyContent: "space-between", padding: "8px", borderRadius: "8px",
+                          border: active ? `1px solid ${b.color}` : "1px solid transparent", cursor: isLocked ? "not-allowed" : "pointer",
+                          background: active ? "rgba(99,102,241,0.1)" : "transparent", opacity: isLocked ? 0.35 : 1
+                        }}>
+                          <span style={{ fontSize: "12px", color: t.text }}>{b.icon} {b.label} {isLocked && `🔒(Lvl ${b.unlockAt})`}</span>
+                          <span style={{ fontSize: "11px", color: t.textMuted }}>💰{b.cost}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {tab === "missions" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {MISSIONS.map(m => {
+                      const isDone = completedM.includes(m.id);
+                      return (
+                        <div key={m.id} style={{ display:"flex", alignItems:"center", justifyValue:"space-between", padding:"6px", background: t.cardBg, borderRadius:"8px", justifyContent:"space-between" }}>
+                          <span style={{ fontSize: "11px" }}>{m.icon} {m.title}</span>
+                          <span style={{ fontSize: "10px", color: isDone ? "#4ade80" : t.textMuted }}>{isDone ? "✓ DONE" : `+💰${m.reward}`}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {tab === "metrics" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px" }}>
+                    <div>🌿 Oxygen: {stats.oxygen}%</div>
+                    <div>✨ Beauty: {stats.beauty}%</div>
+                    <div>💨 Pollution: {stats.pollution}%</div>
+                    <div>🚦 Traffic: {stats.traffic}%</div>
+                    <div>⚡ Energy: {stats.energy}%</div>
+                  </div>
+                )}
+
+                {/* BOTTOM UTILITY FOOTER CONFIGS */}
+                <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "10px", borderTop: `1px solid ${t.sidebarBdr}` }}>
+                  <button onClick={() => { if(window.confirm("Reset Grid?")){setGrid(Array(GRID_SIZE).fill(null)); setCoins(STARTING_COINS); setMoveCount(0); setXp(0);} }} style={{ background:"none", border:"none", color:"#f87171", cursor:"pointer", fontSize:"11px" }}>🔄 Wipe Reset</button>
+                  <button onClick={() => setIsNight(!isNight)} style={{ background:"none", border:"none", color:t.textSub, cursor:"pointer", fontSize:"12px" }}>{isNight ? "☀️ Light Mode" : "🌙 Night Mode"}</button>
+                </div>
               </div>
 
-              {/* Ad Reward Modal */}
-              {showAdModal && (
-                <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:99999 }}>
-                  <div style={{ background:"#1e1b4b", padding:"24px", borderRadius:16, textAlign:"center", border:"1px solid #6366f1" }}>
-                    <h3 style={{ color:"#fff", margin:0 }}>Watching Cyber Ad...</h3>
-                    <p style={{ color:"#94a3b8", fontSize:12 }}>Simulating 5 seconds data pipeline sync.</p>
-                    <button onClick={() => { setCoins(c => c + 250); setShowAdModal(false); playSound("unlock"); }} style={{ background:"#6366f1", color:"#fff", border:"none", padding:"8px 16px", borderRadius:8, cursor:"pointer" }}>Claim 💰 250 Coins</button>
+              {/* ISOMETRIC SIMULATION CANVAS CENTER */}
+              <div style={{
+                flex: 1, background: t.gridBg, border: `1px solid ${t.gridBdr}`, borderRadius: "16px",
+                display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", overflow: "hidden"
+              }}>
+                <div style={{
+                  display: "grid", gridTemplateColumns: `repeat(${GRID_COLS}, ${cellPx}px)`, gap: "4px", padding: "20px"
+                }}>
+                  {grid.map((cell, idx) => {
+                    const b = cell ? BUILDINGS[cell] : null;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => handleCellClick(idx)}
+                        onContextMenu={(e) => handleCellRightClick(idx, e)}
+                        style={{
+                          width: `${cellPx}px`, height: `${cellPx}px`, position: "relative",
+                          cursor: "pointer", background: cell ? "#1e293b" : "rgba(255,255,255,0.02)",
+                          border: `1px solid ${cell ? b.color : "rgba(255,255,255,0.05)"}`, borderRadius: "6px",
+                          display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s"
+                        }}
+                      >
+                        <span style={{ fontSize: `${cellPx * 0.55}px` }}>{cell ? b.icon : ""}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* FUND MODAL */}
+              {showAd && (
+                <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:9999 }}>
+                  <div style={{ background:"#0f172a", border:"1px solid #6366f1", padding:"24px", borderRadius:"12px", textAlign:"center" }}>
+                    <h4 style={{ color:"#fff" }}>Simulating Cyber Infrastructure Reward Ads...</h4>
+                    <p style={{ fontSize:"11px", color:"#94a3b8", marginTop:"4px" }}>Synchronizing state ledger logs.</p>
                   </div>
                 </div>
               )}
+
             </div>
           );
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(<CityOSApp />);
     </script>
 </body>
 </html>
