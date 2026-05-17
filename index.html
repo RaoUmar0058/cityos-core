@@ -415,15 +415,15 @@
     </script>
 </body>
 // ============================================================================
-// LEVEL 2 ENGINE EXPANSION: DELAYED INJECTION BUG FIX
+// LEVEL 2 ENGINE EXPANSION: SECURE BACKGROUND EXECUTION
 // ============================================================================
 
 engineState.levelTwoMovesLeft = 10; 
 engineState.isLevelTwoActive = false;
-let isLevelTwoInjected = false; // Flag to prevent multiple injections
+let isLevelTwoInjected = false; 
 
 function injectLevelTwoUIElements() {
-    if (isLevelTwoInjected) return; // Dubara inject hone se rokay ga
+    if (isLevelTwoInjected) return; 
     
     // Create a Move Tracker HUD Widget
     const moveTracker = document.createElement("div");
@@ -448,7 +448,7 @@ function injectLevelTwoUIElements() {
     // Inject Level 2 Cinematic Congratulations Overlay
     const celebrationOverlay = document.createElement("div");
     celebrationOverlay.id = "level2-celebration-modal";
-    celebrationOverlay.style.cssText = "position: fixed; inset: 0; background: rgba(5, 7, 15, 0.98); z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease;";
+    celebrationOverlay.style.cssText = "position: fixed; inset: 0; background: rgba(5, 7, 15, 0.98); z-index: 10001; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease;";
     celebrationOverlay.innerHTML = `
         <div class="celebration-card" style="background: rgba(11, 19, 38, 0.95); border: 2px solid #f59e0b; padding: 45px; border-radius: 24px; text-align: center; max-width: 550px; box-shadow: 0 0 70px rgba(245, 158, 11, 0.3); backdrop-filter: blur(30px);">
             <div class="tech-badge" style="display: inline-block; padding: 4px 12px; background: rgba(245,158,11,0.15); border: 1px solid #f59e0b; border-radius: 99px; font-family: 'DM Mono', monospace; font-size: 10px; color: #f59e0b; margin-bottom: 16px; letter-spacing: 1px;">⚡ COMPONENT UPGRADE UNLOCKED</div>
@@ -495,7 +495,6 @@ function processLevelOneCompletionCheck() {
     let builtNodeCount = engineState.gridArray.filter(cell => cell !== null && cell !== undefined && cell !== "").length;
     
     if (!engineState.isLevelTwoActive && builtNodeCount >= 4) {
-        // Elements ko sirf AISE WAQT inject karein jab Level 1 mukammal ho jaye!
         injectLevelTwoUIElements();
         
         if (typeof triggerSynthBeep === "function") triggerSynthBeep(783.99, 0.2);
@@ -503,7 +502,6 @@ function processLevelOneCompletionCheck() {
             appendTelemetryLog("[SYSTEM EVENT]: Level 1 optimization conditions achieved. Pausing core simulation clocks.");
         }
         
-        // Modal ko display flex kar dein taa ke congratulations screen show ho sky
         document.getElementById("level2-celebration-modal").style.display = "flex";
     }
 }
