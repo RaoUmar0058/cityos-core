@@ -3,389 +3,504 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CityOS v5 - Smart City Simulator</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+    <title>CityOS v5 - Ultimate Isometric Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #060912; font-family: 'DM Sans', sans-serif; overflow-x: hidden; color: #f1f5f9; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
+        :root {
+            --bg-dark: linear-gradient(135deg, #060913 0%, #0b1528 50%, #030712 100%);
+            --sidebar-dark: rgba(10, 17, 34, 0.95);
+            --glass-border: rgba(99, 102, 241, 0.2);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; display: flex; }
+
+        /* Welcome Screen Splash Overlay */
+        #welcome-screen {
+            position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .welcome-card {
+            background: rgba(15, 23, 42, 0.8); border: 2px solid var(--accent);
+            padding: 40px; borderRadius: 24px; text-align: center; max-width: 480px;
+            box-shadow: 0 0 50px var(--accent-glow); backdrop-filter: blur(20px);
+        }
+        .welcome-card h1 { font-family: 'Syne', sans-serif; font-size: 36px; margin-bottom: 10px; color: #fff; letter-spacing: -1px; }
+        .welcome-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.6; }
+        .start-btn {
+            background: var(--accent); color: white; border: none; padding: 14px 32px;
+            font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 4px 20px var(--accent-glow); transition: all 0.2s;
+        }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px #818cf8; }
+
+        /* Level Up Toast Modal */
+        #level-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(90deg, #ec4899, #8b5cf6); padding: 15px 40px;
+            border-radius: 99px; z-index: 9999; font-family: 'Syne', sans-serif; font-size: 20px;
+            font-weight: 800; box-shadow: 0 10px 30px rgba(236, 72, 153, 0.5);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px;
+        }
+
+        /* Layout Structure */
+        .app-container { display: flex; width: 100vw; height: 100vh; position: relative; }
+        
+        /* Sidebar layout styling */
+        .sidebar {
+            width: 320px; background: var(--sidebar-dark); border-right: 1px solid var(--glass-border);
+            padding: 24px; display: flex; flex-direction: column; gap: 20px; z-index: 10;
+            backdrop-filter: blur(16px); overflow-y: auto;
+        }
+        .brand-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .sub-brand { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+
+        /* Status Panels */
+        .stat-card {
+            background: linear-gradient(135deg, #1e1b4b, #311042); border: 1px solid rgba(167, 139, 250, 0.2);
+            padding: 16px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+        .stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: #a78bfa; letter-spacing: 1px; }
+        .stat-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-top: 4px; }
+
+        /* Control Buttons Container */
+        .ctrl-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .ctrl-btn {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+            border-radius: 10px; padding: 8px 0; color: var(--text-main); cursor: pointer;
+            font-size: 11px; text-align: center; transition: all 0.15s;
+        }
+        .ctrl-btn:hover:not(:disabled) { background: rgba(99, 102, 241, 0.15); border-color: var(--accent); }
+        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Blocks selector view */
+        .block-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 250px; padding-right: 4px; }
+        .block-item {
+            display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 12px;
+            cursor: pointer; text-align: left; transition: all 0.2s; position: relative;
+        }
+        .block-item:hover:not(.locked) { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+        .block-item.active { background: rgba(99,102,241,0.15); border: 1px solid var(--accent); box-shadow: 0 0 12px rgba(99,102,241,0.25); }
+        .block-item.locked { opacity: 0.4; cursor: not-allowed; }
+        .block-icon { font-size: 20px; }
+        .block-details h4 { font-size: 12px; font-weight: 700; color: #fff; }
+        .block-details p { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+        .lock-overlay { position: absolute; right: 12px; font-size: 10px; color: #ef4444; font-family: 'DM Mono', monospace; }
+
+        /* Simulation Canvas Arena (3D Context viewport) */
+        .simulation-viewport {
+            flex: 1; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); perspective: 1200px; overflow: hidden;
+        }
+
+        /* The Isometric Matrix wrapper */
+        .iso-scene {
+            transform: rotateX(60deg) rotateZ(-45deg);
+            transform-style: preserve-3d; transition: transform 0.5s ease;
+            display: grid; grid-template-columns: repeat(10, 48px); grid-template-rows: repeat(10, 48px); gap: 3px;
+            padding: 20px; background: rgba(99, 102, 241, 0.03); border: 2px dashed rgba(99, 102, 241, 0.15); border-radius: 8px;
+        }
+
+        /* 3D Grid Cells */
+        .grid-cell {
+            width: 48px; height: 48px; background: rgba(15, 23, 42, 0.6); position: relative;
+            border-radius: 4px; border: 1px solid rgba(99,102,241,0.1); cursor: pointer;
+            transform-style: preserve-3d; transition: all 0.15s;
+        }
+        .grid-cell:hover { background: rgba(99, 102, 241, 0.2); border-color: var(--accent); transform: translateZ(4px); }
+        
+        /* Rendered Building Element inside Cell */
+        .voxel-building {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 26px; transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px);
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); transform-origin: center bottom;
+            animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+        }
+
+        /* HUD Live Analytics Footer ticker */
+        .hud-suggestion-box {
+            position: absolute; bottom: 20px; left: 20px; right: 20px;
+            background: rgba(10, 17, 34, 0.85); border: 1px solid var(--glass-border);
+            padding: 10px 20px; border-radius: 12px; backdrop-filter: blur(12px);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .hint-text { font-family: 'DM Mono', monospace; font-size: 11px; color: #818cf8; }
+
+        /* Animation frames */
+        @keyframes bounceIn {
+            0% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px) scale(0); opacity: 0; }
+            70% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px) scale(1.2); }
+            100% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px) scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React;
+    <div id="welcome-screen">
+        <div class="welcome-card">
+            <h1>🏙️ CityOS v5</h1>
+            <p>Welcome back, Architect Rao. Initialize the neural engine matrix core to engineer your complex responsive metropolitan network grid simulator.</p>
+            <button class="start-btn" onclick="initializeEngine()">Start Simulation Engine</button>
+        </div>
+    </div>
 
-        // ═══════════════════════════════════════════════════════════════
-        // ENGINE GAME DATA CONFIGURATIONS
-        // ═══════════════════════════════════════════════════════════════
-        const GRID_COLS = 10;
-        const GRID_SIZE = GRID_COLS * GRID_COLS;
-        const SAVE_KEY  = "cityos_v5_save";
-        const STARTING_COINS = 800;
+    <div id="level-toast">⚡ LEVEL UP: LEVEL <span id="toast-lvl">4</span> UNLOCKED! (+💰500)</div>
 
-        const BUILDINGS = {
-          TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:8,  pollution:-6,  traffic:0,  energy:2,  population:0,  color:"#4ade80", unlockAt:0 },
-          ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-2, pollution:4,   traffic:-10,energy:-2, population:0,  color:"#94a3b8", unlockAt:0 },
-          HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-1, pollution:3,   traffic:4,  energy:-5, population:15, color:"#60a5fa", unlockAt:0 },
-          PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  beauty:20, oxygen:12, pollution:-10, traffic:-3, energy:3,  population:5,  color:"#86efac", unlockAt:0 },
-          SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:25, population:2,  color:"#fbbf24", unlockAt:5 },
-          FACTORY:  { id:"FACTORY",  label:"Factory",       icon:"🏭", cost:150, beauty:-5, oxygen:-12,pollution:18,  traffic:8,  energy:15, population:10, color:"#fb923c", unlockAt:5 },
-          HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:8,  oxygen:2,  pollution:-4,  traffic:6,  energy:-8, population:25, color:"#f43f5e", unlockAt:8 },
-          SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:12, oxygen:3,  pollution:-3,  traffic:4,  energy:-6, population:12, color:"#c084fc", unlockAt:8 },
-          MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:30, oxygen:2,  pollution:-2,  traffic:3,  energy:-3, population:8,  color:"#a78bfa", unlockAt:12 },
-          TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:20, oxygen:-5, pollution:8,   traffic:10, energy:-15,population:50, color:"#38bdf8", unlockAt:12 },
-          FASHION:  { id:"FASHION",  label:"Fashion Hub ✦", icon:"👗", cost:400, beauty:40, oxygen:1,  pollution:-5,  traffic:8,  energy:-10,population:30, color:"#f472b6", unlockAt:15 },
-        };
-
-        const MISSIONS = [
-          { id:"m1", title:"Green Starter",    desc:"Plant 3 Trees",              icon:"🌳", check:(g,s)=>g.filter(c=>c==="TREE").length>=3,  reward:100, xp:50  },
-          { id:"m2", title:"Clean Air Act",    desc:"Reduce pollution below 35%", icon:"💨", check:(g,s)=>s.pollution<35,                       reward:150, xp:80  },
-          { id:"m3", title:"City Builder",     desc:"Reach 50 population",        icon:"👥", check:(g,s)=>s.population>=50,                  reward:200, xp:100 },
-          { id:"m4", title:"Energy Surplus",   desc:"Energy above 60%",           icon:"⚡", check:(g,s)=>s.energy>60,                          reward:180, xp:90  },
-          { id:"m5", title:"Beautiful City",   desc:"Beauty score above 60%",     icon:"✨", check:(g,s)=>s.beauty>60,                         reward:200, xp:100 },
-        ];
-
-        const THEMES = {
-          dark: {
-            bg: "linear-gradient(160deg,#060912 0%,#0f172a 55%,#0c0a1e 100%)",
-            sidebar: "rgba(8,12,28,0.96)",
-            sidebarBdr: "rgba(99,102,241,0.15)",
-            gridBg: "rgba(8,12,28,0.75)",
-            gridBdr: "rgba(99,102,241,0.12)",
-            cellTop: "#1a2540", cellLeft: "#121c32", cellRight: "#0d1626",
-            text: "#f1f5f9", textSub: "#94a3b8", textMuted: "#475569",
-            barBg: "rgba(255,255,255,0.06)",
-            cardBg: "rgba(255,255,255,0.03)"
-          },
-          light: {
-            bg: "linear-gradient(160deg,#f0f4ff 0%,#fafafe 45%,#f5f0ff 100%)",
-            sidebar: "rgba(255,255,255,0.85)",
-            sidebarBdr: "rgba(99,102,241,0.1)",
-            gridBg: "rgba(241,245,249,0.85)",
-            gridBdr: "rgba(255,255,255,0.9)",
-            cellTop: "#f1f5f9", cellLeft: "#dde6f0", cellRight: "#c8d5e8",
-            text: "#1e1b4b", textSub: "#475569", textMuted: "#94a3b8",
-            barBg: "rgba(0,0,0,0.05)",
-            cardBg: "rgba(0,0,0,0.02)"
-          }
-        };
-
-        // ═══════════════════════════════════════════════════════════════
-        // SOUND ENGINE CONTEXT
-        // ═══════════════════════════════════════════════════════════════
-        function playAudioTone(type) {
-          try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            const now = ctx.currentTime;
-
-            if (type === "place") {
-              osc.frequency.setValueAtTime(440, now);
-              osc.frequency.exponentialRampToValueAtTime(660, now + 0.1);
-              gain.gain.setValueAtTime(0.1, now);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-              osc.start(now); osc.stop(now + 0.15);
-            } else if (type === "remove") {
-              osc.frequency.setValueAtTime(320, now);
-              osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
-              gain.gain.setValueAtTime(0.08, now);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-              osc.start(now); osc.stop(now + 0.12);
-            } else if (type === "mission") {
-              osc.frequency.setValueAtTime(523, now);
-              osc.frequency.setValueAtTime(659, now + 0.08);
-              osc.frequency.setValueAtTime(784, now + 0.16);
-              gain.gain.setValueAtTime(0.12, now);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-              osc.start(now); osc.stop(now + 0.3);
-            }
-          } catch (e) {}
-        }
-
-        // Stats Engine Calculator
-        function computeStats(grid) {
-          let oxygen=40, beauty=30, pollution=20, traffic=30, energy=50, population=0, score=0;
-          grid.forEach(cell => {
-            if (!cell) return;
-            const b = BUILDINGS[cell];
-            oxygen = Math.max(0, Math.min(100, oxygen + b.oxygen));
-            beauty = Math.max(0, Math.min(100, beauty + b.beauty));
-            pollution = Math.max(0, Math.min(100, pollution + b.pollution));
-            traffic = Math.max(0, Math.min(100, traffic + b.traffic));
-            energy = Math.max(0, Math.min(100, energy + b.energy));
-            population += b.population;
-            score += 10 + b.beauty;
-          });
-          const livability = Math.round((oxygen + beauty + (100 - pollution) + (100 - traffic) + energy) / 5);
-          const sustainability = Math.round(oxygen * 0.35 + (100 - pollution) * 0.35 + energy * 0.3);
-          return { oxygen, beauty, pollution, traffic, energy, population, score, livability, sustainability };
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // MAIN APPLICATION UI ENGINE
-        // ═══════════════════════════════════════════════════════════════
-        function CityOSApp() {
-          const [isNight, setIsNight] = useState(true);
-          const [grid, setGrid] = useState(() => {
-            try {
-              const item = localStorage.getItem(SAVE_KEY);
-              return item ? JSON.parse(item) : Array(GRID_SIZE).fill(null);
-            } catch(e) { return Array(GRID_SIZE).fill(null); }
-          });
-
-          const [coins, setCoins] = useState(STARTING_COINS);
-          const [moveCount, setMoveCount] = useState(0);
-          const [xp, setXp] = useState(0);
-          const [selected, setSelected] = useState("TREE");
-          const [tab, setTab] = useState("build");
-          const [completedM, setCompletedM] = useState([]);
-          const [showAd, setShowAd] = useState(false);
-          const [cellPx, setCellPx] = useState(42);
-
-          const t = isNight ? THEMES.dark : THEMES.light;
-          const stats = computeStats(grid);
-          const level = Math.floor(xp / 200) + 1;
-          const xpPct = ((xp % 200) / 200) * 100;
-
-          // Sync Screen Responsiveness Window Resize
-          useEffect(() => {
-            function handleResize() {
-              const width = window.innerWidth;
-              if (width < 640) setCellPx(28);
-              else if (width < 1024) setCellPx(36);
-              else setCellPx(44);
-            }
-            handleResize();
-            window.addEventListener("resize", handleResize);
-            return () => window.removeEventListener("resize", handleResize);
-          }, []);
-
-          // Auto State Save Engine
-          useEffect(() => {
-            try { localStorage.setItem(SAVE_KEY, JSON.stringify(grid)); } catch(e){}
-          }, [grid]);
-
-          // Real-time Mission Completer Rule engine
-          useEffect(() => {
-            let newlyDone = [];
-            MISSIONS.forEach(m => {
-              if (m.check(grid, stats) && !completedM.includes(m.id)) {
-                newlyDone.push(m.id);
-              }
-            });
-            if (newlyDone.length > 0) {
-              setCompletedM(prev => [...prev, ...newlyDone]);
-              setCoins(c => c + 150);
-              setXp(x => x + 60);
-              playAudioTone("mission");
-            }
-          }, [grid, stats, completedM]);
-
-          const handleCellClick = (idx) => {
-            const b = BUILDINGS[selected];
-            if (grid[idx]) return; 
-            if (coins < b.cost) return;
-
-            const nextGrid = [...grid];
-            nextGrid[idx] = selected;
-            setGrid(nextGrid);
-            setCoins(c => c - b.cost);
-            setMoveCount(m => m + 1);
-            setXp(x => x + 15);
-            playAudioTone("place");
-          };
-
-          const handleCellRightClick = (idx, e) => {
-            if(e) e.preventDefault();
-            if (!grid[idx]) return;
-
-            const nextGrid = [...grid];
-            nextGrid[idx] = null;
-            setGrid(nextGrid);
-            setMoveCount(m => m + 1);
-            playAudioTone("remove");
-          };
-
-          const triggerAdReward = () => {
-            setShowAd(true);
-            setTimeout(() => {
-              setCoins(c => c + 250);
-              setShowAd(false);
-              playAudioTone("mission");
-            }, 2000);
-          };
-
-          return (
-            <div style={{
-              display: "flex", flexDirection: window.innerWidth < 768 ? "column" : "row",
-              minHeight: "100vh", background: t.bg, color: t.text, padding: "16px", gap: "16px"
-            }}>
-              
-              {/* SIDEBAR DASHBOARD CONTROL */}
-              <div style={{
-                width: window.innerWidth < 768 ? "100%" : "300px", background: t.sidebar,
-                border: `1px solid ${t.sidebarBdr}`, borderRadius: "16px", padding: "16px",
-                display: "flex", flexDirection: "column", gap: "12px"
-              }}>
-                <div>
-                  <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "20px" }}>CityOS Simulator 🌆</h2>
-                  <p style={{ fontSize: "10px", color: t.textMuted, fontFamily: "'DM Mono', monospace" }}>PORTFOLIO DATA INFRASTRUCTURE</p>
-                </div>
-
-                {/* LEVEL SUMMARY */}
-                <div style={{ background: "rgba(99,102,241,0.08)", padding: "10px", borderRadius: "12px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:"10px", fontFamily:"'DM Mono',monospace" }}>
-                    <span>PLANNER LEVEL {level}</span>
-                    <span>{Math.round(xpPct)}%</span>
-                  </div>
-                  <div style={{ background: t.barBg, height: "4px", borderRadius: "99px", marginTop: "4px", overflow:"hidden" }}>
-                    <div style={{ width: `${xpPct}%`, height: "100%", background: "#6366f1" }}/>
-                  </div>
-                </div>
-
-                {/* STAT VALUES */}
-                <div style={{ background: "#4f46e5", color: "#fff", padding: "12px", borderRadius: "12px" }}>
-                  <div style={{ fontSize: "10px", opacity: 0.8 }}>BUDGET POOL</div>
-                  <div style={{ fontSize: "24px", fontWeight: "800", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span>💰 {coins}</span>
-                    <button onClick={triggerAdReward} style={{ background:"rgba(255,255,255,0.2)", border:"none", color:"#fff", fontSize:"10px", padding:"4px 8px", borderRadius:"6px", cursor:"pointer" }}>+ FUND</button>
-                  </div>
-                  <div style={{ display: "flex", gap: "10px", marginTop: "6px", fontSize: "10px", fontFamily: "'DM Mono', monospace" }}>
-                    <span>MOVES: {moveCount}</span>
-                    <span>POP: {stats.population}</span>
-                  </div>
-                </div>
-
-                {/* LIVABILITY BAR METER */}
-                <div style={{ border: `1px solid ${stats.livability > 50 ? "#4ade80" : "#fb923c"}`, padding: "8px 12px", borderRadius: "12px", fontSize: "13px" }}>
-                  📊 Livability Score: <strong>{stats.livability}%</strong>
-                </div>
-
-                {/* TAB SWITCH SYSTEM */}
-                <div style={{ display: "flex", background: "rgba(0,0,0,0.15)", borderRadius: "8px", padding: "2px" }}>
-                  {["build", "missions", "metrics"].map(tb => (
-                    <button key={tb} onClick={() => setTab(tb)} style={{
-                      flex: 1, padding: "6px 0", fontSize: "11px", border: "none", borderRadius: "6px", cursor: "pointer",
-                      background: tab === tb ? "#6366f1" : "transparent", color: tab === tb ? "#fff" : t.textSub
-                    }}>{tb.toUpperCase()}</button>
-                  ))}
-                </div>
-
-                {/* CONDITIONAL SUB MENU VIEW */}
-                {tab === "build" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "240px", overflowY: "auto" }}>
-                    {Object.values(BUILDINGS).map(b => {
-                      const active = selected === b.id;
-                      const isLocked = b.unlockAt > moveCount;
-                      return (
-                        <button key={b.id} onClick={() => !isLocked && setSelected(b.id)} style={{
-                          display: "flex", justifyContent: "space-between", padding: "8px", borderRadius: "8px",
-                          border: active ? `1px solid ${b.color}` : "1px solid transparent", cursor: isLocked ? "not-allowed" : "pointer",
-                          background: active ? "rgba(99,102,241,0.1)" : "transparent", opacity: isLocked ? 0.35 : 1
-                        }}>
-                          <span style={{ fontSize: "12px", color: t.text }}>{b.icon} {b.label} {isLocked && `🔒(Lvl ${b.unlockAt})`}</span>
-                          <span style={{ fontSize: "11px", color: t.textMuted }}>💰{b.cost}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {tab === "missions" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    {MISSIONS.map(m => {
-                      const isDone = completedM.includes(m.id);
-                      return (
-                        <div key={m.id} style={{ display:"flex", alignItems:"center", justifyValue:"space-between", padding:"6px", background: t.cardBg, borderRadius:"8px", justifyContent:"space-between" }}>
-                          <span style={{ fontSize: "11px" }}>{m.icon} {m.title}</span>
-                          <span style={{ fontSize: "10px", color: isDone ? "#4ade80" : t.textMuted }}>{isDone ? "✓ DONE" : `+💰${m.reward}`}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {tab === "metrics" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px" }}>
-                    <div>🌿 Oxygen: {stats.oxygen}%</div>
-                    <div>✨ Beauty: {stats.beauty}%</div>
-                    <div>💨 Pollution: {stats.pollution}%</div>
-                    <div>🚦 Traffic: {stats.traffic}%</div>
-                    <div>⚡ Energy: {stats.energy}%</div>
-                  </div>
-                )}
-
-                {/* BOTTOM UTILITY FOOTER CONFIGS */}
-                <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "10px", borderTop: `1px solid ${t.sidebarBdr}` }}>
-                  <button onClick={() => { if(window.confirm("Reset Grid?")){setGrid(Array(GRID_SIZE).fill(null)); setCoins(STARTING_COINS); setMoveCount(0); setXp(0);} }} style={{ background:"none", border:"none", color:"#f87171", cursor:"pointer", fontSize:"11px" }}>🔄 Wipe Reset</button>
-                  <button onClick={() => setIsNight(!isNight)} style={{ background:"none", border:"none", color:t.textSub, cursor:"pointer", fontSize:"12px" }}>{isNight ? "☀️ Light Mode" : "🌙 Night Mode"}</button>
-                </div>
-              </div>
-
-              {/* ISOMETRIC SIMULATION CANVAS CENTER */}
-              <div style={{
-                flex: 1, background: t.gridBg, border: `1px solid ${t.gridBdr}`, borderRadius: "16px",
-                display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", overflow: "hidden"
-              }}>
-                <div style={{
-                  display: "grid", gridTemplateColumns: `repeat(${GRID_COLS}, ${cellPx}px)`, gap: "4px", padding: "20px"
-                }}>
-                  {grid.map((cell, idx) => {
-                    const b = cell ? BUILDINGS[cell] : null;
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => handleCellClick(idx)}
-                        onContextMenu={(e) => handleCellRightClick(idx, e)}
-                        style={{
-                          width: `${cellPx}px`, height: `${cellPx}px`, position: "relative",
-                          cursor: "pointer", background: cell ? "#1e293b" : "rgba(255,255,255,0.02)",
-                          border: `1px solid ${cell ? b.color : "rgba(255,255,255,0.05)"}`, borderRadius: "6px",
-                          display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s"
-                        }}
-                      >
-                        <span style={{ fontSize: `${cellPx * 0.55}px` }}>{cell ? b.icon : ""}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* FUND MODAL */}
-              {showAd && (
-                <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:9999 }}>
-                  <div style={{ background:"#0f172a", border:"1px solid #6366f1", padding:"24px", borderRadius:"12px", textAlign:"center" }}>
-                    <h4 style={{ color:"#fff" }}>Simulating Cyber Infrastructure Reward Ads...</h4>
-                    <p style={{ fontSize:"11px", color:"#94a3b8", marginTop:"4px" }}>Synchronizing state ledger logs.</p>
-                  </div>
-                </div>
-              )}
-
+    <div class="app-container">
+        <div class="sidebar">
+            <div>
+                <div class="brand-title">⚙️ CityOS Matrix</div>
+                <div class="sub-brand">NEURAL URBAN GENERATOR SYSTEM</div>
             </div>
-          );
+
+            <div class="stat-card">
+                <div class="stat-lbl">CORE BALANCE</div>
+                <div class="stat-val" id="coins-display">💰 800</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family:'DM Mono', monospace; font-size:10px; color:#94a3b8;">
+                    <span>MOVES: <b id="moves-lbl" style="color:#fff;">0</b></span>
+                    <span>LVL: <b id="lvl-lbl" style="color:#ec4899;">1</b></span>
+                </div>
+            </div>
+
+            <div class="ctrl-row">
+                <button class="ctrl-btn" onclick="triggerUndo()" id="btn-undo" disabled>↩️ Undo</button>
+                <button class="ctrl-btn" onclick="triggerRedo()" id="btn-redo" disabled>↪️ Redo</button>
+                <button class="ctrl-btn" onclick="toggleMute()" id="btn-mute">🔊 Sound</button>
+                <button class="ctrl-btn" onclick="resetGrid()" style="color: #ef4444;">🔄 Wipe</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <h3 style="font-size: 11px; font-family:'DM Mono', monospace; color: var(--text-muted); letter-spacing: 1px;">METROPOLIS MODULE PALETTE</h3>
+                <div class="block-list" id="palette-container"></div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">
+                <h4 style="font-size: 11px; font-family:'DM Mono', monospace; margin-bottom: 6px; color:#38bdf8;">🎯 ACTIVE MATRIX OBJECTIVE</h4>
+                <div id="objective-desc" style="font-size: 12px; font-weight: 500; color:#cbd5e1;">Plant 3 Oak Trees to build baseline eco infrastructure.</div>
+            </div>
+        </div>
+
+        <div class="simulation-viewport">
+            <div class="iso-scene" id="isometric-grid-matrix"></div>
+
+            <div class="hud-suggestion-box">
+                <div class="hint-text" id="live-engine-hint">💡 TIP: Select modules from the left dashboard catalog and place them onto the spatial isometric field matrix.</div>
+                <div style="font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted);">ENGINE: ONLINE</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Core Config Constants System 
+        const GRID_SIZE = 100;
+        const MODULE_REGISTRY = {
+            TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  unlockAt:0 },
+            ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  unlockAt:0 },
+            HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, unlockAt:0 },
+            PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  unlockAt:2 },
+            SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, unlockAt:4 },
+            FACTORY:  { id:"FACTORY",  label:"Mega Factory",  icon:"🏭", cost:150, unlockAt:6 },
+            MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, unlockAt:8 },
+            TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, unlockAt:10 }
+        };
+
+        // Application Native Reactive States Container
+        let state = {
+            grid: Array(GRID_SIZE).fill(null),
+            coins: 800,
+            moves: 0,
+            level: 1,
+            selectedModule: "TREE",
+            muted: false
+        };
+
+        // Chrono History Stack Engine (Tracking Architecture states for crisp execution)
+        let structuralHistory = [];
+        let structuralFuture = [];
+
+        // Audio System Engine context core
+        let audioCtx = null;
+
+        function initializeEngine() {
+            // Unlocking user security lock for browser native performance audio tracking
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            document.getElementById("welcome-screen").style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById("welcome-screen").style.display = "none";
+                playbackSound("unlock");
+            }, 500);
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<CityOSApp />);
+        // Native Synthesizer Waveform Engine (Pure Audio context code generation)
+        function playbackSound(event) {
+            if (state.muted || !audioCtx) return;
+            try {
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                let time = audioCtx.currentTime;
+
+                if (event === "place") {
+                    osc.frequency.setValueAtTime(440, time);
+                    osc.frequency.exponentialRampToValueAtTime(880, time + 0.1);
+                    gainNode.gain.setValueAtTime(0.15, time);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+                    osc.start(time); osc.stop(time + 0.15);
+                } else if (event === "remove") {
+                    osc.frequency.setValueAtTime(350, time);
+                    osc.frequency.exponentialRampToValueAtTime(120, time + 0.12);
+                    gainNode.gain.setValueAtTime(0.15, time);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+                    osc.start(time); osc.stop(time + 0.15);
+                } else if (event === "unlock") {
+                    // Level design sequence cascade notes
+                    [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                        let o = audioCtx.createOscillator();
+                        let g = audioCtx.createGain();
+                        o.connect(g); g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, time + (idx * 0.08));
+                        g.gain.setValueAtTime(0.15, time + (idx * 0.08));
+                        g.gain.exponentialRampToValueAtTime(0.001, time + (idx * 0.08) + 0.2);
+                        o.start(time + (idx * 0.08)); o.stop(time + (idx * 0.08) + 0.2);
+                    });
+                } else if (event === "error") {
+                    osc.type = "sawtooth";
+                    osc.frequency.setValueAtTime(150, time);
+                    gainNode.gain.setValueAtTime(0.12, time);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+                    osc.start(time); osc.stop(time + 0.2);
+                }
+            } catch (err) { console.log("Audio Context routing exception:", err); }
+        }
+
+        // Render Sidebar Catalog Blocks Engine interface
+        function renderPaletteInterface() {
+            const container = document.getElementById("palette-container");
+            container.innerHTML = "";
+            
+            Object.values(MODULE_REGISTRY).forEach(mod => {
+                const isLocked = state.moves < mod.unlockAt;
+                const isActive = state.selectedModule === mod.id;
+                
+                const elem = document.createElement("button");
+                elem.className = `block-item ${isLocked ? 'locked' : ''} ${isActive ? 'active' : ''}`;
+                elem.disabled = isLocked;
+                elem.onclick = () => {
+                    if(!isLocked) {
+                        state.selectedModule = mod.id;
+                        renderPaletteInterface();
+                    }
+                };
+
+                elem.innerHTML = `
+                    <div class="block-icon">${mod.icon}</div>
+                    <div class="block-details">
+                        <h4>${mod.label}</h4>
+                        <p>${isLocked ? 'SYSTEM BLOCKED' : 'COST: 💰 ' + mod.cost}</p>
+                    </div>
+                    ${isLocked ? `<div class="lock-overlay">🔒 Move ${mod.unlockAt}</div>` : ''}
+                `;
+                container.appendChild(elem);
+            });
+        }
+
+        // Render Simulation Isometric Grid System matrix canvas
+        function renderSimulationGrid() {
+            const field = document.getElementById("isometric-grid-matrix");
+            field.innerHTML = "";
+
+            state.grid.forEach((blockKey, cellIndex) => {
+                const gridCell = document.createElement("div");
+                gridCell.className = "grid-cell";
+                gridCell.onclick = () => handleCellClickAction(cellIndex);
+                
+                // Right click block erasure protocol support
+                gridCell.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    handleCellRightClickAction(cellIndex);
+                };
+
+                if (blockKey && MODULE_REGISTRY[blockKey]) {
+                    const blockMeta = MODULE_REGISTRY[blockKey];
+                    const assetVoxel = document.createElement("div");
+                    assetVoxel.className = "voxel-building";
+                    assetVoxel.innerText = blockMeta.icon;
+                    gridCell.appendChild(assetVoxel);
+                }
+                field.appendChild(gridCell);
+            });
+        }
+
+        // Record Matrix point transaction for deployment operations
+        function pushStateToUndoHistoryStack() {
+            structuralHistory.push(JSON.stringify({ grid: state.grid, coins: state.coins, moves: state.moves, level: state.level }));
+            structuralFuture = []; // Clear redo chain fork operations
+            updateControlSystemButtonsDOM();
+        }
+
+        function updateControlSystemButtonsDOM() {
+            document.getElementById("btn-undo").disabled = structuralHistory.length === 0;
+            document.getElementById("btn-redo").disabled = structuralFuture.length === 0;
+        }
+
+        // Place element action core handling
+        function handleCellClickAction(index) {
+            // Guard clause checking if point cell location is currently occupied
+            if (state.grid[index] !== null) {
+                playbackSound("error");
+                updateSuggestionEngineTicker("❌ Node location is already occupied! Right-click or long-press to wipe block asset mapping.");
+                return;
+            }
+
+            const activeModule = MODULE_REGISTRY[state.selectedModule];
+            if (state.coins < activeModule.cost) {
+                playbackSound("error");
+                updateSuggestionEngineTicker("❌ Budget deficit alert! Insufficient core structural tokens available for operational integration.");
+                return;
+            }
+
+            pushStateToUndoHistoryStack();
+
+            // Mutating internal structural states arrays
+            state.grid[index] = activeModule.id;
+            state.coins -= activeModule.cost;
+            state.moves += 1;
+
+            playbackSound("place");
+            evaluateProgressionMilestoneSystems();
+            syncApplicationStateUIVars();
+        }
+
+        // Right click remove node sequence method
+        function handleCellRightClickAction(index) {
+            if (state.grid[index] === null) return;
+
+            pushStateToUndoHistoryStack();
+            state.grid[index] = null;
+            state.moves += 1;
+            
+            playbackSound("remove");
+            evaluateProgressionMilestoneSystems();
+            syncApplicationStateUIVars();
+        }
+
+        // Chrono State Management Functions
+        function triggerUndo() {
+            if (structuralHistory.length === 0) return;
+            structuralFuture.push(JSON.stringify({ grid: state.grid, coins: state.coins, moves: state.moves, level: state.level }));
+            
+            let targetSnapshot = JSON.parse(structuralHistory.pop());
+            assignSnapshotToActiveState(targetSnapshot);
+        }
+
+        function triggerRedo() {
+            if (structuralFuture.length === 0) return;
+            structuralHistory.push(JSON.stringify({ grid: state.grid, coins: state.coins, moves: state.moves, level: state.level }));
+
+            let targetSnapshot = JSON.parse(structuralFuture.pop());
+            assignSnapshotToActiveState(targetSnapshot);
+        }
+
+        function assignSnapshotToActiveState(snap) {
+            state.grid = snap.grid;
+            state.coins = snap.coins;
+            state.moves = snap.moves;
+            state.level = snap.level;
+            
+            playbackSound("unlock");
+            syncApplicationStateUIVars();
+            updateControlSystemButtonsDOM();
+        }
+
+        // Evolution Progression Calculations Engine (Solving level stuck tracking framework issue)
+        function evaluateProgressionMilestoneSystems() {
+            let nextCalculatedLevel = 1;
+            if (state.moves >= 30) nextCalculatedLevel = 5;
+            else if (state.moves >= 18) nextCalculatedLevel = 4;
+            else if (state.moves >= 10) nextCalculatedLevel = 3;
+            else if (state.moves >= 4)  nextCalculatedLevel = 2;
+
+            if (nextCalculatedLevel > state.level) {
+                state.level = nextCalculatedLevel;
+                state.coins += 500; // Injecting milestone system structural tokens balance expansion
+                triggerLevelCelebrationToastBanner(state.level);
+            }
+        }
+
+        function triggerLevelCelebrationToastBanner(lvl) {
+            playbackSound("unlock");
+            const element = document.getElementById("level-toast");
+            document.getElementById("toast-lvl").innerText = lvl;
+            element.style.top = "24px";
+            setTimeout(() => { element.style.top = "-100px"; }, 4000);
+        }
+
+        // Sync Application system values to standard client nodes DOM layout view
+        function syncApplicationStateUIVars() {
+            document.getElementById("coins-display").innerText = `💰 ${state.coins}`;
+            document.getElementById("moves-lbl").innerText = state.moves;
+            document.getElementById("lvl-lbl").innerText = state.level;
+
+            renderPaletteInterface();
+            renderSimulationGrid();
+            updateDynamicMissionAndSyllabusHints();
+        }
+
+        // Dynamic Hint Suggestion Engine logic updates
+        function updateDynamicMissionAndSyllabusHints() {
+            const descNode = document.getElementById("objective-desc");
+            const countTrees = state.grid.filter(c => c === "TREE").length;
+            const countRoads = state.grid.filter(c => c === "ROAD").length;
+
+            if (state.level === 1) {
+                descNode.innerHTML = `Plant 3 Trees to initialize system canopy (${countTrees}/3 placed)`;
+                updateSuggestionEngineTicker("💡 ARCHITECT HINT: Infrastructure is too barren. Place Oak Trees to generate fresh airflow dynamics and credits.");
+            } else if (state.level === 2) {
+                descNode.innerHTML = `Construct 4 Smart Road channels for transport network (${countRoads}/4 mapped)`;
+                updateSuggestionEngineTicker("💡 ARCHITECT HINT: Citizen transit pathways requested! Lay down Modern Villa properties beside active Smart Roads.");
+            } else if (state.level === 3) {
+                descNode.innerHTML = "Reach 1,200 balance credits to build advanced Tier-3 installations.";
+                updateSuggestionEngineTicker("💡 ARCHITECT HINT: Balance tracking optimizes micro-loans. Conserve structural token allocation footprints.");
+            } else {
+                descNode.innerHTML = "Matrix Grid is sprawling! Deploy Cyber Towers to fully optimize node network routing.";
+                updateSuggestionEngineTicker("💡 ARCHITECT HINT: High evolution matrix active. Watch expansion profiles to protect system metrics.");
+            }
+        }
+
+        function updateSuggestionEngineTicker(text) {
+            document.getElementById("live-engine-hint").innerText = text;
+        }
+
+        function toggleMute() {
+            state.muted = !state.muted;
+            document.getElementById("btn-mute").innerText = state.muted ? "🔇 Muted" : "🔊 Sound";
+        }
+
+        function resetGrid() {
+            if(confirm("Initialize complete network grid node format wipe wipe? All progress will drop.")) {
+                state.grid = Array(GRID_SIZE).fill(null);
+                state.coins = 800;
+                state.moves = 0;
+                state.level = 1;
+                structuralHistory = [];
+                structuralFuture = [];
+                syncApplicationStateUIVars();
+                updateControlSystemButtonsDOM();
+                playbackSound("error");
+            }
+        }
+
+        // Kickstarting baseline pipeline procedures immediately upon DOM window completion tracking
+        renderPaletteInterface();
+        renderSimulationGrid();
+        updateDynamicMissionAndSyllabusHints();
     </script>
 </body>
 </html>
