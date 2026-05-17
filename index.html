@@ -415,3 +415,171 @@
     </script>
 </body>
 </html>
+// ============================================================================
+// LEVEL 2 ENGINE EXPANSION: MOVES MANAGEMENT & STATE TRANSITIONS
+// ============================================================================
+
+// Stacking new Level 2 properties onto our global engineState object
+engineState.levelTwoMovesLeft = 10; // Level 2 structural constraint constraint
+engineState.isLevelTwoActive = false;
+
+// Append a dedicated Level 2 configuration card dynamically into your Sidebar layout
+function injectLevelTwoUIElements() {
+    const sidebar = document.querySelector(".sidebar");
+    
+    // Create a Move Tracker HUD Widget
+    const moveTracker = document.createElement("div");
+    moveTracker.id = "level2-move-card";
+    moveTracker.className = "stat-card";
+    moveTracker.style.display = "none";
+    moveTracker.style.borderLeft = "3px solid #f59e0b";
+    moveTracker.innerHTML = `
+        <div class="stat-lbl" style="color: #f59e0b;">LEVEL 2 DESIGN CONSTRAINTS</div>
+        <div class="stat-val" id="moves-display" style="color: #f59e0b;">⏳ 10 Moves</div>
+        <div style="font-family: 'DM Mono', monospace; font-size: 10px; color: #94a3b8; margin-top: 4px;">
+            ⚠️ Zoning Limit: Optimize load placement before budget or moves exhaust.
+        </div>
+    `;
+    // Insert right under our central core wallet card
+    const walletCard = document.getElementById("wallet-card");
+    walletCard.parentNode.insertBefore(moveTracker, walletCard.nextSibling);
+
+    // Inject Level 2 Cinematic Congratulations Overlay directly into the Body
+    const celebrationOverlay = document.createElement("div");
+    celebrationOverlay.id = "level2-celebration-modal";
+    celebrationOverlay.style.cssText = "position: fixed; inset: 0; background: rgba(5, 7, 15, 0.98); z-index: 10001; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease;";
+    celebrationOverlay.innerHTML = `
+        <div class="celebration-card" style="border-color: #f59e0b; box-shadow: 0 0 70px rgba(245, 158, 11, 0.3);">
+            <div class="tech-badge" style="background: rgba(245,158,11,0.15); border-color: #f59e0b; color: #f59e0b;">⚡ COMPONENT UPGRADE UNLOCKED</div>
+            <h1 style="color: #f59e0b;">Level 1 Complete!</h1>
+            <p>
+                Outstanding engineering, Architect! Your structural grid placement layout cleared baseline spatial zoning parameters. Level 1 optimization is completely stabilized. Welcome to <b>Level 2: Strict Zoning Laws & Resource Limitations</b>.
+            </p>
+            <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(245,158,11,0.3); padding: 16px; border-radius: 12px; margin-bottom: 25px; text-align: left;">
+                <h4 style="color: #fff; font-size: 13px; margin-bottom: 6px;">💡 LEVEL 2 STRATEGIC ANCHOR TIPS:</h4>
+                <p style="font-size: 11px; color: #94a3b8; margin: 0; text-align: justify; line-height: 1.4;">
+                    1. You are bound by a rigid <b>10-move budget framework</b>. Every single structure placed consumes 1 vector move.<br>
+                    2. Check the capacity tolerances inside your telemetry panel before executing node adjustments.<br>
+                    3. Maximize asset diversification to unlock your structural economy loop safely.
+                </p>
+            </div>
+            <button class="start-btn" style="background: linear-gradient(90deg, #f59e0b, #d97706); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);" onclick="startLevelTwoCoreEngine()">Initiate Level 2 Operations</button>
+        </div>
+    `;
+    document.body.appendChild(celebrationOverlay);
+
+    // Inject Level 2 Game Over / Success Terminal Overlay right into the Body
+    const endOverlay = document.createElement("div");
+    endOverlay.id = "level2-end-modal";
+    endOverlay.style.cssText = "position: fixed; inset: 0; background: rgba(5, 7, 15, 0.99); z-index: 10002; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease;";
+    endOverlay.innerHTML = `
+        <div class="celebration-card" style="border-color: #34d399; box-shadow: 0 0 70px rgba(52, 211, 153, 0.4);">
+            <div class="tech-badge success">🏢 METROPOLIS MATRIX VERIFIED</div>
+            <h1 style="color: #34d399;">Level 2 Victorious!</h1>
+            <p>
+                Magnificent execution! You managed structural density allocations flawlessly within the constrained limits. Your structural ecosystem has proven perfectly balanced. Level 2 complete.
+            </p>
+            <div style="font-family: 'DM Mono', monospace; font-size: 11px; color: #a5b4fc; background: rgba(99,102,241,0.1); padding: 12px; border-radius: 8px; margin-bottom: 25px;">
+                🛰️ Status Pipeline: Awaiting Level 3 System Architecture Configuration
+            </div>
+            <button class="start-btn" style="background: linear-gradient(90deg, #6366f1, #4f46e5);" onclick="alert('Level 3 modules locked till your next instruction command vector!')">Standby for Level 3</button>
+        </div>
+    `;
+    document.body.appendChild(endOverlay);
+}
+
+// Intercepts the original Level 1 builder system logic loop seamlessly
+function processLevelOneCompletionCheck() {
+    // Level 1 Ends when user places at least 4 active infrastructure nodes onto the grid matrix
+    let builtNodeCount = engineState.gridArray.filter(cell => cell !== null).length;
+    
+    if (!engineState.isLevelTwoActive && builtNodeCount >= 4) {
+        triggerSynthBeep(783.99, 0.2);
+        setTimeout(() => triggerSynthBeep(987.77, 0.3), 150);
+        
+        // Render the new level visual nodes onto the DOM view tree structure
+        document.getElementById("level2-celebration-modal").style.display = "flex";
+        appendTelemetryLog("[SYSTEM EVENT]: Level 1 optimization conditions achieved. Pausing core simulation clocks.");
+    }
+}
+
+// Boots up level 2 parameters, resetting spatial variables
+function startLevelTwoCoreEngine() {
+    engineState.isLevelTwoActive = true;
+    engineState.walletBal = 500; // Reset budget currency for structural testing challenge
+    engineState.gridArray = Array(GRID_SIZE).fill(null); // Fresh workspace clearance
+    
+    triggerSynthBeep(523.25, 0.15);
+    
+    // UI Visual Elements updating configurations
+    document.getElementById("level2-celebration-modal").style.display = "none";
+    document.getElementById("level2-move-card").style.style.display = "block";
+    document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
+    document.getElementById("moves-display").innerText = `⏳ ${engineState.levelTwoMovesLeft} Moves`;
+    
+    document.getElementById("hud-message-text").innerHTML = "⚡ <b>LEVEL 2 ACTIVE:</b> Strategic 10-Move Limit Enforced. Deploy high-yield assets with precision before exhaustion vectors engage.";
+    appendTelemetryLog("Level 2 initialized. Standard operational frameworks shifted to move budget tracking parameters.");
+    
+    // Redraw empty scene grid canvas context
+    buildActiveMatrixGrid();
+}
+
+// Overwrite the original component function to track moves and verify victory thresholds
+const baseStructuralAssetImplementation = implementStructuralAsset;
+implementStructuralAsset = function(index) {
+    // If level 2 is running, apply limited moves condition calculations
+    if (engineState.isLevelTwoActive) {
+        if (engineState.levelTwoMovesLeft <= 0) {
+            triggerSynthBeep(120, 0.4);
+            appendTelemetryLog("[CRITICAL FAILURE]: Out of moves structural error context vector!", "error");
+            return;
+        }
+
+        const targetAsset = REGISTRY_CATALOG[engineState.selectedAsset];
+        const nodeSoilCapacity = engineState.soilStabilityMatrix[index];
+
+        // Core compliance rules check logic
+        if (engineState.walletBal < targetAsset.cost || nodeSoilCapacity < targetAsset.minSoilLoad) {
+            // Re-route to standard validation error logging code safely
+            baseStructuralAssetImplementation(index);
+            return;
+        }
+
+        // Deduct 1 step command from structural limit
+        engineState.levelTwoMovesLeft--;
+        document.getElementById("moves-display").innerText = `⏳ ${engineState.levelTwoMovesLeft} Moves`;
+
+        // Execute primary data write array transformation safely
+        baseStructuralAssetImplementation(index);
+        appendTelemetryLog(`[LEVEL 2]: Move tracked. Constraints remaining: ${engineState.levelTwoMovesLeft}`);
+
+        // LEVEL 2 WIN CONSTRAINTS EVALUATION: User secures at least 3 Modern Villas within the 10-Move boundary limit
+        let villaCount = engineState.gridArray.filter(cell => cell === "HOUSE").length;
+        if (villaCount >= 3) {
+            setTimeout(() => {
+                triggerSynthBeep(1046.50, 0.4);
+                document.getElementById("level2-end-modal").style.display = "flex";
+                appendTelemetryLog("[SUCCESS EVENT]: Level 2 victory parameter sequence confirmed.");
+            }, 600);
+            return;
+        }
+
+        // LEVEL 2 LOSS CONSTRAINTS EVALUATION
+        if (engineState.levelTwoMovesLeft <= 0 && villaCount < 3) {
+            triggerSynthBeep(90, 0.6);
+            appendTelemetryLog("[FAIL VECTOR]: Level 2 constraints exhausted. Modern Villa density quota not reached.", "error");
+            document.getElementById("hud-message-text").innerHTML = "❌ <b>LEVEL TWO FAILED:</b> Moves exhausted! Reload browser workspace script to run telemetry analytics optimization cycles again.";
+        }
+
+    } else {
+        // Run standard Level 1 logic code pipeline pathway
+        baseStructuralAssetImplementation(index);
+        processLevelOneCompletionCheck();
+    }
+};
+
+// Auto-trigger insertion components upon document execution parsing cycles
+setTimeout(() => {
+    injectLevelTwoUIElements();
+    appendTelemetryLog("Level 2 tracking extensions injected seamlessly into matrix operational loops.");
+}, 600);
