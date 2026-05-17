@@ -3,720 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CityOS Matrix v5: Neural Urban Simulator</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
-
+    <title>CityOS Matrix v5 - Modular Core Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            user-select: none;
+        :root {
+            --bg-dark: linear-gradient(135deg, #05070f 0%, #0b1326 50%, #02040a 100%);
+            --sidebar-dark: rgba(9, 15, 30, 0.96);
+            --glass-border: rgba(99, 102, 241, 0.25);
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.45);
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --matrix-green: #34d399;
         }
-        body, html, #root {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #030712;
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; display: flex; }
+
+        /* Cinematic Welcome & Onboarding Core Overlay */
+        #welcome-screen {
+            position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        .welcome-card {
+            background: rgba(11, 19, 38, 0.85); border: 2px solid var(--accent);
+            padding: 45px; border-radius: 24px; text-align: center; max-width: 550px;
+            box-shadow: 0 0 70px var(--accent-glow); backdrop-filter: blur(30px);
+            animation: cardEntrance 0.8s cubic-bezier(0.19, 1, 0.22, 1);
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        @keyframes cardEntrance {
+            0% { transform: translateY(30px) scale(0.95); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.3);
-            border-radius: 99px;
+        .welcome-card h1 { font-family: 'Syne', sans-serif; font-size: 36px; margin-bottom: 12px; color: #fff; letter-spacing: -1px; }
+        .welcome-card p { color: #94a3b8; font-size: 14px; margin-bottom: 30px; line-height: 1.6; text-align: justify; }
+        .welcome-card .tech-badge {
+            display: inline-block; padding: 4px 12px; background: rgba(99, 102, 241, 0.15);
+            border: 1px solid var(--accent); border-radius: 99px; font-family: 'DM Mono', monospace;
+            font-size: 10px; color: #a5b4fc; margin-bottom: 16px; letter-spacing: 1px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.6);
+        .start-btn {
+            background: linear-gradient(90deg, #6366f1, #4f46e5); color: white; border: none; padding: 14px 40px;
+            font-size: 15px; font-weight: 700; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 4px 20px var(--accent-glow); transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
         }
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 26px #818cf8; }
+
+        /* Base Layout Architecture */
+        .app-container { display: flex; width: 100vw; height: 100vh; position: relative; }
+        
+        .sidebar {
+            width: 340px; background: var(--sidebar-dark); border-right: 1px solid var(--glass-border);
+            padding: 24px; display: flex; flex-direction: column; gap: 20px; z-index: 10;
+            backdrop-filter: blur(20px); overflow-y: auto;
         }
-        .voxel-animate {
-            animation: bounceIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        .brand-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .sub-brand { font-family: 'DM Mono', monospace; font-size: 9px; color: #818cf8; letter-spacing: 1.5px; }
+
+        /* HUD & Data Science Metrics Deck */
+        .stat-card {
+            background: linear-gradient(135deg, #111827, #1e1b4b); border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 16px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            position: relative; overflow: hidden; transition: all 0.3s;
         }
+        .stat-card.active-training { ring: 3px solid var(--matrix-green); box-shadow: 0 0 25px rgba(52, 211, 153, 0.3); }
+        .stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: #a78bfa; letter-spacing: 1px; }
+        .stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-top: 2px; color: #fbbf24; }
+        
+        /* Data Science Live Telemetry Analytics Log */
+        .analytics-log-box {
+            background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 12px; font-family: 'DM Mono', monospace; font-size: 10px;
+            color: #94a3b8; max-height: 150px; overflow-y: hidden; display: flex; flex-direction: column; gap: 4px;
+        }
+        .log-entry { color: #34d399; border-left: 2px solid #34d399; padding-left: 6px; animation: flashLog 0.3s ease-out; }
+        @keyframes flashLog { 0% { opacity: 0; transform: translateX(-5px); } 100% { opacity: 1; transform: translateX(0); } }
+
+        /* Civil Engineering Module Catalog Placeholder Slot */
+        .block-list { display: flex; flex-direction: column; gap: 8px; }
+        .block-item-placeholder {
+            display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.01);
+            border: 1px dashed rgba(99, 102, 241, 0.2); padding: 16px; border-radius: 12px;
+            color: var(--text-muted); font-size: 12px; font-weight: 500;
+        }
+
+        /* 3D Viewport Frame */
+        .simulation-viewport {
+            flex: 1; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at 50% 50%, #0e172c 0%, #030712 100%); perspective: 1400px; overflow: hidden;
+        }
+        .simulation-viewport.training-dimmed { filter: blur(2px); opacity: 0.3; pointer-events: none; }
+
+        /* Empty Matrix Structural Grid Mesh */
+        .iso-scene-placeholder {
+            transform: rotateX(60deg) rotateZ(-45deg); transform-style: preserve-3d;
+            width: 400px; height: 400px; border: 2px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            background: rgba(99, 102, 241, 0.02); box-shadow: 0 30px 70px rgba(0,0,0,0.6);
+        }
+        .grid-lock-msg { transform: rotateZ(45deg) rotateX(-60deg); font-family: 'DM Mono', monospace; font-size: 11px; color: #a5b4fc; text-align: center; }
+
+        /* Assistant Training Tooltip HUD */
+        .hud-suggestion-box {
+            position: absolute; bottom: 24px; left: 24px; right: 24px;
+            background: rgba(8, 14, 28, 0.9); border: 1px solid var(--glass-border);
+            padding: 16px 24px; border-radius: 14px; backdrop-filter: blur(16px);
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 500; transition: all 0.3s;
+        }
+        .hud-suggestion-box.highlight { border-color: var(--matrix-green); box-shadow: 0 0 20px rgba(52, 211, 153, 0.2); }
+        .hint-text { font-family: 'DM Mono', monospace; font-size: 11px; color: #a5b4fc; font-weight: 500; line-height: 1.4; }
+        .tutorial-btn {
+            background: #6366f1; color: white; border: none; padding: 8px 18px;
+            font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;
+            transition: all 0.2s; box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+        .tutorial-btn:hover { background: #4f46e5; }
     </style>
 </head>
 <body>
 
-    <div id="root"></div>
+    <div id="welcome-screen">
+        <div class="welcome-card">
+            <div class="tech-badge">SYSTEM STAGE 0 // BOOT SEQUENCE</div>
+            <h1>Metropolis Matrix Core</h1>
+            <p>
+                Welcome, Architect. The CityOS Matrix system has been engineered at the intersection of Data Science tracking, Frontend UI mechanics, and Civil Infrastructure zoning. Initialize the neural engine training bridge to calibrate real-time state arrays and activate your simulation coordinates.
+            </p>
+            <button class="start-btn" onclick="bootEnginePipeline()">Initialize Training Bridge</button>
+        </div>
+    </div>
 
-    <script type="text/babel">
-        // Inject global environment variable required by Recharts in CDN environments
-        window.process = { env: { NODE_ENV: 'production' } };
+    <div class="app-container">
+        <div class="sidebar">
+            <div>
+                <div class="brand-title">⚙️ CityOS Core</div>
+                <div class="sub-brand">MODULAR BASE STRUCTURE</div>
+            </div>
 
-        const { useState, useEffect, useCallback, useMemo } = React;
-        const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
+            <div class="stat-card" id="wallet-card">
+                <div class="stat-lbl">CORE RESERVES WALLET</div>
+                <div class="stat-val" id="coins-display">💰 800</div>
+                <div style="font-family: 'DM Mono', monospace; font-size: 10px; color: #34d399; margin-top: 4px;">📊 Pipeline Status: Connected</div>
+            </div>
 
-        // ═══════════════════════════════════════════════════════════════
-        // CONFIGURATIONS, THEMES & SEED DATA STRUCTS
-        // ═══════════════════════════════════════════════════════════════
-        const GRID_COLS = 10;
-        const GRID_SIZE = GRID_COLS * GRID_COLS;
-        const STARTING_COINS = 800;
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <h3 style="font-size: 10px; font-family:'DM Mono', monospace; color: var(--text-muted); letter-spacing: 1px;">METROPOLIS MODULE CATALOG</h3>
+                <div class="block-list">
+                    <div class="block-item-placeholder">🔒 Catalog modules locked till Stage 1</div>
+                </div>
+            </div>
 
-        const BUILDINGS = {
-            TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:15, pollution:-10, traffic:0,  energy:2,  population:0,  runoffImpact: -20, bearingReq: 1, color:"#10b981", unlockAt: 1 },
-            ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-4, pollution:5,   traffic:-20,energy:-2, population:0,  runoffImpact: 30,  bearingReq: 2, color:"#64748b", unlockAt: 1 },
-            HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-2, pollution:4,   traffic:8,  energy:-6, population:12, runoffImpact: 15,  bearingReq: 3, color:"#3b82f6", unlockAt: 1 },
-            PARK:     { id:"PARK",     label:"Ecotopia Park", icon:"🌿", cost:60,  beauty:25, oxygen:20, pollution:-15, traffic:-5, energy:4,  population:4,  runoffImpact: -30, bearingReq: 1, color:"#22c55e", unlockAt: 2 },
-            MART:     { id:"MART",     label:"Cyber Mart",    icon:"🏪", cost:160, beauty:8,  oxygen:-5, pollution:12,  traffic:15, energy:-12,population:25, runoffImpact: 20,  bearingReq: 4, color:"#a855f7", unlockAt: 3 },
-            SOLAR:    { id:"SOLAR",    label:"Solar Array",   icon:"☀️", cost:200, beauty:5,  oxygen:6,  pollution:-20, traffic:0,  energy:45, population:2,  runoffImpact: 8,   bearingReq: 2, color:"#eab308", unlockAt: 4 },
-            FACTORY:  { id:"FACTORY",  label:"Algae Factory", icon:"🏭", cost:250, beauty:-12,oxygen:-20,pollution:30,  traffic:18, energy:25, population:15, runoffImpact: 35,  bearingReq: 5, color:"#f97316", unlockAt: 5 },
-            TOWER:    { id:"TOWER",    label:"Matrix Tower",  icon:"🏙️", cost:450, beauty:35, oxygen:-10,pollution:15,  traffic:25, energy:-35,population:80, runoffImpact: 25,  bearingReq: 5, color:"#06b6d4", unlockAt: 6 },
-            FASHION:  { id:"FASHION",  label:"AI Couture Hub",icon:"👗", cost:300, beauty:40, oxygen:5,  pollution:-2,  traffic:10, energy:-10,population:30, runoffImpact: 12,  bearingReq: 3, color:"#ec4899", unlockAt: 4 }
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <h3 style="font-size: 10px; font-family:'DM Mono', monospace; color: var(--text-muted); letter-spacing: 1px;">LIVE TELEMETRY STREAM LOG</h3>
+                <div class="analytics-log-box" id="log-stream-container">
+                    <div>[SYS]: Core idle. Waiting for system boot...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="simulation-viewport training-dimmed" id="main-viewport">
+            <div class="iso-scene-placeholder">
+                <div class="grid-lock-msg">
+                    <span style="font-size: 24px;">📡</span><br>
+                    MATRIX FIELD LOCKED<br>
+                    <span style="color: #64748b; font-size: 9px;">Awaiting pipeline calibration.</span>
+                </div>
+            </div>
+
+            <div class="hud-suggestion-box" id="assistant-hud">
+                <div class="hint-text" id="hud-message-text">💡 <b>CORE NOT INITIALIZED:</b> Please execute the training bridge sequence from the central console card.</div>
+                <div id="hud-action-area" style="display: none;">
+                    <button class="tutorial-btn" onclick="advanceToStageOne()">Calibrate Matrix Field</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System Global State Array Vector
+        let engineState = {
+            walletBal: 800,
+            trainingStage: 0,
+            audioConfigured: false
         };
 
-        const THEMES = {
-            light: {
-                bg: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
-                sidebar: "rgba(255, 255, 255, 0.95)",
-                sidebarBdr: "rgba(99, 102, 241, 0.15)",
-                panelBg: "#ffffff",
-                cellTop: "#f1f5f9", cellLeft: "#cbd5e1", cellRight: "#94a3b8",
-                text: "#0f172a", textSub: "#475569", textMuted: "#94a3b8",
-                glassBdr: "rgba(99, 102, 241, 0.2)", gridBg: "rgba(255, 255, 255, 0.7)"
-            },
-            dark: {
-                bg: "linear-gradient(135deg, #05070f 0%, #0b1326 50%, #02040a 100%)",
-                sidebar: "rgba(9, 15, 30, 0.96)",
-                sidebarBdr: "rgba(99, 102, 241, 0.3)",
-                panelBg: "#0f172a",
-                cellTop: "#1e293b", cellLeft: "#0f172a", cellRight: "#020617",
-                text: "#f8fafc", textSub: "#94a3b8", textMuted: "#475569",
-                glassBdr: "rgba(99, 102, 241, 0.3)", gridBg: "rgba(13, 22, 43, 0.5)"
-            }
-        };
+        let soundContext = null;
 
-        const SOIL_MATRIX_PROFILE = Array.from({ length: GRID_SIZE }, (_, i) => {
-            const x = Math.floor(i / GRID_COLS);
-            const y = i % GRID_COLS;
-            const dynamicWeight = Math.sin(x * 0.8) + Math.cos(y * 0.8);
-            return Math.floor(((dynamicWeight + 2) / 4) * 5) + 1;
-        });
+        // Boot Pipeline Logic Block
+        function bootEnginePipeline() {
+            soundContext = new (window.AudioContext || window.webkitAudioContext)();
+            engineState.audioConfigured = true;
 
-        // ═══════════════════════════════════════════════════════════════
-        // METRICS CALCULATOR ENGINE & MATHEMATICAL OPTIMIZER AGENT
-        // ═══════════════════════════════════════════════════════════════
-        function computeSimulationMetrics(grid) {
-            let oxygen = 40, beauty = 30, pollution = 20, traffic = 30, energy = 50, population = 0, score = 0;
-            let combinedStormwaterRunoffIndex = 15;
-
-            grid.forEach((nodeId) => {
-                if (!nodeId || !BUILDINGS[nodeId]) return;
-                const b = BUILDINGS[nodeId];
-                oxygen = Math.max(0, Math.min(100, oxygen + b.oxygen));
-                beauty = Math.max(0, Math.min(100, beauty + b.beauty));
-                pollution = Math.max(0, Math.min(100, pollution + b.pollution));
-                traffic = Math.max(0, Math.min(100, traffic + b.traffic));
-                energy = Math.max(0, Math.min(100, energy + b.energy));
-                population += b.population;
-                combinedStormwaterRunoffIndex += b.runoffImpact;
-                score += 20 + b.beauty;
-            });
-
-            const livability = Math.round((oxygen + beauty + (100 - pollution) + (100 - traffic) + energy) / 5);
-            const sustainability = Math.round(oxygen * 0.4 + (100 - pollution) * 0.4 + energy * 0.2);
-            const runoffRisk = Math.max(5, Math.min(100, combinedStormwaterRunoffIndex));
-
-            return { oxygen, beauty, pollution, traffic, energy, population, score, livability, sustainability, runoffRisk };
+            // Animate overlay dismissal
+            document.getElementById("welcome-screen").style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById("welcome-screen").style.display = "none";
+                triggerSynthBeep(600, 0.15);
+                startTrainingFlow();
+            }, 500);
         }
 
-        function runParametricAIOptimizer(grid, budget) {
-            let highestUtilityScore = -Infinity;
-            let proposal = { cellIndex: -1, buildingId: null, message: "Engine optimizing systemic matrices..." };
+        // Synth Routing Synthesizer Modules
+        function triggerSynthBeep(frequency, duration) {
+            if (!engineState.audioConfigured || !soundContext) return;
+            try {
+                let oscillator = soundContext.createOscillator();
+                let gainNode = soundContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(soundContext.destination);
 
-            for (let i = 0; i < GRID_SIZE; i++) {
-                if (grid[i]) continue;
-                const soilRating = SOIL_MATRIX_PROFILE[i];
+                oscillator.frequency.setValueAtTime(frequency, soundContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, soundContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, soundContext.currentTime + duration);
 
-                for (const bId of Object.keys(BUILDINGS)) {
-                    const b = BUILDINGS[bId];
-                    if (budget < b.cost || soilRating < b.bearingReq) continue;
-
-                    let virtualGrid = [...grid];
-                    virtualGrid[i] = bId;
-                    const simulatedMetrics = computeSimulationMetrics(virtualGrid);
-
-                    const utilityMetric = (simulatedMetrics.livability * 2.5) + (simulatedMetrics.sustainability * 1.8) - (simulatedMetrics.runoffRisk * 1.2);
-
-                    if (utilityMetric > highestUtilityScore) {
-                        highestUtilityScore = utilityMetric;
-                        proposal.cellIndex = i;
-                        proposal.buildingId = bId;
-                        proposal.message = `Deploy structural node [${b.icon} ${b.label}] on target Coordinate Cell ${i}. This action yields optimal parametric distribution, balancing geotechnical load margins while maximizing eco scores.`;
-                    }
-                }
-            }
-            if (proposal.cellIndex === -1) {
-                proposal.message = "System allocation threshold saturated or capital reserves locked. Increase budget pipelines to trigger AI agent recommendation vectors.";
-            }
-            return proposal;
+                oscillator.start();
+                oscillator.stop(soundContext.currentTime + duration);
+            } catch (err) { console.warn("Synth intersection bypass caught:", err); }
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // MAIN FRONTEND INTERFACE VIEW COMPONENT ASSEMBLY
-        // ═══════════════════════════════════════════════════════════════
-        function MainApplicationAssembly() {
-            const [grid, setGrid] = useState(Array(GRID_SIZE).fill(null));
-            const [selectedModule, setSelectedModule] = useState("TREE");
-            const [coins, setCoins] = useState(STARTING_COINS);
-            const [moves, setMoves] = useState(0);
-            const [level, setLevel] = useState(1);
-            const [isNight, setIsNight] = useState(true);
-            const [currentTab, setCurrentTab] = useState("build");
-            const [tutorialStep, setTutorialStep] = useState(0); 
-            const [historyLogs, setHistoryLogs] = useState([]);
-            const [aiAdviceOutput, setAiAdviceOutput] = useState(null);
-            const [timeSeriesMetrics, setTimeSeriesMetrics] = useState([]);
-
-            const currentTheme = isNight ? THEMES.dark : THEMES.light;
-            const calculatedStats = useMemo(() => computeSimulationMetrics(grid), [grid]);
-
-            useEffect(() => {
-                setTimeSeriesMetrics(prev => {
-                    if (prev.length > 0 && prev[prev.length - 1].moveIndex === moves) return prev;
-                    const predictivePollutionTrend = Math.min(100, calculatedStats.pollution + (calculatedStats.population * 0.12));
-                    return [...prev, {
-                        name: `M-${moves}`,
-                        moveIndex: moves,
-                        Livability: calculatedStats.livability,
-                        StormwaterRisk: calculatedStats.runoffRisk,
-                        ProjectedPollution: Math.round(predictivePollutionTrend)
-                    }].slice(-10);
-                });
-            }, [moves, calculatedStats]);
-
-            useEffect(() => {
-                if (tutorialStep < 3) return;
-                let aggregateNetWorth = coins + (grid.filter(c => c !== null).length * 60);
-                let targetedTier = 1;
-
-                if (aggregateNetWorth >= 14000) targetedTier = 12;
-                else if (aggregateNetWorth >= 11500) targetedTier = 11;
-                else if (aggregateNetWorth >= 9000)  targetedTier = 10;
-                else if (aggregateNetWorth >= 7200)  targetedTier = 9;
-                else if (aggregateNetWorth >= 5500)  targetedTier = 8;
-                else if (aggregateNetWorth >= 4000)  targetedTier = 7;
-                else if (aggregateNetWorth >= 2600)  targetedTier = 6;
-                else if (aggregateNetWorth >= 1600)  targetedTier = 5;
-                else if (aggregateNetWorth >= 900)   targetedTier = 4;
-                else if (aggregateNetWorth >= 450)   targetedTier = 3;
-                else if (aggregateNetWorth >= 150)   targetedTier = 2;
-
-                if (targetedTier > level && level < 12) {
-                    setLevel(targetedTier);
-                    setCoins(prev => prev + 500); 
-                }
-            }, [grid, coins, tutorialStep, level]);
-
-            useEffect(() => {
-                if (tutorialStep < 3) return;
-                const periodicYieldInterval = setInterval(() => {
-                    let cumulativeYieldInjectedValue = 0;
-                    grid.forEach(cellId => {
-                        if (cellId && BUILDINGS[cellId]) {
-                            if (cellId === "HOUSE") cumulativeYieldInjectedValue += 8;
-                            if (cellId === "MART") cumulativeYieldInjectedValue += 16;
-                            if (cellId === "FACTORY") cumulativeYieldInjectedValue += 28;
-                            if (cellId === "TOWER") cumulativeYieldInjectedValue += 40;
-                        }
-                    });
-                    if (cumulativeYieldInjectedValue > 0) {
-                        setCoins(prev => prev + cumulativeYieldInjectedValue);
-                    }
-                }, 3000);
-                return () => clearInterval(periodicYieldInterval);
-            }, [grid, tutorialStep]);
-
-            const triggerAIParametricInferenceAgent = () => {
-                const analyticsAdviceInstance = runParametricAIOptimizer(grid, coins);
-                setAiAdviceOutput(analyticsAdviceInstance);
-            };
-
-            const deployStructuralMatrixNode = (idx) => {
-                if (grid[idx] !== null) return;
-                const targetModule = BUILDINGS[selectedModule];
-
-                if (tutorialStep === 1) return;
-                if (tutorialStep === 2 && selectedModule !== "TREE") return;
-
-                if (coins < targetModule.cost) return;
-                if (SOIL_MATRIX_PROFILE[idx] < targetModule.bearingReq) {
-                    alert(`Geotechnical Deficit Error: Selected sector coordinate structural profile bearing threshold is [${SOIL_MATRIX_PROFILE[idx]}]. Structural footprint of ${targetModule.label} requires an allocation parameter value ≥ ${targetModule.bearingReq}.`);
-                    return;
-                }
-
-                setHistoryLogs(prev => [...prev, [...grid]]);
-                setGrid(prev => {
-                    const clonedGridArray = [...prev];
-                    clonedGridArray[idx] = selectedModule;
-                    return clonedGridArray;
-                });
-                setCoins(prev => prev - targetModule.cost);
-                setMoves(prev => prev + 1);
-                setAiAdviceOutput(null);
-
-                if (tutorialStep === 2 && selectedModule === "TREE") {
-                    setTutorialStep(3); 
-                }
-            };
-
-            const wipeStructuralMatrixNode = (idx, event) => {
-                if (event) event.preventDefault();
-                if (tutorialStep < 3 || !grid[idx]) return;
-
-                setHistoryLogs(prev => [...prev, [...grid]]);
-                setGrid(prev => {
-                    const clonedGridArray = [...prev];
-                    clonedGridArray[idx] = null;
-                    return clonedGridArray;
-                });
-                setMoves(prev => prev + 1);
-                setAiAdviceOutput(null);
-            };
-
-            const systemWipeFormatPurgeProcedure = () => {
-                if (window.confirm("Authorize full system sector formatting vectors? This structural state modification sequence wipes operational logs permanently.")) {
-                    setGrid(Array(GRID_SIZE).fill(null));
-                    setCoins(STARTING_COINS);
-                    setMoves(0);
-                    setLevel(1);
-                    setHistoryLogs([]);
-                    setTimeSeriesMetrics([]);
-                    setAiAdviceOutput(null);
-                    setTutorialStep(3); 
-                }
-            };
-
-            const revertHistoricalStateLog = () => {
-                if (!historyLogs.length) return;
-                const previousGridSnapshotFrame = historyLogs[historyLogs.length - 1];
-                setGrid(previousGridSnapshotFrame);
-                setHistoryLogs(old => old.slice(0, -1));
-                setMoves(prev => Math.max(0, prev - 1));
-                setAiAdviceOutput(null);
-            };
-
-            return (
-                <div style={{
-                    width: "100vw", height: "100%", background: currentTheme.bg, color: currentTheme.text,
-                    display: "flex", flexDirection: "row", position: "relative", transition: "all 0.4s ease"
-                }}>
-                    
-                    {/* CINEMATIC ONBOARDING ACCELERATOR PANEL SPLASH LAYER */}
-                    {tutorialStep === 0 && (
-                        <div style={{
-                            position: "fixed", inset: 0, background: "linear-gradient(135deg, #040612 0%, #0b152d 100%)",
-                            zIndex: 20000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px"
-                        }}>
-                            <div style={{
-                                background: "rgba(13, 24, 48, 0.85)", border: "2px solid #6366f1", padding: "40px",
-                                borderRadius: "24px", maxWidth: "550px", width: "100%",
-                                boxShadow: "0 0 60px rgba(99, 102, 241, 0.4)", backdropFilter: "blur(20px)", textAlign: 'center'
-                            }}>
-                                <h1 style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>
-                                    Welcome to CityOS Matrix
-                                </h1>
-                                <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "#818cf8", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "20px" }}>
-                                    Neural Infrastructure Analytics System
-                                </p>
-                                <p style={{ color: "#94a3b8", fontSize: "14px", lineHeight: "1.6", marginBottom: "32px" }}>
-                                    An adaptive sandbox environment where data intelligence algorithms, hydraulic flood routing parameters, and advanced geotechnical civil engineering matrices converge seamlessly.
-                                </p>
-                                <button 
-                                    onClick={() => setTutorialStep(1)}
-                                    style={{
-                                        background: "linear-gradient(90deg, #6366f1, #4f46e5)", color: "white", border: "none",
-                                        padding: "14px 38px", fontSize: "15px", fontWeight: 700, borderRadius: "12px",
-                                        cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.45)", transition: "transform 0.2s"
-                                    }}
-                                >
-                                    Initialize Training Mode
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CONTROL HOOD DASHBOARD SIDEBAR PANEL */}
-                    <div style={{
-                        width: "350px", height: "100%", background: currentTheme.sidebar,
-                        borderRight: `1px solid ${currentTheme.sidebarBdr}`, padding: "24px", display: "flex",
-                        flexDirection: "column", gap: "20px", zIndex: 1000, backdropFilter: "blur(20px)"
-                    }}>
-                        
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <h2 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-1px" }}>⚙️ CityOS Matrix</h2>
-                            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", color: "#6366f1", marginTop: "2px", letterSpacing: "1px" }}>
-                                AUTOMATED GENERATIVE CONTEXT
-                            </p>
-                          </div>
-                          <button 
-                            onClick={() => setIsNight(!isNight)}
-                            style={{
-                                width: "48px", height: "26px", borderRadius: "99px", border: "none",
-                                background: isNight ? "#1e293b" : "#e2e8f0", cursor: "pointer",
-                                display: "flex", alignItems: "center", justifyContent: isNight ? "flex-end" : "flex-start", padding: "4px"
-                            }}
-                          >
-                            <span>{isNight ? "🌙" : "☀️"}</span>
-                          </button>
-                        </div>
-
-                        <div style={{
-                            background: tutorialStep === 1 ? "rgba(99, 102, 241, 0.25)" : "linear-gradient(135deg, #4f46e5 0%, #312e81 100%)",
-                            padding: "18px", borderRadius: "16px", color: "#fff",
-                            boxShadow: "0 10px 25px rgba(99, 102, 241, 0.2)",
-                            border: tutorialStep === 1 ? "3px solid #6366f1" : "none",
-                            transform: tutorialStep === 1 ? "scale(1.02)" : "scale(1)", transition: "all 0.3s ease"
-                        }}>
-                            <span style={{ fontSize: "10px", fontFamily: "'JetBrains Mono', monospace", opacity: 0.85, letterSpacing: "1px" }}>
-                                CORE MUNICIPAL VALUATION RESERVES
-                            </span>
-                            <div style={{ fontSize: "32px", fontWeight: 800, margin: "6px 0", color: "#fbbf24" }}>
-                                💰 {coins}
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: "10px", fontSize: "11px", fontFamily: "'JetBrains Mono', monospace" }}>
-                                <span>STAGE: <b style={{color: '#93c5fd'}}>{level}/12</b></span>
-                                <span>MOVES: <b>{moves}</b></span>
-                                <span>POP: <b>{calculatedStats.population}</b></span>
-                            </div>
-                        </div>
-
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                            <button 
-                                onClick={revertHistoricalStateLog} 
-                                disabled={!historyLogs.length || tutorialStep < 3}
-                                style={{ padding: "10px", fontSize: "12px", fontWeight: 600, cursor: "pointer", borderRadius: "8px", border: `1px solid ${currentTheme.sidebarBdr}`, background: "transparent", color: currentTheme.text }}
-                            >
-                                ↩️ Step Undo
-                            </button>
-                            <button 
-                                onClick={systemWipeFormatPurgeProcedure}
-                                style={{ padding: "10px", fontSize: "12px", fontWeight: 600, cursor: "pointer", borderRadius: "8px", border: "none", background: "#ef4444", color: "#fff" }}
-                            >
-                                🔄 Format Mesh
-                            </button>
-                        </div>
-
-                        <div style={{ display: "flex", background: isNight ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", padding: "4px", borderRadius: "10px" }}>
-                            {["build", "analytics", "ai-agent"].map(tabKey => (
-                                <button
-                                    key={tabKey}
-                                    onClick={() => tutorialStep >= 3 && setCurrentTab(tabKey)}
-                                    disabled={tutorialStep < 3 && tabKey !== "build"}
-                                    style={{
-                                        flex: 1, padding: "8px 0", border: "none", background: currentTab === tabKey ? "#6366f1" : "transparent",
-                                        color: currentTab === tabKey ? "#fff" : currentTheme.textSub, borderRadius: "6px", fontSize: "12px",
-                                        fontWeight: 700, textTransform: "uppercase", cursor: tutorialStep < 3 ? "not-allowed" : "pointer", opacity: (tutorialStep < 3 && tabKey !== "build") ? 0.3 : 1
-                                    }}
-                                >
-                                    {tabKey.replace("-", " ")}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div style={{ flex: 1, overflowY: "auto" }}>
-                            
-                            {currentTab === "build" && (
-                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                    <h3 style={{ fontSize: "11px", fontFamily: "'JetBrains Mono', monospace", color: currentTheme.textMuted, letterSpacing: "1.5px" }}>
-                                        INFRASTRUCTURE CATALOG REGISTRY
-                                    </h3>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                        {Object.values(BUILDINGS).map(item => {
-                                            const isActiveSelection = selectedModule === item.id;
-                                            const isLockedByStageValue = level < item.unlockAt;
-                                            
-                                            let tutorialHighlightStyle = {};
-                                            let isInteractiveBlockedByTutorial = false;
-
-                                            if (tutorialStep === 2) {
-                                                if (item.id === "TREE") {
-                                                    tutorialHighlightStyle = { border: "2px solid #34d399", background: "rgba(52, 211, 153, 0.12)" };
-                                                } else {
-                                                    isInteractiveBlockedByTutorial = true;
-                                                }
-                                            } else if (tutorialStep === 1) {
-                                                isInteractiveBlockedByTutorial = true;
-                                            }
-
-                                            return (
-                                                <button
-                                                    key={item.id}
-                                                    disabled={isLockedByStageValue || isInteractiveBlockedByTutorial}
-                                                    onClick={() => setSelectedModule(item.id)}
-                                                    style={{
-                                                        display: "flex", alignItems: "center", gap: "12px", padding: "12px",
-                                                        borderRadius: "12px", border: isActiveSelection ? "2px solid #6366f1" : `1px solid ${currentTheme.sidebarBdr}`,
-                                                        background: isActiveSelection ? "rgba(99, 102, 241, 0.15)" : currentTheme.panelBg,
-                                                        color: currentTheme.text, textAlign: "left", cursor: "pointer", opacity: (isLockedByStageValue || isInteractiveBlockedByTutorial) ? 0.4 : 1,
-                                                        ...tutorialHighlightStyle, transition: "all 0.2s ease"
-                                                    }}
-                                                >
-                                                    <span style={{ fontSize: "22px" }}>{item.icon}</span>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ fontSize: "13px", fontWeight: 700 }}>{item.label}</div>
-                                                        <div style={{ fontSize: "10px", color: currentTheme.textMuted, fontFamily: "'JetBrains Mono', monospace", marginTop: "2px" }}>
-                                                            Cost: 💰{item.cost} | Geotechnical Load: ≥{item.bearingReq}
-                                                        </div>
-                                                    </div>
-                                                    {isLockedByStageValue && (
-                                                        <span style={{ fontSize: "10px", background: "rgba(239,68,68,0.15)", color: "#f87171", padding: "2px 6px", borderRadius: "4px" }}>
-                                                            🔒 Lvl {item.unlockAt}
-                                                        </span>
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-
-                            {currentTab === "analytics" && (
-                                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                                        <div style={{ padding: "12px", background: currentTheme.panelBg, borderRadius: "10px", border: `1px solid ${currentTheme.sidebarBdr}` }}>
-                                            <div style={{ fontSize: "10px", color: currentTheme.textMuted }}>OXYGEN IND.</div>
-                                            <div style={{ fontSize: "18px", fontWeight: 800, color: "#10b981", marginTop: "4px" }}>{calculatedStats.oxygen}%</div>
-                                        </div>
-                                        <div style={{ padding: "12px", background: currentTheme.panelBg, borderRadius: "10px", border: `1px solid ${currentTheme.sidebarBdr}` }}>
-                                            <div style={{ fontSize: "10px", color: currentTheme.textMuted }}>TRAFFIC NET</div>
-                                            <div style={{ fontSize: "18px", fontWeight: 800, color: "#f59e0b", marginTop: "4px" }}>{calculatedStats.traffic}%</div>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ padding: "14px", background: currentTheme.panelBg, borderRadius: "12px", border: `1px solid ${currentTheme.sidebarBdr}` }}>
-                                        <div style={{ fontSize: "11px", color: currentTheme.textMuted, fontWeight: 700 }}>LIVABILITY ECO INDEX HEALTH</div>
-                                        <div style={{ fontSize: "26px", fontWeight: 800, color: "#6366f1", marginTop: "4px" }}>{calculatedStats.livability}%</div>
-                                    </div>
-
-                                    <div style={{ padding: "14px", background: currentTheme.panelBg, borderRadius: "12px", border: `1px solid ${currentTheme.sidebarBdr}` }}>
-                                        <div style={{ fontSize: "11px", color: currentTheme.textMuted, fontWeight: 700 }}>STORMWATER RUNOFF RISK (HYDRAULICS)</div>
-                                        <div style={{ fontSize: "26px", fontWeight: 800, color: calculatedStats.runoffRisk > 45 ? "#ef4444" : "#3b82f6", marginTop: "4px" }}>{calculatedStats.runoffRisk}%</div>
-                                    </div>
-
-                                    <div style={{ height: "180px", width: "100%", background: currentTheme.panelBg, padding: "10px", borderRadius: "12px", border: `1px solid ${currentTheme.sidebarBdr}` }}>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <LineChart data={timeSeriesMetrics}>
-                                                <XAxis dataKey="name" stroke={currentTheme.textMuted} fontSize={9} />
-                                                <Tooltip contentStyle={{ background: '#0f172a', color: '#fff', fontSize: '11px' }} />
-                                                <Line type="monotone" dataKey="Livability" stroke="#6366f1" strokeWidth={2} dot={false} />
-                                                <Line type="monotone" dataKey="StormwaterRisk" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                                                <Line type="dashed" dataKey="ProjectedPollution" stroke="#ef4444" strokeWidth={1} name="Projected Pollution" />
-                                            </LineChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-                            )}
-
-                            {currentTab === "ai-agent" && (
-                                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                                    <button 
-                                        onClick={triggerAIParametricInferenceAgent}
-                                        style={{
-                                            padding: "14px", background: "linear-gradient(90deg, #6366f1 0%, #a855f7 100%)",
-                                            color: "#fff", border: "none", fontWeight: 700, borderRadius: "10px", cursor: "pointer"
-                                        }}
-                                    >
-                                        🤖 Fire AI Optimization Engine
-                                    </button>
-
-                                    {aiAdviceOutput && (
-                                        <div style={{
-                                            padding: "16px", background: "rgba(168, 85, 247, 0.08)",
-                                            border: "1px solid #a855f7", borderRadius: "12px"
-                                        }}>
-                                            <div style={{ fontSize: "10px", fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: "#c084fc", textTransform: "uppercase" }}>
-                                                PARAMETRIC MODEL INFERENCE DATA:
-                                            </div>
-                                            <p style={{ fontSize: "12px", lineHeight: "1.5", margin: "8px 0", color: currentTheme.text }}>
-                                                {aiAdviceOutput.message}
-                                            </p>
-                                            {aiAdviceOutput.cellIndex !== -1 && (
-                                                <div style={{ fontSize: "10px", color: currentTheme.textMuted, fontFamily: "'JetBrains Mono', monospace" }}>
-                                                    Target Mesh Cell Matrix Coordinate: <b>{aiAdviceOutput.cellIndex}</b>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                        </div>
-
-                        <div style={{ background: "rgba(99, 102, 241, 0.06)", border: "1px solid rgba(99, 102, 241, 0.2)", padding: "12px", borderRadius: "12px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                                <span style={{ fontSize: "10px", fontWeight: 700, color: "#6366f1" }}>🎯 TARGET OBJECTIVE MATRIX</span>
-                                <span style={{ fontSize: "11px", fontWeight: 700, color: "#eab308" }}>
-                                    {tutorialStep < 3 ? "0%" : `${Math.min(100, Math.round((calculatedStats.score / 600) * 100))}%`}
-                                </span>
-                            </div>
-                            <p style={{ fontSize: "11px", fontWeight: 500, lineHeight: "1.4" }}>
-                                {tutorialStep < 3 ? "Complete the ongoing interactive onboarding training simulation steps." : "Accumulate a cumulative structural architectural score index of 600 points via optimization loops."}
-                            </p>
-                        </div>
-
-                    </div>
-
-                    {/* VIRTUALIZED GRAPHIC ISOMETRIC GRID CELL MESH FIELD */}
-                    <div style={{
-                        flex: 1, height: "100%", display: "flex", flexDirection: "column",
-                        alignItems: "center", justifyContent: "center", padding: "20px", position: "relative"
-                    }}>
-                        
-                        <div style={{
-                            display: "grid", gridTemplateColumns: `repeat(${GRID_COLS}, 54px)`,
-                            gap: "5px", background: currentTheme.gridBg, padding: "20px", borderRadius: "20px",
-                            border: `1px solid ${currentTheme.glassBdr}`, backdropFilter: "blur(8px)",
-                            boxShadow: isNight ? "0 30px 70px rgba(0,0,0,0.6)" : "0 20px 50px rgba(99,102,241,0.05)",
-                            opacity: tutorialStep === 1 ? 0.35 : 1, transition: "all 0.4s ease"
-                        }}>
-                            {grid.map((cellValue, cellIndex) => {
-                                const bearingStrengthVal = SOIL_MATRIX_PROFILE[cellIndex];
-                                const colorGradationBars = ["#ef4444", "#f97316", "#eab308", "#4ade80", "#10b981"];
-                                const activeSoilBarColor = colorGradationBars[bearingStrengthVal - 1];
-
-                                const isMarkedByAiParametricInferenceTarget = aiAdviceOutput && aiAdviceOutput.cellIndex === cellIndex;
-
-                                return (
-                                    <div key={cellIndex} style={{ position: "relative", width: "54px", height: "54px" }}>
-                                        <IsometricMeshNodeElement 
-                                            nodeKey={cellValue}
-                                            selectedKey={selectedModule}
-                                            theme={currentTheme}
-                                            isNight={isNight}
-                                            onDeploy={() => deployStructuralMatrixNode(cellIndex)}
-                                            onWipe={(e) => wipeStructuralMatrixNode(cellIndex, e)}
-                                        />
-                                        
-                                        <div style={{
-                                            position: "absolute", bottom: "1px", left: "20%", width: "60%", height: "3px",
-                                            background: activeSoilBarColor, borderRadius: "99px", opacity: cellValue ? 0.2 : 0.85,
-                                            boxShadow: `0 1px 4px ${activeSoilBarColor}`, zIndex: 10
-                                        }} title={`Soil Load Capacity Profile Level: ${bearingStrengthVal}`} />
-
-                                        {isMarkedByAiParametricInferenceTarget && (
-                                            <div style={{
-                                                position: "absolute", inset: "-3px", border: "2px dashed #c084fc",
-                                                borderRadius: "8px", pointerEvents: "none", zIndex: 12,
-                                                boxShadow: "0 0 12px #a855f7"
-                                            }} />
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* ASSISTANT COMPASS REAL-TIME ONBOARDING DIALOG PANEL SYSTEM */}
-                        <div style={{
-                            position: "absolute", bottom: "30px", left: "30px", right: "30px",
-                            background: "rgba(10, 17, 36, 0.92)", border: "1px solid #6366f1",
-                            borderRadius: "16px", padding: "18px 24px", backdropFilter: "blur(12px)",
-                            display: "flex", justifyContent: "space-between", alignItems: "center",
-                            boxShadow: "0 15px 40px rgba(0,0,0,0.5)", zIndex: 5000
-                        }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                                <span style={{ fontSize: "24px" }}>🛰️</span>
-                                <div style={{ fontSize: "13px", fontWeight: 500, color: "#e2e8f0", lineHeight: "1.5" }}>
-                                    {tutorialStep === 1 && (
-                                        <span><b>GUIDED ONBOARDING (Step 1 of 2):</b> Survey the core structural metrics layout framework. Constructing items decreases capital reserves. Your starting budget context balance is initialized at <b>💰 800 tokens</b>.</span>
-                                    )}
-                                    {tutorialStep === 2 && (
-                                        <span><b>GUIDED ONBOARDING (Step 2 of 2):</b> Acquire resource infrastructure logic. Select the <b>Oak Tree 🌳</b> component from your inventory block palette panel selection tab, and deploy it onto any target coordinate cell block within the isometric matrix grid field.</span>
-                                    )}
-                                    {tutorialStep === 3 && (
-                                        <span><b>METROPOLIS ARCHITECTURE ENGINE ONLINE:</b> Sandbox structural simulation constraints are fully operational. Left-click to place assets according to geotechnical soil index parameters; Right-click inside cells to remove assets. Run real-time AI agents for optimization heuristics.</span>
-                                    )}
-                                </div>
-                            </div>
-                            {tutorialStep === 1 && (
-                                <button
-                                    onClick={() => setTutorialStep(2)}
-                                    style={{
-                                        background: "#6366f1", color: "#fff", border: "none", padding: "8px 20px",
-                                        fontSize: "12px", fontWeight: 700, borderRadius: "6px", cursor: "pointer"
-                                    }}
-                                >
-                                    Next Phase
-                                </button>
-                            )}
-                        </div>
-
-                    </div>
-
-                </div>
-            );
+        // Dynamic Logs Vector Generation Stream
+        function appendTelemetryLog(message) {
+            const container = document.getElementById("log-stream-container");
+            const logEntry = document.createElement("div");
+            logEntry.className = "log-entry";
+            logEntry.innerText = `[LOG-${new Date().toLocaleTimeString()}]: ${message}`;
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
         }
 
-        // ═══════════════════════════════════════════════════════════════
-        // LOW-LEVEL ISOMETRIC VOXEL RENDER GENERATOR ELEMENT
-        // ═══════════════════════════════════════════════════════════════
-        function IsometricMeshNodeElement({ nodeKey, selectedKey, theme, isNight, onDeploy, onWipe }) {
-            const [isHovered, setIsHovered] = useState(false);
-            const activeNodeData = nodeKey ? BUILDINGS[nodeKey] : null;
-            const contextHoverData = BUILDINGS[selectedKey];
-
-            return (
-                <div
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                    onClick={onDeploy}
-                    onContextMenu={onWipe}
-                    style={{
-                        position: "relative", width: "100%", height: "100%", cursor: "pointer",
-                        transformStyle: "preserve-3d"
-                    }}
-                >
-                    <div style={{
-                        position: "absolute", inset: 0, transform: "rotateX(60deg) rotateZ(-45deg)",
-                        transformStyle: "preserve-3d", transition: "all 0.15s ease"
-                    }}>
-                        <div style={{
-                            position: "absolute", inset: 0, borderRadius: "6px",
-                            background: isHovered && !nodeKey ? `${contextHoverData.color}25` : nodeKey ? (isNight ? "#1e293b" : "#ffffff") : theme.cellTop,
-                            border: `1px solid ${isHovered ? (activeNodeData || contextHoverData).color : "rgba(99,102,241,0.15)"}`,
-                            boxShadow: isHovered ? `0 0 12px ${(activeNodeData || contextHoverData).color}40` : "none"
-                        }} />
-                        <div style={{ position: "absolute", bottom: "-6px", left: 0, right: "50%", height: "6px", background: theme.cellLeft, borderRadius: "2px" }} />
-                        <div style={{ position: "absolute", bottom: "-6px", left: "50%", right: 0, height: "6px", background: theme.cellRight, borderRadius: "2px" }} />
-                    </div>
-
-                    <div 
-                        className="voxel-animate"
-                        style={{
-                            position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: "24px", zIndex: 100, transform: isHovered ? "translateY(-8px)" : "translateY(-3px)",
-                            transition: "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-                            filter: isNight ? "drop-shadow(0 4px 10px rgba(99,102,241,0.4))" : "drop-shadow(0 6px 8px rgba(0,0,0,0.15))"
-                        }}
-                    >
-                        {nodeKey ? activeNodeData.icon : (isHovered ? contextHoverData.icon : "")}
-                    </div>
-                </div>
-            );
+        // Training Coordinator Flow
+        function startTrainingFlow() {
+            engineState.trainingStage = 1;
+            document.getElementById("wallet-card").classList.add("active-training");
+            document.getElementById("assistant-hud").classList.add("highlight");
+            
+            document.getElementById("hud-message-text").innerHTML = "🛰️ <b>TRAINING STAGE 0.1:</b> Core reserves active. Data pipelines initialized. The wallet securely streams digital capital allocation required for civil zone planning.";
+            document.getElementById("hud-action-area").style.display = "block";
+            
+            appendTelemetryLog("Pipeline online. Secure telemetry streaming active.");
         }
 
-        const rootContainerNodeElement = ReactDOM.createRoot(document.getElementById("root"));
-        rootContainerNodeElement.render(<MainApplicationAssembly />);
+        function advanceToStageOne() {
+            triggerSynthBeep(880, 0.25);
+            document.getElementById("wallet-card").classList.remove("active-training");
+            document.getElementById("main-viewport").classList.remove("training-dimmed");
+            document.getElementById("hud-action-area").style.display = "none";
+            
+            document.getElementById("hud-message-text").innerHTML = "🚀 <b>BASE STAGE COMPLETE:</b> Core architecture calibrated! Ready for the deployment of 3D Coordinate Meshes and Module Builders.";
+            appendTelemetryLog("Viewport unlocked. Frame buffers assigned to matrix coordinates.");
+            
+            // Interval loop simulator ensuring telemetry streams passively
+            setInterval(() => {
+                let drift = (Math.random() * 0.05).toFixed(4);
+                appendTelemetryLog(`Telemetry packet synchronized. Latency offset: ${drift}ms`);
+            }, 4000);
+        }
     </script>
 </body>
 </html>
