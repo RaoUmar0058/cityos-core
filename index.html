@@ -29,7 +29,6 @@
             overflow: hidden;
             background-color: #030712;
         }
-        /* Custom scrollbar matching dark/light parameters */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -61,7 +60,7 @@
 
     <script type="text/babel">
         const { useState, useEffect, useCallback, useMemo } = React;
-        const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } = Recharts;
+        const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } = Recharts;
 
         // ═══════════════════════════════════════════════════════════════
         // CONFIGURATIONS, THEMES & SEED DATA STRUCTS
@@ -74,7 +73,7 @@
             TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:15, pollution:-10, traffic:0,  energy:2,  population:0,  runoffImpact: -20, bearingReq: 1, color:"#10b981" },
             ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-4, pollution:5,   traffic:-20,energy:-2, population:0,  runoffImpact: 30,  bearingReq: 2, color:"#64748b" },
             HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-2, pollution:4,   traffic:8,  energy:-6, population:12, runoffImpact: 15,  bearingReq: 3, color:"#3b82f6" },
-            PARK:     { id:"PARK",     label:"Ecotopia Park", icon:"🌿", cost:60,  beauty:25, oxygen:20, pollution:-15, traffic:-5, energy:4,  population:4,  runoffImpact: -30, bearingReq: 1, color:#22c55e" },
+            PARK:     { id:"PARK",     label:"Ecotopia Park", icon:"🌿", cost:60,  beauty:25, oxygen:20, pollution:-15, traffic:-5, energy:4,  population:4,  runoffImpact: -30, bearingReq: 1, color:"#22c55e" },
             MART:     { id:"MART",     label:"Cyber Mart",    icon:"🏪", cost:160, beauty:8,  oxygen:-5, pollution:12,  traffic:15, energy:-12,population:25, runoffImpact: 20,  bearingReq: 4, color:"#a855f7" },
             SOLAR:    { id:"SOLAR",    label:"Solar Array",   icon:"☀️", cost:200, beauty:5,  oxygen:6,  pollution:-20, traffic:0,  energy:45, population:2,  runoffImpact: 8,   bearingReq: 2, color:"#eab308" },
             FACTORY:  { id:"FACTORY",  label:"Algae Factory", icon:"🏭", cost:250, beauty:-12,oxygen:-20,pollution:30,  traffic:18, energy:25, population:15, runoffImpact: 35,  bearingReq: 5, color:"#f97316" },
@@ -103,12 +102,11 @@
             }
         };
 
-        // Deterministic Soil Stratigraphy Model Map Generation
         const SOIL_MATRIX_PROFILE = Array.from({ length: GRID_SIZE }, (_, i) => {
             const x = Math.floor(i / GRID_COLS);
             const y = i % GRID_COLS;
             const dynamicWeight = Math.sin(x * 0.8) + Math.cos(y * 0.8);
-            return Math.floor(((dynamicWeight + 2) / 4) * 5) + 1; // Evaluates strictly inside scale range 1-5
+            return Math.floor(((dynamicWeight + 2) / 4) * 5) + 1;
         });
 
         // ═══════════════════════════════════════════════════════════════
@@ -154,7 +152,6 @@
                     virtualGrid[i] = bId;
                     const simulatedMetrics = computeSimulationMetrics(virtualGrid);
 
-                    // Multi-objective scalar optimization objective function logic
                     const utilityMetric = (simulatedMetrics.livability * 2.5) + (simulatedMetrics.sustainability * 1.8) - (simulatedMetrics.runoffRisk * 1.2);
 
                     if (utilityMetric > highestUtilityScore) {
@@ -182,7 +179,7 @@
             const [level, setLevel] = useState(1);
             const [isNight, setIsNight] = useState(true);
             const [currentTab, setCurrentTab] = useState("build");
-            const [tutorialStep, setTutorialStep] = useState(0); // 0: Splash, 1: Onboarding, 2: Active Constraint, 3: Sandbox Sandbox Mode
+            const [tutorialStep, setTutorialStep] = useState(0); 
             const [historyLogs, setHistoryLogs] = useState([]);
             const [aiAdviceOutput, setAiAdviceOutput] = useState(null);
             const [timeSeriesMetrics, setTimeSeriesMetrics] = useState([]);
@@ -190,7 +187,6 @@
             const currentTheme = isNight ? THEMES.dark : THEMES.light;
             const calculatedStats = useMemo(() => computeSimulationMetrics(grid), [grid]);
 
-            // Live Analytics Historical Stream Tracking Hook
             useEffect(() => {
                 setTimeSeriesMetrics(prev => {
                     if (prev.length > 0 && prev[prev.length - 1].moveIndex === moves) return prev;
@@ -201,11 +197,10 @@
                         Livability: calculatedStats.livability,
                         StormwaterRisk: calculatedStats.runoffRisk,
                         ProjectedPollution: Math.round(predictivePollutionTrend)
-                    }].slice(-10); // Extrapolate sliding scope frame windows
+                    }].slice(-10);
                 });
             }, [moves, calculatedStats]);
 
-            // Automated Stage Expansion Progression Loop System
             useEffect(() => {
                 if (tutorialStep < 3) return;
                 let aggregateNetWorth = coins + (grid.filter(c => c !== null).length * 60);
@@ -221,23 +216,20 @@
                 else if (aggregateNetWorth >= 1600)  targetedTier = 5;
                 else if (aggregateNetWorth >= 900)   targetedTier = 4;
                 else if (aggregateNetWorth >= 450)   targetedTier = 3;
-                else if (aggregateNetWorth >= 18000)  targetedTier = 12; // Out of bounds guard rail safety fallback check
                 else if (aggregateNetWorth >= 150)   targetedTier = 2;
 
                 if (targetedTier > level && level < 12) {
                     setLevel(targetedTier);
-                    setCoins(prev => prev + 500); // Grant Structural Level Up Capital Allocation Injection
+                    setCoins(prev => prev + 500); 
                 }
             }, [grid, coins, tutorialStep, level]);
 
-            // Real-time Passive Cash Yield Generation Loop Pipeline
             useEffect(() => {
                 if (tutorialStep < 3) return;
                 const periodicYieldInterval = setInterval(() => {
                     let cumulativeYieldInjectedValue = 0;
                     grid.forEach(cellId => {
                         if (cellId && BUILDINGS[cellId]) {
-                            // Assign static modular income points based on structures
                             if (cellId === "HOUSE") cumulativeYieldInjectedValue += 8;
                             if (cellId === "MART") cumulativeYieldInjectedValue += 16;
                             if (cellId === "FACTORY") cumulativeYieldInjectedValue += 28;
@@ -260,7 +252,6 @@
                 if (grid[idx] !== null) return;
                 const targetModule = BUILDINGS[selectedModule];
 
-                // Tutorial constraints protection filters
                 if (tutorialStep === 1) return;
                 if (tutorialStep === 2 && selectedModule !== "TREE") return;
 
@@ -281,7 +272,7 @@
                 setAiAdviceOutput(null);
 
                 if (tutorialStep === 2 && selectedModule === "TREE") {
-                    setTutorialStep(3); // Elevate to Sandbox Mode operational control limits
+                    setTutorialStep(3); 
                 }
             };
 
@@ -308,7 +299,7 @@
                     setHistoryLogs([]);
                     setTimeSeriesMetrics([]);
                     setAiAdviceOutput(null);
-                    setTutorialStep(3); // Enter Sandbox directly on full reset routine sequences
+                    setTutorialStep(3); 
                 }
             };
 
@@ -335,7 +326,7 @@
                         }}>
                             <div style={{
                                 background: "rgba(13, 24, 48, 0.85)", border: "2px solid #6366f1", padding: "40px",
-                                borderRadius: "24px", textalign: "center", maxWidth: "550px", width: "100%",
+                                borderRadius: "24px", maxWidth: "550px", width: "100%",
                                 boxShadow: "0 0 60px rgba(99, 102, 241, 0.4)", backdropFilter: "blur(20px)", textAlign: 'center'
                             }}>
                                 <h1 style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-1px", color: "#fff", marginBottom: "8px" }}>
@@ -354,8 +345,6 @@
                                         padding: "14px 38px", fontSize: "15px", fontWeight: 700, borderRadius: "12px",
                                         cursor: "pointer", boxShadow: "0 4px 20px rgba(99,102,241,0.45)", transition: "transform 0.2s"
                                     }}
-                                    onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-                                    onMouseOut={(e) => e.target.style.transform = 'translateY(0px)'}
                                 >
                                     Initialize Training Mode
                                 </button>
@@ -370,7 +359,6 @@
                         flexDirection: "column", gap: "20px", zIndex: 1000, backdropFilter: "blur(20px)"
                     }}>
                         
-                        {/* Header Identity Container */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div>
                             <h2 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-1px" }}>⚙️ CityOS Matrix</h2>
@@ -390,7 +378,6 @@
                           </button>
                         </div>
 
-                        {/* Financial Ledger HUD Widget Card */}
                         <div style={{
                             background: tutorialStep === 1 ? "rgba(99, 102, 241, 0.25)" : "linear-gradient(135deg, #4f46e5 0%, #312e81 100%)",
                             padding: "18px", borderRadius: "16px", color: "#fff",
@@ -411,10 +398,9 @@
                             </div>
                         </div>
 
-                        {/* Macro Action Group Node Trigger Buttons */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                             <button 
-                                onClick={rehistoricalStateLog} 
+                                onClick={revertHistoricalStateLog} 
                                 disabled={!historyLogs.length || tutorialStep < 3}
                                 style={{ padding: "10px", fontSize: "12px", fontWeight: 600, cursor: "pointer", borderRadius: "8px", border: `1px solid ${currentTheme.sidebarBdr}`, background: "transparent", color: currentTheme.text }}
                             >
@@ -428,7 +414,6 @@
                             </button>
                         </div>
 
-                        {/* Interactive UI Navigation Menu Tabs */}
                         <div style={{ display: "flex", background: isNight ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", padding: "4px", borderRadius: "10px" }}>
                             {["build", "analytics", "ai-agent"].map(tabKey => (
                                 <button
@@ -446,7 +431,6 @@
                             ))}
                         </div>
 
-                        {/* DYNAMIC WINDOW INTERFACE BLOCK VIEWER ROUTER */}
                         <div style={{ flex: 1, overflowY: "auto" }}>
                             
                             {currentTab === "build" && (
@@ -523,7 +507,7 @@
                                     </div>
 
                                     <div style={{ padding: "14px", background: currentTheme.panelBg, borderRadius: "12px", border: `1px solid ${currentTheme.sidebarBdr}` }}>
-                                        <div style={{ fontSize: "11px", color: currentTheme.textMuted, fontWeight: 700 }}>STOMWATER RUNOFF RISK (HYDRAULICS)</div>
+                                        <div style={{ fontSize: "11px", color: currentTheme.textMuted, fontWeight: 700 }}>STORMWATER RUNOFF RISK (HYDRAULICS)</div>
                                         <div style={{ fontSize: "26px", fontWeight: 800, color: calculatedStats.runoffRisk > 45 ? "#ef4444" : "#3b82f6", marginTop: "4px" }}>{calculatedStats.runoffRisk}%</div>
                                     </div>
 
@@ -576,7 +560,6 @@
 
                         </div>
 
-                        {/* TARGET METROPOLIS OBJECTIVE INDICATOR CONTAINER */}
                         <div style={{ background: "rgba(99, 102, 241, 0.06)", border: "1px solid rgba(99, 102, 241, 0.2)", padding: "12px", borderRadius: "12px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                                 <span style={{ fontSize: "10px", fontWeight: 700, color: "#6366f1" }}>🎯 TARGET OBJECTIVE MATRIX</span>
@@ -584,7 +567,7 @@
                                     {tutorialStep < 3 ? "0%" : `${Math.min(100, Math.round((calculatedStats.score / 600) * 100))}%`}
                                 </span>
                             </div>
-                            <p id="objective-display-node" style={{ fontSize: "11px", fontWeight: 500, lineHeight: "1.4" }}>
+                            <p style={{ fontSize: "11px", fontWeight: 500, lineHeight: "1.4" }}>
                                 {tutorialStep < 3 ? "Complete the ongoing interactive onboarding training simulation steps." : "Accumulate a cumulative structural architectural score index of 600 points via optimization loops."}
                             </p>
                         </div>
@@ -597,7 +580,6 @@
                         alignItems: "center", justifyContent: "center", padding: "20px", position: "relative"
                     }}>
                         
-                        {/* Interactive Grid Overlay Dimmer Filter for Focused Tutorial Sequencing */}
                         <div style={{
                             display: "grid", gridTemplateColumns: `repeat(${GRID_COLS}, 54px)`,
                             gap: "5px", background: currentTheme.gridBg, padding: "20px", borderRadius: "20px",
@@ -623,19 +605,17 @@
                                             onWipe={(e) => wipeStructuralMatrixNode(cellIndex, e)}
                                         />
                                         
-                                        {/* Dynamic Geotechnical Capability Visualization Strip */}
                                         <div style={{
                                             position: "absolute", bottom: "1px", left: "20%", width: "60%", height: "3px",
                                             background: activeSoilBarColor, borderRadius: "99px", opacity: cellValue ? 0.2 : 0.85,
                                             boxShadow: `0 1px 4px ${activeSoilBarColor}`, zIndex: 10
                                         }} title={`Soil Load Capacity Profile Level: ${bearingStrengthVal}`} />
 
-                                        {/* AI Reinforcement Logic Tracking Overlap Ring border */}
                                         {isMarkedByAiParametricInferenceTarget && (
                                             <div style={{
                                                 position: "absolute", inset: "-3px", border: "2px dashed #c084fc",
                                                 borderRadius: "8px", pointerEvents: "none", zIndex: 12,
-                                                boxShadow: "0 0 12px #a855f7", animation: "pulse 1s infinite alternate"
+                                                boxShadow: "0 0 12px #a855f7"
                                             }} />
                                         )}
                                     </div>
@@ -703,25 +683,20 @@
                         transformStyle: "preserve-3d"
                     }}
                 >
-                    {/* Isometric Geometry Projected Transformation Planes */}
                     <div style={{
                         position: "absolute", inset: 0, transform: "rotateX(60deg) rotateZ(-45deg)",
                         transformStyle: "preserve-3d", transition: "all 0.15s ease"
                     }}>
-                        {/* Top Facet Mesh Face */}
                         <div style={{
                             position: "absolute", inset: 0, borderRadius: "6px",
                             background: isHovered && !nodeKey ? `${contextHoverData.color}25` : nodeKey ? (isNight ? "#1e293b" : "#ffffff") : theme.cellTop,
                             border: `1px solid ${isHovered ? (activeNodeData || contextHoverData).color : "rgba(99,102,241,0.15)"}`,
                             boxShadow: isHovered ? `0 0 12px ${(activeNodeData || contextHoverData).color}40` : "none"
                         }} />
-                        {/* Left Projection Extrusion Plane Face */}
                         <div style={{ position: "absolute", bottom: "-6px", left: 0, right: "50%", height: "6px", background: theme.cellLeft, borderRadius: "2px" }} />
-                        {/* Right Projection Extrusion Plane Face */}
                         <div style={{ position: "absolute", bottom: "-6px", left: "50%", right: 0, height: "6px", background: theme.cellRight, borderRadius: "2px" }} />
                     </div>
 
-                    {/* Voxel Emoji Elevation Sprite Anchor Layer */}
                     <div 
                         className="voxel-animate"
                         style={{
@@ -737,7 +712,6 @@
             );
         }
 
-        // Render Application Component Core Assembly to DOM Tree
         const rootContainerNodeElement = ReactDOM.createRoot(document.getElementById("root"));
         rootContainerNodeElement.render(<MainApplicationAssembly />);
     </script>
