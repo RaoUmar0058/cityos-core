@@ -22,19 +22,14 @@
 
         /* Cinematic Welcome & Onboarding Core Overlay */
         #welcome-screen {
-            position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000;
+            position: fixed; inset: 0; background: #05070f; z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            transition: opacity 0.4s ease;
         }
         .welcome-card {
-            background: rgba(11, 19, 38, 0.85); border: 2px solid var(--accent);
+            background: rgba(11, 19, 38, 0.95); border: 2px solid var(--accent);
             padding: 45px; border-radius: 24px; text-align: center; max-width: 550px;
             box-shadow: 0 0 70px var(--accent-glow); backdrop-filter: blur(30px);
-            animation: cardEntrance 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-        }
-        @keyframes cardEntrance {
-            0% { transform: translateY(30px) scale(0.95); opacity: 0; }
-            100% { transform: translateY(0) scale(1); opacity: 1; }
         }
         .welcome-card h1 { font-family: 'Syne', sans-serif; font-size: 36px; margin-bottom: 12px; color: #fff; letter-spacing: -1px; }
         .welcome-card p { color: #94a3b8; font-size: 14px; margin-bottom: 30px; line-height: 1.6; text-align: justify; }
@@ -46,7 +41,7 @@
         .start-btn {
             background: linear-gradient(90deg, #6366f1, #4f46e5); color: white; border: none; padding: 14px 40px;
             font-size: 15px; font-weight: 700; border-radius: 12px; cursor: pointer;
-            box-shadow: 0 4px 20px var(--accent-glow); transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 4px 20px var(--accent-glow); transition: all 0.2s ease;
         }
         .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 26px #818cf8; }
 
@@ -65,9 +60,8 @@
         .stat-card {
             background: linear-gradient(135deg, #111827, #1e1b4b); border: 1px solid rgba(99, 102, 241, 0.3);
             padding: 16px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            position: relative; overflow: hidden; transition: all 0.3s;
+            position: relative; overflow: hidden;
         }
-        .stat-card.active-training { ring: 3px solid var(--matrix-green); box-shadow: 0 0 25px rgba(52, 211, 153, 0.3); }
         .stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: #a78bfa; letter-spacing: 1px; }
         .stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-top: 2px; color: #fbbf24; }
         
@@ -77,8 +71,7 @@
             border-radius: 12px; padding: 12px; font-family: 'DM Mono', monospace; font-size: 10px;
             color: #94a3b8; height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;
         }
-        .log-entry { color: #34d399; border-left: 2px solid #34d399; padding-left: 6px; animation: flashLog 0.3s ease-out; line-height: 1.3; }
-        @keyframes flashLog { 0% { opacity: 0; transform: translateX(-5px); } 100% { opacity: 1; transform: translateX(0); } }
+        .log-entry { color: #34d399; border-left: 2px solid #34d399; padding-left: 6px; line-height: 1.3; }
 
         /* Civil Engineering Module Catalog Slots */
         .block-list { display: flex; flex-direction: column; gap: 8px; }
@@ -87,9 +80,8 @@
             border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;
             cursor: pointer; transition: all 0.2s; position: relative;
         }
-        .block-item:hover:not(.locked) { background: rgba(99, 102, 241, 0.1); border-color: var(--accent); }
+        .block-item:hover { background: rgba(99, 102, 241, 0.1); border-color: var(--accent); }
         .block-item.active { background: rgba(99, 102, 241, 0.2); border-color: #818cf8; box-shadow: 0 0 15px rgba(99,102,241,0.25); }
-        .block-item.locked { background: rgba(0, 0, 0, 0.3); border-color: rgba(255,255,255,0.02); cursor: not-allowed; opacity: 0.5; }
         .block-icon { font-size: 20px; }
         .block-details h4 { font-size: 13px; font-weight: 700; color: #fff; }
         .block-details p { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); }
@@ -99,32 +91,25 @@
             flex: 1; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center;
             background: radial-gradient(circle at 50% 50%, #0e172c 0%, #030712 100%); perspective: 1400px; overflow: hidden;
         }
-        .simulation-viewport.training-dimmed { filter: blur(2px); opacity: 0.3; pointer-events: none; }
 
         /* Level 1: True 3D Isometric Coordinate Mesh Grid */
         .iso-scene {
             transform: rotateX(60deg) rotateZ(-45deg); transform-style: preserve-3d;
             display: grid; grid-template-columns: repeat(6, 55px); grid-template-rows: repeat(6, 55px); gap: 4px;
             padding: 16px; background: rgba(99, 102, 241, 0.02); border: 2px dashed rgba(99, 102, 241, 0.3); border-radius: 16px;
-            box-shadow: 0 30px 70px rgba(0,0,0,0.6); transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 30px 70px rgba(0,0,0,0.6); display: none;
         }
         .grid-cell {
             width: 55px; height: 55px; background: rgba(13, 22, 43, 0.7); position: relative;
             border-radius: 6px; border: 1px solid rgba(99,102,241,0.15); cursor: pointer;
-            transform-style: preserve-3d; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform-style: preserve-3d; transition: all 0.2s ease;
         }
         .grid-cell:hover { background: rgba(99, 102, 241, 0.25); border-color: #818cf8; transform: translateZ(5px); }
         
-        /* 3D Structural Height Projection Hook */
         .voxel-building {
             position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
             font-size: 26px; transform: rotateZ(45deg) rotateX(-60deg) translateY(-12px);
             filter: drop-shadow(0 8px 8px rgba(0,0,0,0.5)); transform-origin: center bottom;
-            animation: buildBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.25);
-        }
-        @keyframes buildBounce {
-            0% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-12px) scale(0); opacity: 0; }
-            100% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-12px) scale(1); opacity: 1; }
         }
 
         /* Assistant Training Tooltip HUD */
@@ -133,14 +118,13 @@
             background: rgba(8, 14, 28, 0.9); border: 1px solid var(--glass-border);
             padding: 16px 24px; border-radius: 14px; backdrop-filter: blur(16px);
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 500; transition: all 0.3s;
+            z-index: 500;
         }
-        .hud-suggestion-box.highlight { border-color: var(--matrix-green); box-shadow: 0 0 20px rgba(52, 211, 153, 0.2); }
         .hint-text { font-family: 'DM Mono', monospace; font-size: 11px; color: #a5b4fc; font-weight: 500; line-height: 1.4; }
         .tutorial-btn {
             background: #6366f1; color: white; border: none; padding: 8px 18px;
             font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;
-            transition: all 0.2s; box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
         }
         .tutorial-btn:hover { background: #4f46e5; }
     </style>
@@ -149,7 +133,7 @@
 
     <div id="welcome-screen">
         <div class="welcome-card">
-            <div class="tech-badge">SYSTEM STAGE 1 // GRID ACTIVATION</div>
+            <div class="tech-badge">SYSTEM STAGE 1 // AUTO-BYPASS MODE</div>
             <h1>Metropolis Matrix Core</h1>
             <p>
                 Welcome, Architect. The CityOS Matrix system has been engineered at the intersection of Data Science tracking, Frontend UI mechanics, and Civil Infrastructure zoning. Initialize the neural engine training bridge to calibrate real-time state arrays and activate your simulation coordinates.
@@ -168,13 +152,14 @@
             <div class="stat-card" id="wallet-card">
                 <div class="stat-lbl">CORE RESERVES WALLET</div>
                 <div class="stat-val" id="coins-display">💰 800</div>
-                <div style="font-family: 'DM Mono', monospace; font-size: 10px; color: #34d399; margin-top: 4px;">📊 Active Income: +0/sec</div>
+                <div style="font-family: 'DM Mono', monospace; font-size: 10px; color: #34d399; margin-top: 4px;" id="income-label">📊 Active Income: +0/sec</div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <h3 style="font-size: 10px; font-family:'DM Mono', monospace; color: var(--text-muted); letter-spacing: 1px;">METROPOLIS MODULE CATALOG</h3>
                 <div class="block-list" id="catalog-container">
-                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Initializing catalog arrays...</div>
+                </div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -185,9 +170,9 @@
             </div>
         </div>
 
-        <div class="simulation-viewport training-dimmed" id="main-viewport">
+        <div class="simulation-viewport" id="main-viewport">
             
-            <div class="iso-scene" id="matrix-grid-mesh" style="display: none;"></div>
+            <div class="iso-scene" id="matrix-grid-mesh"></div>
 
             <div class="hud-suggestion-box" id="assistant-hud">
                 <div class="hint-text" id="hud-message-text">💡 <b>CORE NOT INITIALIZED:</b> Please execute the training bridge sequence from the central console card.</div>
@@ -199,7 +184,7 @@
     </div>
 
     <script>
-        const GRID_SIZE = 36; // 6x6 Matrix Topology Setup for optimization
+        const GRID_SIZE = 36; 
         
         const REGISTRY_CATALOG = {
             TREE: { id: "TREE", label: "Oak Tree", icon: "🌳", cost: 20, yield: 1 },
@@ -207,51 +192,53 @@
             HOUSE: { id: "HOUSE", label: "Modern Villa", icon: "🏠", cost: 100, yield: 8 }
         };
 
-        // System Global State Array Vector
         let engineState = {
             gridArray: Array(GRID_SIZE).fill(null),
             walletBal: 800,
             trainingStage: 0,
-            audioConfigured: false,
             selectedAsset: "TREE"
         };
 
         let soundContext = null;
 
-        // Boot Pipeline Logic Block
+        // SAFE BOOT: Complete execution even if browser blocks Web Audio API
         function bootEnginePipeline() {
-            soundContext = new (window.AudioContext || window.webkitAudioContext)();
-            engineState.audioConfigured = true;
+            try {
+                // Safely attempt audio init, catch block gracefully ignores browser lock
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    soundContext = new AudioContextClass();
+                }
+            } catch (err) { 
+                console.log("Audio pipeline safely bypassed to prevent thread freeze."); 
+            }
 
+            // Instantly clear out welcome screen overlay visually
             document.getElementById("welcome-screen").style.opacity = 0;
             setTimeout(() => {
                 document.getElementById("welcome-screen").style.display = "none";
-                triggerSynthBeep(600, 0.15);
                 startTrainingFlow();
-            }, 500);
+            }, 400);
         }
 
-        // Synth Routing Synthesizer Modules
         function triggerSynthBeep(frequency, duration) {
-            if (!engineState.audioConfigured || !soundContext) return;
+            if (!soundContext) return;
             try {
                 let oscillator = soundContext.createOscillator();
                 let gainNode = soundContext.createGain();
                 oscillator.connect(gainNode);
                 gainNode.connect(soundContext.destination);
-
                 oscillator.frequency.setValueAtTime(frequency, soundContext.currentTime);
-                gainNode.gain.setValueAtTime(0.08, soundContext.currentTime);
+                gainNode.gain.setValueAtTime(0.05, soundContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, soundContext.currentTime + duration);
-
                 oscillator.start();
                 oscillator.stop(soundContext.currentTime + duration);
-            } catch (err) { console.warn("Synth exception caught:", err); }
+            } catch (err) {}
         }
 
-        // Dynamic Logs Vector Generation Stream
         function appendTelemetryLog(message) {
             const container = document.getElementById("log-stream-container");
+            if (!container) return;
             const logEntry = document.createElement("div");
             logEntry.className = "log-entry";
             logEntry.innerText = `[LOG-${new Date().toLocaleTimeString()}]: ${message}`;
@@ -259,22 +246,18 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Training Coordinator Flow
         function startTrainingFlow() {
             engineState.trainingStage = 1;
-            document.getElementById("wallet-card").classList.add("active-training");
-            document.getElementById("assistant-hud").classList.add("highlight");
-            
-            document.getElementById("hud-message-text").innerHTML = "🛰️ <b>TRAINING STAGE 0.1:</b> Core reserves active. Data pipelines initialized. The wallet securely streams digital capital allocation required for civil zone planning.";
+            document.getElementById("hud-message-text").innerHTML = "🛰️ <b>TRAINING STAGE 0.1:</b> Core reserves active. Data pipelines initialized. Please click the calibration option in the bottom panel to unlock the isometric mesh.";
             document.getElementById("hud-action-area").style.display = "block";
             
             appendTelemetryLog("Pipeline online. Secure telemetry streaming active.");
             renderStructuralCatalog();
         }
 
-        // Level 1 Integration: Render Civil Modules Options
         function renderStructuralCatalog() {
             const catalogContainer = document.getElementById("catalog-container");
+            if (!catalogContainer) return;
             catalogContainer.innerHTML = "";
             
             Object.values(REGISTRY_CATALOG).forEach(asset => {
@@ -297,74 +280,62 @@
             engineState.selectedAsset = assetId;
             triggerSynthBeep(440, 0.1);
             renderStructuralCatalog();
-            appendTelemetryLog(`Active builder pointer toggled onto structural module vector: [${assetId}]`);
+            appendTelemetryLog(`Active vector selected: [${assetId}]`);
         }
 
-        // Level 1 Integration: Activate 3D Isometric Mesh Pipeline
+        // TRIGGERS LEVEL 1 ISO GRID SHOW/HIDE TRANSITION
         function advanceToStageOne() {
-            triggerSynthBeep(880, 0.25);
-            document.getElementById("wallet-card").classList.remove("active-training");
-            document.getElementById("main-viewport").classList.remove("training-dimmed");
+            triggerSynthBeep(880, 0.2);
             document.getElementById("hud-action-area").style.display = "none";
             
-            // Swap placeholder with real active mesh container
             const gridMesh = document.getElementById("matrix-grid-mesh");
-            gridMesh.style.display = "grid";
+            gridMesh.style.display = "grid"; // FORCES THE GRID VISIBLE
 
-            document.getElementById("hud-message-text").innerHTML = "🌳 <b>LEVEL 1 INITIALIZED:</b> 3D Coordinate mesh online! Select a structural catalog option from your sidebar panel, then click any grid vector node to integrate assets.";
-            appendTelemetryLog("Viewport unlocked. Frame buffers mapped onto 6x6 matrix spatial system layout topology.");
+            document.getElementById("hud-message-text").innerHTML = "🌳 <b>LEVEL 1 INITIALIZED:</b> 3D Coordinate grid open! Click on any square field block to construct your chosen asset vector.";
+            appendTelemetryLog("Grid mesh fully unmasked. Rendering spatial addresses.");
             
             buildActiveMatrixGrid();
-
-            // Run passive revenue cycle and monitoring streams
             setInterval(executePassiveIncomeTelemetry, 2000);
         }
 
-        // Level 1 Structural Generation: Build Grid Matrix Elements
         function buildActiveMatrixGrid() {
             const gridContainer = document.getElementById("matrix-grid-mesh");
+            if (!gridContainer) return;
             gridContainer.innerHTML = "";
 
             for (let i = 0; i < GRID_SIZE; i++) {
                 const cell = document.createElement("div");
                 cell.className = "grid-cell";
-                cell.dataset.index = i;
                 cell.onclick = () => implementStructuralAsset(i);
                 
-                // If cell contains structural module, project it upward (Height Elevation Vector)
                 if (engineState.gridArray[i]) {
                     const building = document.createElement("div");
                     building.className = "voxel-building";
                     building.innerText = REGISTRY_CATALOG[engineState.gridArray[i]].icon;
                     cell.appendChild(building);
                 }
-                
                 gridContainer.appendChild(cell);
             }
         }
 
-        // Level 1 Structural Interaction: Cost calculation and vector logging
         function implementStructuralAsset(index) {
             const targetAsset = REGISTRY_CATALOG[engineState.selectedAsset];
             
             if (engineState.walletBal < targetAsset.cost) {
-                triggerSynthBeep(150, 0.3);
-                appendTelemetryLog(`[ALERT]: Operational failure! Deficit detected for integration allocation code [${targetAsset.id}].`);
+                triggerSynthBeep(150, 0.2);
+                appendTelemetryLog(`[ALERT]: Deficit! Insufficient core structural tokens for [${targetAsset.id}].`);
                 return;
             }
 
-            // Write state mutation data vector
             engineState.walletBal -= targetAsset.cost;
             engineState.gridArray[index] = targetAsset.id;
             
             document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
-            triggerSynthBeep(523.25, 0.12);
-            
+            triggerSynthBeep(523, 0.1);
             buildActiveMatrixGrid();
-            appendTelemetryLog(`Integrated node [${targetAsset.id}] into spatial address coordinate matrix index space: {${index}}`);
+            appendTelemetryLog(`Integrated node [${targetAsset.id}] into matrix index space: {${index}}`);
         }
 
-        // Data Science Stream Update Loop
         function executePassiveIncomeTelemetry() {
             let activePassiveYield = 0;
             engineState.gridArray.forEach(cellAsset => {
@@ -376,13 +347,12 @@
             if (activePassiveYield > 0) {
                 engineState.walletBal += activePassiveYield;
                 document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
-                appendTelemetryLog(`Passive economy cycle finished. Harvested +${activePassiveYield} structural matrix tokens into wallet balances.`);
+                appendTelemetryLog(`Harvested +${activePassiveYield} matrix tokens from ecosystem components.`);
             } else {
-                let drift = (Math.random() * 0.04).toFixed(4);
-                appendTelemetryLog(`Synchronized packet array. Matrix grid density status: ${((engineState.gridArray.filter(n => n).length / GRID_SIZE) * 100).toFixed(1)}% | Jitter: ${drift}ms`);
+                appendTelemetryLog(`Grid metrics synchronized. Total density: ${((engineState.gridArray.filter(n => n).length / GRID_SIZE) * 100).toFixed(0)}%`);
             }
             
-            document.getElementById("wallet-card").children[2].innerText = `📊 Active Income: +${activePassiveYield}/sec`;
+            document.getElementById("income-label").innerText = `📊 Active Income: +${activePassiveYield}/sec`;
         }
     </script>
 </body>
