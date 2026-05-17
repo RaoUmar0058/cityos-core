@@ -3,140 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CityOS v5 - Ultimate Isometric Simulator</title>
+    <title>CityOS Matrix v5 - Level 12 Metropolis Expansion</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;700&family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: linear-gradient(135deg, #060913 0%, #0b1528 50%, #030712 100%);
-            --sidebar-dark: rgba(10, 17, 34, 0.95);
-            --glass-border: rgba(99, 102, 241, 0.2);
+            --bg-dark: linear-gradient(135deg, #05070f 0%, #0b1326 50%, #02040a 100%);
+            --sidebar-dark: rgba(9, 15, 30, 0.96);
+            --glass-border: rgba(99, 102, 241, 0.25);
             --accent: #6366f1;
-            --accent-glow: rgba(99, 102, 241, 0.4);
-            --text-main: #f1f5f9;
+            --accent-glow: rgba(99, 102, 241, 0.45);
+            --text-main: #f8fafc;
             --text-muted: #64748b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; display: flex; }
 
-        /* Welcome Screen Splash Overlay */
+        /* Cinematic Welcome Panel */
         #welcome-screen {
             position: fixed; inset: 0; background: var(--bg-dark); z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.4s ease;
         }
         .welcome-card {
-            background: rgba(15, 23, 42, 0.8); border: 2px solid var(--accent);
-            padding: 40px; borderRadius: 24px; text-align: center; max-width: 480px;
-            box-shadow: 0 0 50px var(--accent-glow); backdrop-filter: blur(20px);
+            background: rgba(11, 19, 38, 0.85); border: 2px solid var(--accent);
+            padding: 40px; border-radius: 24px; text-align: center; max-width: 500px;
+            box-shadow: 0 0 60px var(--accent-glow); backdrop-filter: blur(24px);
         }
-        .welcome-card h1 { font-family: 'Syne', sans-serif; font-size: 36px; margin-bottom: 10px; color: #fff; letter-spacing: -1px; }
-        .welcome-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; line-height: 1.6; }
+        .welcome-card h1 { font-family: 'Syne', sans-serif; font-size: 38px; margin-bottom: 12px; color: #fff; letter-spacing: -1px; }
+        .welcome-card p { color: #94a3b8; font-size: 14px; margin-bottom: 30px; line-height: 1.6; }
         .start-btn {
-            background: var(--accent); color: white; border: none; padding: 14px 32px;
+            background: linear-gradient(90deg, #6366f1, #4f46e5); color: white; border: none; padding: 14px 36px;
             font-size: 16px; font-weight: 700; border-radius: 12px; cursor: pointer;
             box-shadow: 0 4px 20px var(--accent-glow); transition: all 0.2s;
         }
-        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px #818cf8; }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 26px #818cf8; }
 
-        /* Level Up Toast Modal */
+        /* Level Up Dynamic Banner */
         #level-toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: linear-gradient(90deg, #ec4899, #8b5cf6); padding: 15px 40px;
-            border-radius: 99px; z-index: 9999; font-family: 'Syne', sans-serif; font-size: 20px;
-            font-weight: 800; box-shadow: 0 10px 30px rgba(236, 72, 153, 0.5);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px;
+            background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6); padding: 16px 45px;
+            border-radius: 99px; z-index: 9999; font-family: 'Syne', sans-serif; font-size: 22px;
+            font-weight: 800; box-shadow: 0 12px 35px rgba(139, 92, 246, 0.5);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 12px;
         }
 
-        /* Layout Structure */
+        /* Layout Architecture */
         .app-container { display: flex; width: 100vw; height: 100vh; position: relative; }
         
-        /* Sidebar layout styling */
         .sidebar {
-            width: 320px; background: var(--sidebar-dark); border-right: 1px solid var(--glass-border);
-            padding: 24px; display: flex; flex-direction: column; gap: 20px; z-index: 10;
-            backdrop-filter: blur(16px); overflow-y: auto;
+            width: 340px; background: var(--sidebar-dark); border-right: 1px solid var(--glass-border);
+            padding: 24px; display: flex; flex-direction: column; gap: 18px; z-index: 10;
+            backdrop-filter: blur(20px); overflow-y: auto;
         }
-        .brand-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .sub-brand { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+        .brand-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .sub-brand { font-family: 'DM Mono', monospace; font-size: 9px; color: #818cf8; letter-spacing: 1.5px; }
 
-        /* Status Panels */
+        /* Premium Core HUD Data Displays */
         .stat-card {
-            background: linear-gradient(135deg, #1e1b4b, #311042); border: 1px solid rgba(167, 139, 250, 0.2);
-            padding: 16px; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            background: linear-gradient(135deg, #111827, #1e1b4b); border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 16px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            position: relative; overflow: hidden;
         }
+        .stat-card.tutorial-highlight {
+            ring: 4px solid #6366f1;
+            transform: scale(1.03);
+            box-shadow: 0 0 30px var(--accent-glow);
+            z-index: 101;
+        }
+        .stat-card::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
+            transform: rotate(45deg); animation: shine 6s infinite linear;
+        }
+        @keyframes shine { 0% { transform: translate(-30%, -30%) rotate(45deg); } 100% { transform: translate(30%, 30%) rotate(45deg); } }
+        
         .stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: #a78bfa; letter-spacing: 1px; }
-        .stat-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; margin-top: 4px; }
+        .stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-top: 2px; color: #fbbf24; }
+        .passive-ticker { font-family: 'DM Mono', monospace; font-size: 11px; color: #34d399; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 
-        /* Control Buttons Container */
-        .ctrl-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        /* Control Cluster Box */
+        .ctrl-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .ctrl-btn {
             background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
-            border-radius: 10px; padding: 8px 0; color: var(--text-main); cursor: pointer;
-            font-size: 11px; text-align: center; transition: all 0.15s;
+            border-radius: 10px; padding: 10px 0; color: var(--text-main); cursor: pointer;
+            font-size: 11px; font-weight: 600; text-align: center; transition: all 0.15s;
         }
-        .ctrl-btn:hover:not(:disabled) { background: rgba(99, 102, 241, 0.15); border-color: var(--accent); }
-        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .ctrl-btn:hover:not(:disabled) { background: rgba(99, 102, 241, 0.25); border-color: #818cf8; }
+        .ctrl-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
-        /* Blocks selector view */
-        .block-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 250px; padding-right: 4px; }
+        /* Dynamic Palette Selection Area */
+        .block-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 280px; padding-right: 4px; }
         .block-item {
-            display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 12px;
+            display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;
             cursor: pointer; text-align: left; transition: all 0.2s; position: relative;
         }
-        .block-item:hover:not(.locked) { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
-        .block-item.active { background: rgba(99,102,241,0.15); border: 1px solid var(--accent); box-shadow: 0 0 12px rgba(99,102,241,0.25); }
-        .block-item.locked { opacity: 0.4; cursor: not-allowed; }
-        .block-icon { font-size: 20px; }
-        .block-details h4 { font-size: 12px; font-weight: 700; color: #fff; }
-        .block-details p { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); margin-top: 2px; }
-        .lock-overlay { position: absolute; right: 12px; font-size: 10px; color: #ef4444; font-family: 'DM Mono', monospace; }
+        .block-item:hover:not(.locked) { background: rgba(255,255,255,0.07); border-color: rgba(99, 102, 241, 0.3); }
+        .block-item.active { background: rgba(99,102,241,0.2); border: 1px solid #6366f1; box-shadow: 0 0 15px rgba(99,102,241,0.35); }
+        .block-item.tutorial-highlight-btn {
+            border: 2px solid #34d399 !important;
+            background: rgba(52, 211, 153, 0.15) !important;
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+        }
+        .block-item.locked { background: rgba(0, 0, 0, 0.3); border-color: rgba(255,255,255,0.02); cursor: not-allowed; }
+        .block-icon { font-size: 22px; }
+        .block-details h4 { font-size: 13px; font-weight: 700; color: #fff; }
+        .block-details p { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); margin-top: 1px; }
+        .lock-overlay { position: absolute; right: 12px; font-size: 10px; color: #f87171; font-family: 'DM Mono', monospace; background: rgba(248,113,113,0.1); padding: 2px 6px; border-radius: 4px; }
 
-        /* Simulation Canvas Arena (3D Context viewport) */
+        /* True 3D Isometric Viewport Platform */
         .simulation-viewport {
             flex: 1; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); perspective: 1200px; overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #0e172c 0%, #030712 100%); perspective: 1400px; overflow: hidden;
         }
+        .simulation-viewport.dimmed { opacity: 0.35; pointer-events: none; filter: blur(1px); }
 
-        /* The Isometric Matrix wrapper */
+        /* Isometric Matrix Coordinate Mesh grid configuration */
         .iso-scene {
             transform: rotateX(60deg) rotateZ(-45deg);
-            transform-style: preserve-3d; transition: transform 0.5s ease;
-            display: grid; grid-template-columns: repeat(10, 48px); grid-template-rows: repeat(10, 48px); gap: 3px;
-            padding: 20px; background: rgba(99, 102, 241, 0.03); border: 2px dashed rgba(99, 102, 241, 0.15); border-radius: 8px;
+            transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            display: grid; grid-template-columns: repeat(10, 52px); grid-template-rows: repeat(10, 52px); gap: 4px;
+            padding: 24px; background: rgba(99, 102, 241, 0.02); border: 2px dashed rgba(99, 102, 241, 0.2); border-radius: 16px;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.6);
         }
 
-        /* 3D Grid Cells */
+        /* Dynamic 3D Cells with transform preservation hooks */
         .grid-cell {
-            width: 48px; height: 48px; background: rgba(15, 23, 42, 0.6); position: relative;
-            border-radius: 4px; border: 1px solid rgba(99,102,241,0.1); cursor: pointer;
-            transform-style: preserve-3d; transition: all 0.15s;
+            width: 52px; height: 52px; background: rgba(13, 22, 43, 0.7); position: relative;
+            border-radius: 6px; border: 1px solid rgba(99,102,241,0.15); cursor: pointer;
+            transform-style: preserve-3d; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        .grid-cell:hover { background: rgba(99, 102, 241, 0.2); border-color: var(--accent); transform: translateZ(4px); }
+        .grid-cell:hover { background: rgba(99, 102, 241, 0.25); border-color: #818cf8; transform: translateZ(6px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
         
-        /* Rendered Building Element inside Cell */
+        /* Rendered Building Elements projecting vertical elevation vectors */
         .voxel-building {
             position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-            font-size: 26px; transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px);
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); transform-origin: center bottom;
-            animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+            font-size: 30px; transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px);
+            filter: drop-shadow(0 12px 12px rgba(0,0,0,0.6)); transform-origin: center bottom;
+            animation: voxelBounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.25);
         }
 
-        /* HUD Live Analytics Footer ticker */
+        /* HUD Suggestion Box Tracker */
         .hud-suggestion-box {
-            position: absolute; bottom: 20px; left: 20px; right: 20px;
-            background: rgba(10, 17, 34, 0.85); border: 1px solid var(--glass-border);
-            padding: 10px 20px; border-radius: 12px; backdrop-filter: blur(12px);
-            display: flex; justify-content: space-between; align-items: center;
+            position: absolute; bottom: 24px; left: 24px; right: 24px;
+            background: rgba(8, 14, 28, 0.85); border: 1px solid var(--glass-border);
+            padding: 12px 24px; border-radius: 14px; backdrop-filter: blur(16px);
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 500;
         }
-        .hint-text { font-family: 'DM Mono', monospace; font-size: 11px; color: #818cf8; }
+        .hud-suggestion-box.tutorial-focus {
+            border: 2px solid #6366f1;
+            box-shadow: 0 0 25px var(--accent-glow);
+            background: rgba(13, 15, 37, 0.95);
+        }
+        .hint-text { font-family: 'DM Mono', monospace; font-size: 11px; color: #a5b4fc; font-weight: 500; }
+        .tutorial-next-btn {
+            background: #6366f1; color: white; border: none; padding: 6px 14px;
+            font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; margin-left: 12px;
+        }
 
-        /* Animation frames */
-        @keyframes bounceIn {
-            0% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px) scale(0); opacity: 0; }
-            70% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px) scale(1.2); }
-            100% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-14px) scale(1); opacity: 1; }
+        @keyframes voxelBounce {
+            0% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px) scale(0); opacity: 0; }
+            75% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px) scale(1.2); }
+            100% { transform: rotateZ(45deg) rotateX(-60deg) translateY(-18px) scale(1); opacity: 1; }
         }
     </style>
 </head>
@@ -144,333 +174,369 @@
 
     <div id="welcome-screen">
         <div class="welcome-card">
-            <h1>🏙️ CityOS v5</h1>
-            <p>Welcome back, Architect Rao. Initialize the neural engine matrix core to engineer your complex responsive metropolitan network grid simulator.</p>
-            <button class="start-btn" onclick="initializeEngine()">Start Simulation Engine</button>
+            <h1>🏙️ CityOS Matrix v5</h1>
+            <p>Welcome back, Architect Rao. Initialize the neural engine matrix core to deploy urban zones. Houses & Marts generate passive yield cycles to bypass capital blockades.</p>
+            <button class="start-btn" onclick="initializeEngine()">Start Core Simulation</button>
         </div>
     </div>
 
-    <div id="level-toast">⚡ LEVEL UP: LEVEL <span id="toast-lvl">4</span> UNLOCKED! (+💰500)</div>
+    <div id="level-toast">🚀 LEVEL UP: ARCHITECTURE STAGE <span id="toast-lvl">1</span> (+💰600 Bonus)</div>
 
     <div class="app-container">
         <div class="sidebar">
             <div>
                 <div class="brand-title">⚙️ CityOS Matrix</div>
-                <div class="sub-brand">NEURAL URBAN GENERATOR SYSTEM</div>
+                <div class="sub-brand">AUTOMATED PROGRESSION ENGINE</div>
             </div>
 
-            <div class="stat-card">
-                <div class="stat-lbl">CORE BALANCE</div>
+            <div class="stat-card" id="wallet-hud-card">
+                <div class="stat-lbl">CORE RESERVES WALLET</div>
                 <div class="stat-val" id="coins-display">💰 800</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family:'DM Mono', monospace; font-size:10px; color:#94a3b8;">
+                <div class="passive-ticker" id="passive-yield-lbl">📈 Passive Yield: +0/sec</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 12px; font-family:'DM Mono', monospace; font-size:11px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
                     <span>MOVES: <b id="moves-lbl" style="color:#fff;">0</b></span>
-                    <span>LVL: <b id="lvl-lbl" style="color:#ec4899;">1</b></span>
+                    <span>STAGE: <b id="lvl-lbl" style="color:#f472b6;">1/12</b></span>
                 </div>
             </div>
 
             <div class="ctrl-row">
-                <button class="ctrl-btn" onclick="triggerUndo()" id="btn-undo" disabled>↩️ Undo</button>
-                <button class="ctrl-btn" onclick="triggerRedo()" id="btn-redo" disabled>↪️ Redo</button>
-                <button class="ctrl-btn" onclick="toggleMute()" id="btn-mute">🔊 Sound</button>
-                <button class="ctrl-btn" onclick="resetGrid()" style="color: #ef4444;">🔄 Wipe</button>
+                <button class="ctrl-btn" onclick="triggerUndo()" id="btn-undo" disabled>↩️ Undo Step</button>
+                <button class="ctrl-btn" onclick="toggleMute()" id="btn-mute">🔊 Synth</button>
+                <button class="ctrl-btn" onclick="resetGrid()" style="color: #f87171;">🔄 Wipe Field</button>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
-                <h3 style="font-size: 11px; font-family:'DM Mono', monospace; color: var(--text-muted); letter-spacing: 1px;">METROPOLIS MODULE PALETTE</h3>
+                <h3 style="font-size: 10px; font-family:'DM Mono', monospace; color: var(--text-muted); letter-spacing: 1px;">METROPOLIS MODULE CATALOG</h3>
                 <div class="block-list" id="palette-container"></div>
             </div>
 
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">
-                <h4 style="font-size: 11px; font-family:'DM Mono', monospace; margin-bottom: 6px; color:#38bdf8;">🎯 ACTIVE MATRIX OBJECTIVE</h4>
-                <div id="objective-desc" style="font-size: 12px; font-weight: 500; color:#cbd5e1;">Plant 3 Oak Trees to build baseline eco infrastructure.</div>
+            <div style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); padding: 14px; border-radius: 14px;">
+                <h4 style="font-size: 11px; font-family:'DM Mono', monospace; margin-bottom: 4px; color:#38bdf8; display:flex; justify-content:space-between;">
+                    <span>🎯 MATRIX OBJECTIVE</span>
+                    <span id="obj-progress" style="color:#fbbf24;">0%</span>
+                </h4>
+                <div id="objective-desc" style="font-size: 12px; font-weight: 500; color:#e2e8f0; line-height:1.4;">Deploy initial assets to generate income logs.</div>
             </div>
         </div>
 
-        <div class="simulation-viewport">
+        <div class="simulation-viewport" id="viewport-platform">
             <div class="iso-scene" id="isometric-grid-matrix"></div>
 
-            <div class="hud-suggestion-box">
-                <div class="hint-text" id="live-engine-hint">💡 TIP: Select modules from the left dashboard catalog and place them onto the spatial isometric field matrix.</div>
-                <div style="font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted);">ENGINE: ONLINE</div>
+            <div class="hud-suggestion-box" id="assistant-box">
+                <div class="hint-text" id="live-engine-hint">💡 CORE INITIALIZATION: Map environmental and structural assets onto the isometric field.</div>
+                <div id="tutorial-action-area" style="display:none;">
+                    <button class="tutorial-next-btn" onclick="advanceTutorialStep()">Next Engine Step</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Core Config Constants System 
-        const GRID_SIZE = 100;
+        const GRID_SIZE = 100; 
+        
         const MODULE_REGISTRY = {
-            TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  unlockAt:0 },
-            ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  unlockAt:0 },
-            HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, unlockAt:0 },
-            PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  unlockAt:2 },
-            SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, unlockAt:4 },
-            FACTORY:  { id:"FACTORY",  label:"Mega Factory",  icon:"🏭", cost:150, unlockAt:6 },
-            MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, unlockAt:8 },
-            TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, unlockAt:10 }
+            TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  yield:1,  unlockAt:1 },
+            ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  yield:0,  unlockAt:1 },
+            HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, yield:8,  unlockAt:1 },
+            PARK:     { id:"PARK",     label:"Ecotopia Park", icon:"🌿", cost:150, yield:12, unlockAt:3 },
+            MART:     { id:"MART",     label:"Cyber Mart",    icon:"🏪", cost:200, yield:22, unlockAt:4 },
+            SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:260, yield:30, unlockAt:5 },
+            FACTORY:  { id:"FACTORY",  label:"Mega Factory",  icon:"🏭", cost:320, yield:45, unlockAt:6 },
+            SCHOOL:   { id:"SCHOOL",   label:"Tech Academy",  icon:"🏫", cost:400, yield:60, unlockAt:7 },
+            HOSPITAL: { id:"HOSPITAL", label:"Med Center",    icon:"🏥", cost:500, yield:85, unlockAt:8 },
+            MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:650, yield:120,unlockAt:9 },
+            TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:800, yield:180,unlockAt:10 },
+            FASHION:  { id:"FASHION",  label:"AI Couture Hub",icon:"👗", cost:1100,yield:260,unlockAt:11 }
         };
 
-        // Application Native Reactive States Container
         let state = {
             grid: Array(GRID_SIZE).fill(null),
             coins: 800,
             moves: 0,
             level: 1,
             selectedModule: "TREE",
-            muted: false
+            muted: false,
+            tutorialStep: 0  
         };
 
-        // Chrono History Stack Engine (Tracking Architecture states for crisp execution)
-        let structuralHistory = [];
-        let structuralFuture = [];
-
-        // Audio System Engine context core
+        let historicUndoChain = [];
         let audioCtx = null;
 
         function initializeEngine() {
-            // Unlocking user security lock for browser native performance audio tracking
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             document.getElementById("welcome-screen").style.opacity = 0;
             setTimeout(() => {
                 document.getElementById("welcome-screen").style.display = "none";
-                playbackSound("unlock");
-            }, 500);
+                playbackSynthTone("unlock");
+                startTutorialSequence();
+            }, 400);
+
+            setInterval(executePassiveIncomeCycle, 2000);
         }
 
-        // Native Synthesizer Waveform Engine (Pure Audio context code generation)
-        function playbackSound(event) {
+        function startTutorialSequence() {
+            state.tutorialStep = 1;
+            document.getElementById("viewport-platform").classList.add("dimmed");
+            document.getElementById("wallet-hud-card").classList.add("tutorial-highlight");
+            document.getElementById("assistant-box").classList.add("tutorial-focus");
+            document.getElementById("live-engine-hint").innerHTML = "🛰️ <b>TRAINING MODE:</b> This is your <b>Core Reserves Wallet</b>. Every action consumes capital. Let's learn how to establish a passive economy.";
+            document.getElementById("tutorial-action-area").style.display = "block";
+            renderPaletteInterface();
+            renderSimulationGrid();
+        }
+
+        function advanceTutorialStep() {
+            if (state.tutorialStep === 1) {
+                state.tutorialStep = 2;
+                document.getElementById("wallet-hud-card").classList.remove("tutorial-highlight");
+                document.getElementById("viewport-platform").classList.remove("dimmed");
+                document.getElementById("live-engine-hint").innerHTML = "🌳 <b>TACTICAL PLACEMENT:</b> Click on the highlighted <b>Oak Tree</b> item, then click anywhere on the 3D matrix field to deploy your environmental asset node.";
+                document.getElementById("tutorial-action-area").style.display = "none";
+                state.selectedModule = "TREE";
+                renderPaletteInterface();
+            }
+        }
+
+        function completeTutorialSequence() {
+            state.tutorialStep = 3;
+            document.getElementById("assistant-box").classList.remove("tutorial-focus");
+            document.getElementById("live-engine-hint").innerHTML = "🚀 <b>SANDBOX INITIALIZED:</b> Training sequence completed! Build houses & marts freely. Generate asset logs to scale through level 12.";
+            playbackSynthTone("unlock");
+            renderPaletteInterface();
+        }
+
+        function playbackSynthTone(event) {
             if (state.muted || !audioCtx) return;
             try {
                 let osc = audioCtx.createOscillator();
                 let gainNode = audioCtx.createGain();
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                let time = audioCtx.currentTime;
+                osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+                let now = audioCtx.currentTime;
 
                 if (event === "place") {
-                    osc.frequency.setValueAtTime(440, time);
-                    osc.frequency.exponentialRampToValueAtTime(880, time + 0.1);
-                    gainNode.gain.setValueAtTime(0.15, time);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
-                    osc.start(time); osc.stop(time + 0.15);
+                    osc.frequency.setValueAtTime(587.33, now); 
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                    gainNode.gain.setValueAtTime(0.12, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    osc.start(now); osc.stop(now + 0.12);
                 } else if (event === "remove") {
-                    osc.frequency.setValueAtTime(350, time);
-                    osc.frequency.exponentialRampToValueAtTime(120, time + 0.12);
-                    gainNode.gain.setValueAtTime(0.15, time);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
-                    osc.start(time); osc.stop(time + 0.15);
+                    osc.frequency.setValueAtTime(293.66, now);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
+                    gainNode.gain.setValueAtTime(0.15, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    osc.start(now); osc.stop(now + 0.12);
                 } else if (event === "unlock") {
-                    // Level design sequence cascade notes
-                    [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, index) => {
                         let o = audioCtx.createOscillator();
                         let g = audioCtx.createGain();
                         o.connect(g); g.connect(audioCtx.destination);
-                        o.frequency.setValueAtTime(freq, time + (idx * 0.08));
-                        g.gain.setValueAtTime(0.15, time + (idx * 0.08));
-                        g.gain.exponentialRampToValueAtTime(0.001, time + (idx * 0.08) + 0.2);
-                        o.start(time + (idx * 0.08)); o.stop(time + (idx * 0.08) + 0.2);
+                        o.frequency.setValueAtTime(freq, now + (index * 0.06));
+                        g.gain.setValueAtTime(0.1, now + (index * 0.06));
+                        g.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.25);
+                        o.start(now + (index * 0.06)); o.stop(now + (index * 0.06) + 0.25);
                     });
                 } else if (event === "error") {
-                    osc.type = "sawtooth";
-                    osc.frequency.setValueAtTime(150, time);
-                    gainNode.gain.setValueAtTime(0.12, time);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
-                    osc.start(time); osc.stop(time + 0.2);
+                    osc.type = "sawtooth"; osc.frequency.setValueAtTime(130, now);
+                    gainNode.gain.setValueAtTime(0.15, now); gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    osc.start(now); osc.stop(now + 0.18);
                 }
-            } catch (err) { console.log("Audio Context routing exception:", err); }
+            } catch (ex) { console.warn("Synth exception:", ex); }
         }
 
-        // Render Sidebar Catalog Blocks Engine interface
+        function executePassiveIncomeCycle() {
+            let periodicYield = 0;
+            state.grid.forEach(cellKey => {
+                if(cellKey && MODULE_REGISTRY[cellKey]) {
+                    periodicYield += MODULE_REGISTRY[cellKey].yield;
+                }
+            });
+
+            if(periodicYield > 0) {
+                state.coins += periodicYield;
+                document.getElementById("coins-display").innerText = `💰 ${state.coins}`;
+                document.getElementById("coins-display").style.color = "#34d399";
+                setTimeout(() => { document.getElementById("coins-display").style.color = "#fbbf24"; }, 400);
+            }
+            document.getElementById("passive-yield-lbl").innerText = `📈 Passive Yield: +${periodicYield}/cycle`;
+            evaluateProgressionMilestoneSystems();
+        }
+
         function renderPaletteInterface() {
             const container = document.getElementById("palette-container");
             container.innerHTML = "";
             
             Object.values(MODULE_REGISTRY).forEach(mod => {
-                const isLocked = state.moves < mod.unlockAt;
+                const isLocked = state.level < mod.unlockAt;
                 const isActive = state.selectedModule === mod.id;
+                let highlightClass = "";
                 
-                const elem = document.createElement("button");
-                elem.className = `block-item ${isLocked ? 'locked' : ''} ${isActive ? 'active' : ''}`;
-                elem.disabled = isLocked;
-                elem.onclick = () => {
+                if (state.tutorialStep === 2 && mod.id === "TREE") {
+                    highlightClass = "tutorial-highlight-btn";
+                }
+
+                const elementNode = document.createElement("button");
+                elementNode.className = `block-item ${isLocked ? 'locked' : ''} ${isActive ? 'active' : ''} ${highlightClass}`;
+                elementNode.disabled = isLocked;
+                elementNode.onclick = () => {
                     if(!isLocked) {
                         state.selectedModule = mod.id;
                         renderPaletteInterface();
                     }
                 };
 
-                elem.innerHTML = `
+                elementNode.innerHTML = `
                     <div class="block-icon">${mod.icon}</div>
                     <div class="block-details">
                         <h4>${mod.label}</h4>
-                        <p>${isLocked ? 'SYSTEM BLOCKED' : 'COST: 💰 ' + mod.cost}</p>
+                        <p>${isLocked ? 'STAGE RECORD LOCKED' : 'COST: 💰 ' + mod.cost + ' | +💰' + mod.yield + '/cyc'}</p>
                     </div>
-                    ${isLocked ? `<div class="lock-overlay">🔒 Move ${mod.unlockAt}</div>` : ''}
+                    ${isLocked ? `<div class="lock-overlay">🔒 Stage ${mod.unlockAt}</div>` : ''}
                 `;
-                container.appendChild(elem);
+                container.appendChild(elementNode);
             });
         }
 
-        // Render Simulation Isometric Grid System matrix canvas
         function renderSimulationGrid() {
-            const field = document.getElementById("isometric-grid-matrix");
-            field.innerHTML = "";
+            const viewportMesh = document.getElementById("isometric-grid-matrix");
+            viewportMesh.innerHTML = "";
 
             state.grid.forEach((blockKey, cellIndex) => {
-                const gridCell = document.createElement("div");
-                gridCell.className = "grid-cell";
-                gridCell.onclick = () => handleCellClickAction(cellIndex);
-                
-                // Right click block erasure protocol support
-                gridCell.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    handleCellRightClickAction(cellIndex);
-                };
+                const gridCellNode = document.createElement("div");
+                gridCellNode.className = "grid-cell";
+                gridCellNode.onclick = () => processMatrixCellDeployment(cellIndex);
+                gridCellNode.oncontextmenu = (e) => { e.preventDefault(); processMatrixCellWipeout(cellIndex); };
 
                 if (blockKey && MODULE_REGISTRY[blockKey]) {
-                    const blockMeta = MODULE_REGISTRY[blockKey];
-                    const assetVoxel = document.createElement("div");
-                    assetVoxel.className = "voxel-building";
-                    assetVoxel.innerText = blockMeta.icon;
-                    gridCell.appendChild(assetVoxel);
+                    const metadata = MODULE_REGISTRY[blockKey];
+                    const voxelObject = document.createElement("div");
+                    voxelObject.className = "voxel-building";
+                    voxelObject.innerText = metadata.icon;
+                    gridCellNode.appendChild(voxelObject);
                 }
-                field.appendChild(gridCell);
+                viewportMesh.appendChild(gridCellNode);
             });
         }
 
-        // Record Matrix point transaction for deployment operations
-        function pushStateToUndoHistoryStack() {
-            structuralHistory.push(JSON.stringify({ grid: state.grid, coins: state.coins, moves: state.moves, level: state.level }));
-            structuralFuture = []; // Clear redo chain fork operations
-            updateControlSystemButtonsDOM();
+        function pushStateSnapshotToUndoStack() {
+            if (historicUndoChain.length > 25) historicUndoChain.shift();
+            historicUndoChain.push(JSON.stringify({ grid: state.grid, coins: state.coins, moves: state.moves, level: state.level }));
+            document.getElementById("btn-undo").disabled = false;
         }
 
-        function updateControlSystemButtonsDOM() {
-            document.getElementById("btn-undo").disabled = structuralHistory.length === 0;
-            document.getElementById("btn-redo").disabled = structuralFuture.length === 0;
+        function triggerUndo() {
+            if (historicUndoChain.length === 0) return;
+            let snapshot = JSON.parse(historicUndoChain.pop());
+            state.grid = snapshot.grid; state.coins = snapshot.coins;
+            state.moves = snapshot.moves; state.level = snapshot.level;
+
+            if(historicUndoChain.length === 0) document.getElementById("btn-undo").disabled = true;
+            playbackSynthTone("remove"); synchronizeUINodesView();
         }
 
-        // Place element action core handling
-        function handleCellClickAction(index) {
-            // Guard clause checking if point cell location is currently occupied
+        function processMatrixCellDeployment(index) {
             if (state.grid[index] !== null) {
-                playbackSound("error");
-                updateSuggestionEngineTicker("❌ Node location is already occupied! Right-click or long-press to wipe block asset mapping.");
+                playbackSynthTone("error"); return;
+            }
+
+            const selectionMeta = MODULE_REGISTRY[state.selectedModule];
+            if (state.coins < selectionMeta.cost) {
+                playbackSynthTone("error");
+                updateSuggestionEngineTicker("❌ Credits deficit! Construct low-tier Villas (Houses) or wait for yield cycle refresh.");
                 return;
             }
 
-            const activeModule = MODULE_REGISTRY[state.selectedModule];
-            if (state.coins < activeModule.cost) {
-                playbackSound("error");
-                updateSuggestionEngineTicker("❌ Budget deficit alert! Insufficient core structural tokens available for operational integration.");
-                return;
-            }
-
-            pushStateToUndoHistoryStack();
-
-            // Mutating internal structural states arrays
-            state.grid[index] = activeModule.id;
-            state.coins -= activeModule.cost;
+            pushStateSnapshotToUndoStack();
+            state.grid[index] = selectionMeta.id;
+            state.coins -= selectionMeta.cost;
             state.moves += 1;
 
-            playbackSound("place");
-            evaluateProgressionMilestoneSystems();
-            syncApplicationStateUIVars();
+            playbackSynthTone("place");
+
+            if (state.tutorialStep === 2 && selectionMeta.id === "TREE") {
+                completeTutorialSequence();
+            }
+
+            synchronizeUINodesView();
         }
 
-        // Right click remove node sequence method
-        function handleCellRightClickAction(index) {
+        function processMatrixCellWipeout(index) {
             if (state.grid[index] === null) return;
-
-            pushStateToUndoHistoryStack();
+            pushStateSnapshotToUndoStack();
             state.grid[index] = null;
             state.moves += 1;
-            
-            playbackSound("remove");
-            evaluateProgressionMilestoneSystems();
-            syncApplicationStateUIVars();
+            playbackSynthTone("remove");
+            synchronizeUINodesView();
         }
 
-        // Chrono State Management Functions
-        function triggerUndo() {
-            if (structuralHistory.length === 0) return;
-            structuralFuture.push(JSON.stringify({ grid: state.grid, coins: state.coins, moves: state.moves, level: state.level }));
-            
-            let targetSnapshot = JSON.parse(structuralHistory.pop());
-            assignSnapshotToActiveState(targetSnapshot);
-        }
-
-        function triggerRedo() {
-            if (structuralFuture.length === 0) return;
-            structuralHistory.push(JSON.stringify({ grid: state.grid, coins: state.coins, moves: state.moves, level: state.level }));
-
-            let targetSnapshot = JSON.parse(structuralFuture.pop());
-            assignSnapshotToActiveState(targetSnapshot);
-        }
-
-        function assignSnapshotToActiveState(snap) {
-            state.grid = snap.grid;
-            state.coins = snap.coins;
-            state.moves = snap.moves;
-            state.level = snap.level;
-            
-            playbackSound("unlock");
-            syncApplicationStateUIVars();
-            updateControlSystemButtonsDOM();
-        }
-
-        // Evolution Progression Calculations Engine (Solving level stuck tracking framework issue)
         function evaluateProgressionMilestoneSystems() {
-            let nextCalculatedLevel = 1;
-            if (state.moves >= 30) nextCalculatedLevel = 5;
-            else if (state.moves >= 18) nextCalculatedLevel = 4;
-            else if (state.moves >= 10) nextCalculatedLevel = 3;
-            else if (state.moves >= 4)  nextCalculatedLevel = 2;
+            let calculatedTargetStage = 1;
+            let assetCount = state.grid.filter(c => c !== null).length;
+            let netWorthValue = state.coins + (assetCount * 50);
 
-            if (nextCalculatedLevel > state.level) {
-                state.level = nextCalculatedLevel;
-                state.coins += 500; // Injecting milestone system structural tokens balance expansion
-                triggerLevelCelebrationToastBanner(state.level);
+            if (netWorthValue >= 12000) calculatedTargetStage = 12;
+            else if (netWorthValue >= 9500) calculatedTargetStage = 11;
+            else if (netWorthValue >= 7500) calculatedTargetStage = 10;
+            else if (netWorthValue >= 5800) calculatedTargetStage = 9;
+            else if (netWorthValue >= 4400) calculatedTargetStage = 8;
+            else if (netWorthValue >= 3200) calculatedTargetStage = 7;
+            else if (netWorthValue >= 2200) calculatedTargetStage = 6;
+            else if (netWorthValue >= 1400) calculatedTargetStage = 5;
+            else if (netWorthValue >= 850)  calculatedTargetStage = 4; 
+            else if (netWorthValue >= 450)  calculatedTargetStage = 3;
+            else if (netWorthValue >= 150)  calculatedTargetStage = 2;
+
+            if (calculatedTargetStage > state.level && state.level < 12) {
+                state.level = calculatedTargetStage;
+                state.coins += 600; 
+                triggerDynamicLevelUpCelebrationBanner(state.level);
+                synchronizeUINodesView();
             }
         }
 
-        function triggerLevelCelebrationToastBanner(lvl) {
-            playbackSound("unlock");
+        function triggerDynamicLevelUpCelebrationBanner(lvl) {
+            playbackSynthTone("unlock");
             const element = document.getElementById("level-toast");
-            document.getElementById("toast-lvl").innerText = lvl;
+            document.getElementById("toast-lvl").innerText = lvl + "/12 Core Unlocked";
             element.style.top = "24px";
             setTimeout(() => { element.style.top = "-100px"; }, 4000);
         }
 
-        // Sync Application system values to standard client nodes DOM layout view
-        function syncApplicationStateUIVars() {
+        function synchronizeUINodesView() {
             document.getElementById("coins-display").innerText = `💰 ${state.coins}`;
             document.getElementById("moves-lbl").innerText = state.moves;
-            document.getElementById("lvl-lbl").innerText = state.level;
-
+            document.getElementById("lvl-lbl").innerText = `${state.level}/12`;
             renderPaletteInterface();
             renderSimulationGrid();
-            updateDynamicMissionAndSyllabusHints();
+            recalculateMissionObjectivesTexts();
         }
 
-        // Dynamic Hint Suggestion Engine logic updates
-        function updateDynamicMissionAndSyllabusHints() {
-            const descNode = document.getElementById("objective-desc");
-            const countTrees = state.grid.filter(c => c === "TREE").length;
-            const countRoads = state.grid.filter(c => c === "ROAD").length;
+        function recalculateMissionObjectivesTexts() {
+            if (state.tutorialStep < 3) return;
 
-            if (state.level === 1) {
-                descNode.innerHTML = `Plant 3 Trees to initialize system canopy (${countTrees}/3 placed)`;
-                updateSuggestionEngineTicker("💡 ARCHITECT HINT: Infrastructure is too barren. Place Oak Trees to generate fresh airflow dynamics and credits.");
-            } else if (state.level === 2) {
-                descNode.innerHTML = `Construct 4 Smart Road channels for transport network (${countRoads}/4 mapped)`;
-                updateSuggestionEngineTicker("💡 ARCHITECT HINT: Citizen transit pathways requested! Lay down Modern Villa properties beside active Smart Roads.");
-            } else if (state.level === 3) {
-                descNode.innerHTML = "Reach 1,200 balance credits to build advanced Tier-3 installations.";
-                updateSuggestionEngineTicker("💡 ARCHITECT HINT: Balance tracking optimizes micro-loans. Conserve structural token allocation footprints.");
+            const descNode = document.getElementById("objective-desc");
+            const percentageNode = document.getElementById("obj-progress");
+
+            let countVillas = state.grid.filter(c => c === "HOUSE").length;
+            let countMarts = state.grid.filter(c => c === "MART").length;
+
+            if (state.level <= 2) {
+                let pct = Math.min(100, Math.round((countVillas / 3) * 100));
+                descNode.innerHTML = `Construct 3 Modern Villa residential zones to start passive automation cycles. (${countVillas}/3 placed)`;
+                percentageNode.innerText = `${pct}%`;
+                updateSuggestionEngineTicker("💡 ARCHITECT ADVICE: Modern Villas generate +8 tokens every cycle. Build them to avoid credit traps.");
+            } else if (state.level <= 5) {
+                let pct = Math.min(100, Math.round((countMarts / 2) * 100));
+                descNode.innerHTML = `Deploy 2 Cyber Mart commercial sectors to scale token production. (${countMarts}/2 placed)`;
+                percentageNode.innerText = `${pct}%`;
+                updateSuggestionEngineTicker("💡 ARCHITECT ADVICE: Cyber Marts accelerate liquidity generation to unlock Stage 5+ modules.");
+            } else if (state.level <= 9) {
+                descNode.innerHTML = "Accumulate financial reserves to unlock high-tier nodes (Grand Mosque & Cyber Towers).";
+                percentageNode.innerText = `${Math.min(100, Math.round((state.coins / 5000)*100))}%`;
+                updateSuggestionEngineTicker("💡 ARCHITECT ADVICE: Combine energy from Solar Farms and yields from Mega Factories to accelerate net worth.");
             } else {
-                descNode.innerHTML = "Matrix Grid is sprawling! Deploy Cyber Towers to fully optimize node network routing.";
-                updateSuggestionEngineTicker("💡 ARCHITECT HINT: High evolution matrix active. Watch expansion profiles to protect system metrics.");
+                descNode.innerHTML = "Stage 12 Metropolis Matrix Achieved. Run expansion parameters to complete sandbox layout.";
+                percentageNode.innerText = "100%";
+                updateSuggestionEngineTicker("💡 ARCHITECT ADVICE: Fully deploy AI Couture Hub structures to maximize neural mesh routing maps.");
             }
         }
 
@@ -480,27 +546,21 @@
 
         function toggleMute() {
             state.muted = !state.muted;
-            document.getElementById("btn-mute").innerText = state.muted ? "🔇 Muted" : "🔊 Sound";
+            document.getElementById("btn-mute").innerText = state.muted ? "🔇 Mute" : "🔊 Synth";
         }
 
         function resetGrid() {
-            if(confirm("Initialize complete network grid node format wipe wipe? All progress will drop.")) {
-                state.grid = Array(GRID_SIZE).fill(null);
-                state.coins = 800;
-                state.moves = 0;
-                state.level = 1;
-                structuralHistory = [];
-                structuralFuture = [];
-                syncApplicationStateUIVars();
-                updateControlSystemButtonsDOM();
-                playbackSound("error");
+            if(confirm("Are you sure you want to completely format the data grid array core logs? All stages drop to 1.")) {
+                state.grid = Array(GRID_SIZE).fill(null); state.coins = 800; state.moves = 0; state.level = 1;
+                state.tutorialStep = 3; historicUndoChain = [];
+                document.getElementById("btn-undo").disabled = true;
+                synchronizeUINodesView(); playbackSynthTone("error");
             }
         }
 
-        // Kickstarting baseline pipeline procedures immediately upon DOM window completion tracking
+        // Palette and view baseline rendering initialization mapping anchors
         renderPaletteInterface();
         renderSimulationGrid();
-        updateDynamicMissionAndSyllabusHints();
     </script>
 </body>
 </html>
