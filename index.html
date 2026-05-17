@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://cityos-core-k434z879i-khadija-rao-s-projects.vercel.app/" />
     <meta property="og:title" content="CityOS - Smart City Sustainability Simulator" />
-<meta property="og:description" content="An interactive, state-driven urban planning simulation balancing economic growth and environmental metrics." />
+    <meta property="og:description" content="An interactive, state-driven urban planning simulation balancing economic growth, power management, and environmental metrics. Built with React." />
+    <meta property="og:image" content="https://cityos-core-k434z879i-khadija-rao-s-projects.vercel.app/screenshot_1.png" />
+
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="CityOS - Smart City Sustainability Simulator" />
+    <meta property="twitter:description" content="An interactive, state-driven urban planning simulation balancing economic growth, power management, and environmental metrics. Built with React." />
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>CityOS v5 — Smart Simulator</title>
@@ -40,7 +48,7 @@
         .welcome-panel { background: rgba(10, 15, 30, 0.8); border: 2px solid #6366f1; box-shadow: 0 0 30px rgba(99, 102, 241, 0.3); border-radius: 20px; padding: 40px; max-width: 500px; backdrop-filter: blur(10px); animation: panelPulse 4s infinite alternate; }
         
         /* Disappearing Strategic Hint Overlay */
-        .timed-hint { position: absolute; top: 80px; right: 25px; background: rgba(15, 23, 42, 0.9); border-left: 4px solid #fbbf24; box-shadow: 0 10px 25px rgba(0,0,0,0.5); padding: 15px; borderRadius: 10px; border-radius: 8px; width: 280px; z-index: 500; animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .timed-hint { position: absolute; top: 80px; right: 25px; background: rgba(15, 23, 42, 0.9); border-left: 4px solid #fbbf24; box-shadow: 0 10px 25px rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; width: 280px; z-index: 500; animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
         /* Level End / Reward Screen Overlay */
         .level-modal { position: fixed; inset: 0; background: rgba(3, 5, 10, 0.85); backdrop-filter: blur(8px); z-index: 9000; display: flex; align-items: center; justify-content: center; }
@@ -87,7 +95,6 @@
                     gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
                     osc.start(); osc.stop(ctx.currentTime + 0.2);
                 } else if (type === 'levelup') {
-                    // Arpeggio chime sequence
                     [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
                         const o = ctx.createOscillator();
                         const g = ctx.createGain();
@@ -107,7 +114,7 @@
                     gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.25);
                     osc.start(); osc.stop(ctx.currentTime + 0.25);
                 }
-            } catch (e) { console.log("Audio not allowed yet context blocks:", e); }
+            } catch (e) { console.log("Audio contexts blocked:", e); }
         };
 
         // ═══════════════════════════════════════════════════════════════
@@ -118,18 +125,19 @@
         const SAVE_KEY  = "cityos_v5_pro";
         const STARTING_COINS = 800;
 
+        // Smooth Level thresholds to completely avoid any Level 4/6 lock blocks
         const BUILDINGS = {
           TREE:     { id:"TREE",     label:"Oak Tree",      icon:"🌳", cost:20,  beauty:10, oxygen:8,  pollution:-6,  traffic:0,  energy:2,  population:0,  color:"#4ade80", unlockAt:0 },
           ROAD:     { id:"ROAD",     label:"Smart Road",    icon:"🛣️", cost:30,  beauty:2,  oxygen:-2, pollution:4,   traffic:-10,energy:-2, population:0,  color:"#94a3b8", unlockAt:0 },
           HOUSE:    { id:"HOUSE",    label:"Modern Villa",  icon:"🏠", cost:100, beauty:15, oxygen:-1, pollution:3,   traffic:4,  energy:-5, population:15, color:"#60a5fa", unlockAt:0 },
           PARK:     { id:"PARK",     label:"City Park",     icon:"🌿", cost:50,  beauty:20, oxygen:12, pollution:-10, traffic:-3, energy:3,  population:5,  color:"#86efac", unlockAt:0 },
-          SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:25, population:2,  color:"#fbbf24", unlockAt:3 },
-          FACTORY:  { id:"FACTORY",  label:"Factory",       icon:"🏭", cost:150, beauty:-5, oxygen:-12,pollution:18,  traffic:8,  energy:15, population:10, color:"#fb923c", unlockAt:5 },
-          HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:8,  oxygen:2,  pollution:-4,  traffic:6,  energy:-8, population:25, color:"#f43f5e", unlockAt:8 },
-          SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:12, oxygen:3,  pollution:-3,  traffic:4,  energy:-6, population:12, color:"#c084fc", unlockAt:10 },
-          MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:30, oxygen:2,  pollution:-2,  traffic:3,  energy:-3, population:8,  color:"#a78bfa", unlockAt:12 },
-          TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:20, oxygen:-5, pollution:8,   traffic:10, energy:-15,population:50, color:"#38bdf8", unlockAt:15 },
-          FASHION:  { id:"FASHION",  label:"Fashion Hub ✦", icon:"👗", cost:400, beauty:40, oxygen:1,  pollution:-5,  traffic:8,  energy:-10,population:30, color:"#f472b6", unlockAt:18 },
+          SOLAR:    { id:"SOLAR",    label:"Solar Farm",    icon:"☀️", cost:120, beauty:5,  oxygen:4,  pollution:-15, traffic:0,  energy:25, population:2,  color:"#fbbf24", unlockAt:2 },
+          FACTORY:  { id:"FACTORY",  label:"Factory",       icon:"🏭", cost:150, beauty:-5, oxygen:-12,pollution:18,  traffic:8,  energy:15, population:10, color:"#fb923c", unlockAt:3 },
+          HOSPITAL: { id:"HOSPITAL", label:"Health Center", icon:"🏥", cost:200, beauty:8,  oxygen:2,  pollution:-4,  traffic:6,  energy:-8, population:25, color:"#f43f5e", unlockAt:4 },
+          SCHOOL:   { id:"SCHOOL",   label:"Academy",       icon:"🏫", cost:180, beauty:12, oxygen:3,  pollution:-3,  traffic:4,  energy:-6, population:12, color:"#c084fc", unlockAt:5 },
+          MOSQUE:   { id:"MOSQUE",   label:"Grand Mosque",  icon:"🕌", cost:250, beauty:30, oxygen:2,  pollution:-2,  traffic:3,  energy:-3, population:8,  color:"#a78bfa", unlockAt:6 },
+          TOWER:    { id:"TOWER",    label:"Cyber Tower",   icon:"🏙️", cost:300, beauty:20, oxygen:-5, pollution:8,   traffic:10, energy:-15,population:50, color:"#38bdf8", unlockAt:7 },
+          FASHION:  { id:"FASHION",  label:"Fashion Hub ✦", icon:"👗", cost:400, beauty:40, oxygen:1,  pollution:-5,  traffic:8,  energy:-10,population:30, color:"#f472b6", unlockAt:8 },
         };
 
         const HINTS = [
@@ -254,7 +262,6 @@
             return saved ? JSON.parse(saved).moveCount : 0;
           });
           
-          // Progression Engine State Variables
           const [currentLevel, setCurrentLevel] = useState(1);
           const [showLevelModal, setShowLevelModal] = useState(false);
           const [activeHint, setActiveHint] = useState(null);
@@ -266,20 +273,18 @@
           const t = THEMES[themeMode];
           const stats = computeStats(grid);
 
-          // Calculate Dynamic Leveling Bracket
+          // Dynamic Level bracket recalculation based on total active moves
           const levelCalculation = Math.floor(moveCount / 8) + 1;
 
-          // Track leveling changes for reward prompts
           useEffect(() => {
               if (moveCount > 0 && levelCalculation > currentLevel) {
                   setCurrentLevel(levelCalculation);
-                  setCoins(c => c + 350); // level reward
+                  setCoins(c => c + 350); 
                   setShowLevelModal(true);
                   playSound('levelup');
               }
           }, [levelCalculation, moveCount, currentLevel]);
 
-          // Loop Interval Engine for Mid-game Strategic Hints (Visible for 10 Sec every 40 Sec)
           useEffect(() => {
               const triggerHintLoop = setInterval(() => {
                   const randomHint = HINTS[Math.floor(Math.random() * HINTS.length)];
@@ -287,9 +292,9 @@
                   
                   setTimeout(() => {
                       setActiveHint(null);
-                  }, 10000); // 10 seconds lifespan
+                  }, 10000);
 
-              }, 40000); // Run every 40 seconds
+              }, 40000); 
               return () => clearInterval(triggerHintLoop);
           }, []);
 
@@ -427,7 +432,7 @@
 
                 {/* Level Progress Display Indicator */}
                 <div style={{ background:"rgba(99,102,241,0.08)", padding:10, borderRadius:12, border:"1px solid rgba(99,102,241,0.2)" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:9, fontWeight:700, color:"#6366f1", marginBottom:4 }}>
+                  <div style={{ display:"flex", justifyValues:"space-between", justifyContent:"space-between", fontSize:9, fontWeight:700, color:"#6366f1", marginBottom:4 }}>
                     <span>PLANNER LEVEL {currentLevel}</span>
                     <span>{moveCount % 8}/8 Moves to Next Rank</span>
                   </div>
@@ -523,38 +528,42 @@
               {/* RIGHT VIEWPORT GRAPHICS (THE 3D GRID WORLD) */}
               <div className="main-content">
                 <div className="top-bar" style={{ background: t.glass, borderColor: t.sidebarBdr }}>
-                  <div style={{ fontSize:12, fontWeight:600 }}>🌟 Environment Performance Matrix</div>
-                  <button onClick={() => setThemeMode(themeMode === "dark" ? "light" : "dark")} style={{
-                      background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: t.text,
-                      padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer"
-                  }}>
-                      {themeMode === "dark" ? "🌙 Night" : "☀️ Day"}
-                  </button>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <button onClick={() => setThemeMode(themeMode === "dark" ? "light" : "dark")} style={{
+                            background: t.chartCard, border: `1px solid ${t.sidebarBdr}`, color: t.text,
+                            padding: "6px 12px", borderRadius: 8, fontSize: 11, cursor: "pointer"
+                        }}>
+                            {themeMode === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+                        </button>
+                    </div>
+                    <div style={{ fontSize: 11, color: t.textSub, fontFamily: "'DM Mono'" }}>
+                        CORE ENGINE v5.0 // RESPONSIVE
+                    </div>
                 </div>
 
                 <div className="world-container">
-                  <div className="grid-isometric" style={{ filter: t.gridFilter }}>
-                    {grid.map((cell, idx) => (
-                      <IsoCell 
-                        key={idx} 
-                        building={cell} 
-                        selected={selected} 
-                        isNight={themeMode === "dark"} 
-                        t={t} 
-                        sizePx={44}
-                        onClick={() => buildCell(idx)}
-                        onRightClick={() => removeCell(idx)}
-                      />
-                    ))}
-                  </div>
+                    <div className="grid-isometric" style={{ filter: t.gridFilter }}>
+                        {grid.map((cell, idx) => (
+                            <IsoCell
+                                key={idx}
+                                building={cell}
+                                selected={selected}
+                                isNight={themeMode === "dark"}
+                                t={t}
+                                sizePx={44}
+                                onClick={() => buildCell(idx)}
+                                onRightClick={() => removeCell(idx)}
+                            />
+                        ))}
+                    </div>
                 </div>
               </div>
-
             </div>
           );
         };
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<CityApp />);
+        const root = RoyalDOM.createRoot(document.getElementById('root'));
+        root.render(<CityApp />);
     </script>
 </body>
 </html>
