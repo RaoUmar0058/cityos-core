@@ -697,40 +697,61 @@
         // will keep previous engine states completely secure.
         // ===================================================
 // ============================================================================
-// LEVEL 6 EXTENSION SYSTEM: QUANTUM TIME-SERIES FORECASTING ENGINE
+// LEVEL 6 SYSTEM EXTENSION: ELITE QUANTUM TIME-SERIES UI/UX ENGINE
 // ============================================================================
 
-// Global hook activation override
 function startLevelSixEngine() {
     engineState.activeLevel = 6;
-    engineState.walletBal = 3500;
+    engineState.walletBal = 5000; // Premium allocation for design scaling
     engineState.gridArray = Array(GRID_SIZE).fill(null);
     engineState.damageArray = Array(GRID_SIZE).fill(false);
-    engineState.forecastAccuracy = 0.45; // Start with low accuracy baseline
+    engineState.forecastAccuracy = 0.45; 
 
-    // Update UI Elements with premium cyberpunk palette overrides
+    // UI Layer Override: Applying premium cinematic theme variables directly to Root
+    const rootStyle = document.documentElement.style;
+    rootStyle.setProperty('--matrix-purple', '#a855f7');
+    rootStyle.setProperty('--matrix-green', '#34d399');
+    rootStyle.setProperty('--glass-bg', 'rgba(15, 23, 42, 0.65)');
+    rootStyle.setProperty('--neon-glow', '0 0 20px rgba(168, 85, 247, 0.6)');
+
+    // Refresh core DOM components with high-fidelity telemetry metrics
     document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
-    configureRightPanelUI("var(--matrix-purple)", "🌌 Quantum Forecast", "ALGORITHMIC TREND ACCURACY");
+    configureRightPanelUI("var(--matrix-purple)", "🌌 Quantum Forecast Hub", "ALGORITHMIC TREND ACCURACY");
     
-    // Inject custom structural item into catalog for Level 6
+    // Registry definition for the premium interactive asset
     REGISTRY_CATALOG.QUANTUM_HUB = { 
         id: "QUANTUM_HUB", 
         label: "Quantum Forecaster", 
         icon: "🌌", 
-        cost: 400, 
-        yield: 65, 
-        minSoilLoad: 20 
+        cost: 500, 
+        yield: 85, 
+        minSoilLoad: 15 
     };
     
     renderStructuralCatalog();
     buildActiveMatrixGrid();
+    applyEliteUiUXStylingOverrides(); // Trigger custom layout engine transformations
     triggerQuantumForecastingVisualizer();
     
-    appendTelemetryLog("LEVEL 6 ACTIVE: System transition to Quantum Space Engine confirmed.", "normal");
-    appendTelemetryLog("[OBJECTIVE]: Build Quantum Forecasters to cross 95% Model Accuracy!", "warning");
+    appendTelemetryLog("LEVEL 6 ACTIVE: Masterpiece UI/UX Forecasting Pipeline mounted successfully.", "normal");
+    appendTelemetryLog("[OBJECTIVE]: Construct Quantum Arrays to scale trend accuracy past 95%!", "warning");
 }
 
-// Ultra Premium High-Tech UI/UX Time-Series Wave Visualizer
+// Injects premium styles directly for a seamless, beautiful glassmorphism aesthetic
+function applyEliteUiUXStylingOverrides() {
+    const panels = document.querySelectorAll(".metro-panel, #sidebar, #right-analytics");
+    panels.forEach(panel => {
+        panel.style.background = "var(--glass-bg)";
+        panel.style.backdropFilter = "blur(16px)";
+        panel.style.webkitBackdropFilter = "blur(16px)";
+        panel.style.border = "1px solid rgba(255, 255, 255, 0.08)";
+        panel.style.borderRadius = "12px";
+        panel.style.boxShadow = "0 8px 32px 0 rgba(0, 0, 0, 0.37)";
+        panel.style.transition = "all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)";
+    });
+}
+
+// Ultra High-Tech Interactive Time-Series Wave Engine
 function triggerQuantumForecastingVisualizer() {
     if (canvasAnimationId) cancelAnimationFrame(canvasAnimationId);
     
@@ -739,103 +760,104 @@ function triggerQuantumForecastingVisualizer() {
     const ctx = canvas.getContext("2d");
     let timeTick = 0;
 
-    // Generate random mock historical data stream nodes
-    let historyPoints = Array.from({ length: 15 }, (_, i) => 60 + Math.random() * 80);
+    // Generated historical noise stream array
+    let historyPoints = Array.from({ length: 18 }, (_, i) => 70 + Math.sin(i * 0.5) * 20 + Math.random() * 30);
 
     function renderForecastLoop() {
         if (engineState.activeLevel !== 6) return;
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        timeTick += 0.05;
+        timeTick += 0.04;
 
-        // Draw CSS Subgrid System lines for industrial look
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+        // Render Cybersecurity Matrix Coordinates (Background Tech Grid)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
         ctx.lineWidth = 1;
-        for (let i = 20; i < canvas.width; i += 30) {
-            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+        for (let x = 0; x < canvas.width; x += 25) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
         }
-        for (let j = 20; j < canvas.height; j += 30) {
-            ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke();
+        for (let y = 0; y < canvas.height; y += 25) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
         }
 
-        // Calculate current forecast performance metrics dynamically
         let hubsCount = engineState.gridArray.filter(cell => cell === "QUANTUM_HUB").length;
-        engineState.forecastAccuracy = Math.min(0.99, 0.45 + (hubsCount * 0.13));
+        engineState.forecastAccuracy = Math.min(0.99, 0.45 + (hubsCount * 0.15));
 
-        // Draw Historical Trend Area under the curve (Glow Fill)
-        ctx.fillStyle = "rgba(168, 85, 247, 0.05)";
-        ctx.beginPath();
-        ctx.moveTo(15, canvas.height - 20);
+        // Beautiful Translucent Gradient Fill Under the Historical Trend Line
+        let areaGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        areaGrad.addColorStop(0, "rgba(168, 85, 247, 0.18)");
+        areaGrad.addColorStop(1, "rgba(168, 85, 247, 0.0)");
         
-        let stepX = (canvas.width - 40) / (historyPoints.length - 1);
-        historyPoints.forEach((val, index) => {
-            let offsetNoise = Math.sin(timeTick + index) * 3;
-            ctx.lineTo(20 + index * stepX, canvas.height - 30 - val + offsetNoise);
+        ctx.fillStyle = areaGrad;
+        ctx.beginPath();
+        ctx.moveTo(10, canvas.height - 10);
+        
+        let stepX = (canvas.width - 60) / (historyPoints.length - 1);
+        historyPoints.forEach((val, idx) => {
+            let waviness = Math.sin(timeTick + idx * 0.8) * 4;
+            ctx.lineTo(15 + idx * stepX, canvas.height - 40 - val + waviness);
         });
-        ctx.lineTo(canvas.width - 20, canvas.height - 20);
+        ctx.lineTo(15 + (historyPoints.length - 1) * stepX, canvas.height - 10);
         ctx.closePath();
         ctx.fill();
 
-        // Draw Neon Historical Core Line
-        ctx.strokeStyle = "rgba(168, 85, 247, 0.8)";
-        ctx.lineWidth = 2.5;
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = "rgba(168, 85, 247, 0.6)";
+        // Master Trend Line: Deep Purple Neon Ribbon
+        ctx.strokeStyle = "rgba(168, 85, 247, 0.95)";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = "rgba(168, 85, 247, 0.8)";
         ctx.beginPath();
-        
-        historyPoints.forEach((val, index) => {
-            let offsetNoise = Math.sin(timeTick + index) * 3;
-            if (index === 0) ctx.moveTo(20, canvas.height - 30 - val + offsetNoise);
-            else ctx.lineTo(20 + index * stepX, canvas.height - 30 - val + offsetNoise);
+        historyPoints.forEach((val, idx) => {
+            let waviness = Math.sin(timeTick + idx * 0.8) * 4;
+            if (idx === 0) ctx.moveTo(15, canvas.height - 40 - val + waviness);
+            else ctx.lineTo(15 + idx * stepX, canvas.height - 40 - val + waviness);
         });
         ctx.stroke();
 
-        // Draw Quantum Predictive Time-Series Extension (Fluorescent Cyberpunk Green Line)
+        // Predictive Horizon: Emerald Green Future Trajectory
         ctx.strokeStyle = "var(--matrix-green)";
         ctx.shadowColor = "var(--matrix-green)";
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
         
-        let lastHistX = 20 + (historyPoints.length - 1) * stepX;
-        let lastHistY = canvas.height - 30 - historyPoints[historyPoints.length - 1];
-        ctx.moveTo(lastHistX, lastHistY);
+        let lastX = 15 + (historyPoints.length - 1) * stepX;
+        let lastY = canvas.height - 40 - historyPoints[historyPoints.length - 1];
+        ctx.moveTo(lastX, lastY);
 
-        // Predictive future horizon modeling projection
-        for (let k = 1; k <= 6; k++) {
-            let futureX = lastHistX + (k * 18);
-            // Dynamic convergence convergence mathematical damping factor based on forecast accuracy
-            let convergenceFactor = Math.sin(timeTick + k) * (30 * (1 - engineState.forecastAccuracy));
-            let futureY = lastHistY - (k * 8) + convergenceFactor - 15;
-            ctx.lineTo(futureX, futureY);
+        for (let k = 1; k <= 7; k++) {
+            let nextX = lastX + (k * 16);
+            let dampening = Math.sin(timeTick * 1.5 + k) * (35 * (1 - engineState.forecastAccuracy));
+            let nextY = lastY - (k * 6) + dampening - 10;
+            ctx.lineTo(nextX, nextY);
             
-            // Draw predictive bounding variance halos
-            ctx.fillStyle = "rgba(52, 211, 153, 0.15)";
+            // Render interactive variance indicators (The UI Halos)
+            ctx.fillStyle = "rgba(52, 211, 153, 0.12)";
             ctx.beginPath();
-            ctx.arc(futureX, futureY, 4 + (k * 2) * (1 - engineState.forecastAccuracy), 0, Math.PI * 2);
+            ctx.arc(nextX, nextY, 3 + (k * 2.5) * (1 - engineState.forecastAccuracy), 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.stroke();
-        ctx.shadowBlur = 0; // Reset shading properties safely
+        ctx.shadowBlur = 0; // Clear canvas shadow pipelines immediately
 
-        // High-Tech Horizontal Scanning Laser Line
-        let laserY = (canvas.height / 2) + Math.sin(timeTick * 0.5) * (canvas.height / 2.5);
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.25)";
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(0, laserY); ctx.lineTo(canvas.width, laserY); ctx.stroke();
+        // Cyberpunk Horizontal Crosshair Scan Line
+        let crosshairY = (canvas.height / 2) + Math.sin(timeTick * 0.7) * (canvas.height / 3);
+        ctx.strokeStyle = "rgba(6, 182, 212, 0.3)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]); // Beautiful industrial dash pattern
+        ctx.beginPath(); ctx.moveTo(0, crosshairY); ctx.lineTo(canvas.width, crosshairY); ctx.stroke();
+        ctx.setLineDash([]); // Reset to solid line formatting
 
-        // Live Dynamic Metadata Overlay updating DOM interface elements
-        document.getElementById("ds-metric-display").innerText = `${(engineState.forecastAccuracy * 100).toFixed(0)}% Accuracy`;
-        document.getElementById("ds-metric-display").style.color = engineState.forecastAccuracy >= 0.90 ? "var(--matrix-green)" : "var(--matrix-purple)";
+        // Real-time Dashboard Variable Injection
+        document.getElementById("ds-metric-display").innerText = `${(engineState.forecastAccuracy * 100).toFixed(0)}% Convergence`;
+        document.getElementById("ds-metric-display").style.textShadow = "0 0 10px var(--matrix-green)";
 
-        // Evaluate Victory Conditions Pipeline State Transitions
+        // Termination Check System
         if (engineState.forecastAccuracy >= 0.95) {
-            AdaptiveAudioEngine.play("victory");
-            appendTelemetryLog("[SUCCESS]: Neural Matrix Core achieved absolute convergence. Accuracy over 95%!", "normal");
+            if (typeof AdaptiveAudioEngine !== 'undefined') AdaptiveAudioEngine.play("victory");
+            appendTelemetryLog("[CONVERGENCE COMPLETED]: Optimal predictive weights stabilized across all matrix nodes.", "normal");
             
-            // Trigger ultimate termination UI overlay state
             setTimeout(() => {
-                alert("👑 CONGRATULATIONS! You have mastered all 6 operational layers of the Metropolis Matrix Simulation Core Engine!");
-            }, 500);
+                alert("👑 SPECTACULAR JOB! You have successfully unlocked and mastered Level 6 Core Analytics!");
+            }, 600);
             return;
         }
 
@@ -844,14 +866,13 @@ function triggerQuantumForecastingVisualizer() {
     renderForecastLoop();
 }
 
-// Automatically link and execute hook logic internally if system transitions from level 5
-const previousImplementStructuralAsset = implementStructuralAsset;
+// Runtime Module Linking Core Logic
+const interceptStructuralAsset = implementStructuralAsset;
 implementStructuralAsset = function(index) {
-    previousImplementStructuralAsset(index);
+    interceptStructuralAsset(index);
     if (engineState.activeLevel === 6) {
-        // Force evaluation refresh immediately on interactive clicks
-        let hubsCount = engineState.gridArray.filter(cell => cell === "QUANTUM_HUB").length;
-        appendTelemetryLog(`[TELEMETRY SCAN]: Active Quantum Array Clusters count scaled to: ${hubsCount}`);
+        let clusters = engineState.gridArray.filter(cell => cell === "QUANTUM_HUB").length;
+        appendTelemetryLog(`[UI EVENT]: Quantum Cluster state shift detected. Node count: ${clusters}`);
     }
 };
     </script>
