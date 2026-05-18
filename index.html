@@ -21,13 +21,12 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { background: var(--bg-dark); color: var(--text-main); overflow: hidden; height: 100vh; display: flex; }
 
-        /* Cinematic Welcome & Onboarding Core Overlay */
-        #welcome-screen, #celebration-modal {
+        #welcome-screen, #celebration-modal, #level2-celebration-modal, #level2-end-modal, #level3-celebration-modal, #level3-end-modal {
             position: fixed; inset: 0; background: rgba(5, 7, 15, 0.98); z-index: 10000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.4s ease;
         }
-        #celebration-modal { display: none; background: rgba(2, 4, 10, 0.95); }
+        #celebration-modal, #level2-celebration-modal, #level2-end-modal, #level3-celebration-modal, #level3-end-modal { display: none; background: rgba(2, 4, 10, 0.95); }
         
         .welcome-card, .celebration-card {
             background: rgba(11, 19, 38, 0.95); border: 2px solid var(--accent);
@@ -54,7 +53,6 @@
         .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 26px #818cf8; }
         .start-btn.success-btn { background: linear-gradient(90deg, #10b981, #059669); box-shadow: 0 4px 20px rgba(52, 211, 153, 0.3); }
 
-        /* Base Layout Architecture */
         .app-container { display: flex; width: 100vw; height: 100vh; position: relative; }
         
         .sidebar {
@@ -65,7 +63,6 @@
         .brand-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
         .sub-brand { font-family: 'DM Mono', monospace; font-size: 9px; color: #818cf8; letter-spacing: 1.5px; }
 
-        /* HUD & Data Science Metrics Deck */
         .stat-card {
             background: linear-gradient(135deg, #111827, #1e1b4b); border: 1px solid rgba(99, 102, 241, 0.3);
             padding: 16px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.4);
@@ -74,7 +71,6 @@
         .stat-lbl { font-family: 'DM Mono', monospace; font-size: 9px; color: #a78bfa; letter-spacing: 1px; }
         .stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-top: 2px; color: #fbbf24; }
         
-        /* Data Science Live Telemetry Analytics Log */
         .analytics-log-box {
             background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.05);
             border-radius: 12px; padding: 12px; font-family: 'DM Mono', monospace; font-size: 10px;
@@ -84,7 +80,6 @@
         .log-entry.error-log { color: var(--matrix-red); border-left-color: var(--matrix-red); }
         .log-entry.warning-log { color: #fbbf24; border-left-color: #fbbf24; }
 
-        /* Civil Engineering Module Catalog Slots */
         .block-list { display: flex; flex-direction: column; gap: 8px; }
         .block-item {
             display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.02);
@@ -97,13 +92,11 @@
         .block-details h4 { font-size: 13px; font-weight: 700; color: #fff; }
         .block-details p { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); }
 
-        /* 3D Viewport Frame */
         .simulation-viewport {
             flex: 1; height: 100vh; position: relative; display: flex; align-items: center; justify-content: center;
             background: radial-gradient(circle at 50% 50%, #0e172c 0%, #030712 100%); perspective: 1400px; overflow: hidden;
         }
 
-        /* Level 1: True 3D Isometric Coordinate Mesh Grid */
         .iso-scene {
             transform: rotateX(60deg) rotateZ(-45deg); transform-style: preserve-3d;
             display: grid; grid-template-columns: repeat(6, 55px); grid-template-rows: repeat(6, 55px); gap: 4px;
@@ -116,28 +109,18 @@
             transform-style: preserve-3d; transition: all 0.2s ease;
         }
         .grid-cell:hover { background: rgba(99, 102, 241, 0.25); border-color: #818cf8; transform: translateZ(5px); }
+        .grid-cell.damaged { border-color: var(--matrix-red); background: rgba(239, 68, 68, 0.2); animation: pulseDamage 1s infinite alternate; }
         
+        @keyframes pulseDamage {
+            from { background: rgba(239, 68, 68, 0.1); }
+            to { background: rgba(239, 68, 68, 0.3); }
+        }
+
         .voxel-building {
             position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
             font-size: 26px; transform: rotateZ(45deg) rotateX(-60deg) translateY(-12px);
             filter: drop-shadow(0 8px 8px rgba(0,0,0,0.5)); transform-origin: center bottom;
         }
-
-        /* Assistant Training Tooltip HUD */
-        .hud-suggestion-box {
-            position: absolute; bottom: 24px; left: 24px; right: 24px;
-            background: rgba(8, 14, 28, 0.9); border: 1px solid var(--glass-border);
-            padding: 16px 24px; border-radius: 14px; backdrop-filter: blur(16px);
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 500;
-        }
-        .hint-text { font-family: 'DM Mono', monospace; font-size: 11px; color: #a5b4fc; font-weight: 500; line-height: 1.4; }
-        .tutorial-btn {
-            background: #6366f1; color: white; border: none; padding: 8px 18px;
-            font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;
-            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-        }
-        .tutorial-btn:hover { background: #4f46e5; }
     </style>
 </head>
 <body>
@@ -146,9 +129,7 @@
         <div class="welcome-card">
             <div class="tech-badge">SYSTEM STAGE 0 // INITIALIZATION</div>
             <h1>Metropolis Matrix Core</h1>
-            <p>
-                Welcome, Architect. The CityOS Matrix system has been engineered at the intersection of Data Science tracking, Frontend UI mechanics, and Civil Infrastructure zoning. Initialize the neural engine training bridge to calibrate real-time state arrays and activate your simulation coordinates.
-            </p>
+            <p>Welcome, Architect. The CityOS Matrix system has been engineered at the intersection of Data Science tracking, Frontend UI mechanics, and Civil Infrastructure zoning.</p>
             <button class="start-btn" onclick="bootEnginePipeline()">Initialize Training Bridge</button>
         </div>
     </div>
@@ -157,10 +138,44 @@
         <div class="celebration-card">
             <div class="tech-badge success">🏆 MILESTONE ACHIEVED</div>
             <h1 style="color: var(--matrix-green);">Training Complete!</h1>
-            <p>
-                Congratulations! You have successfully completed the foundational data sync training bridge pipeline. All baseline vectors have mapped smoothly. The structural simulator framework is now fully unlocked for Level 1: Civil Infrastructure Deployment.
-            </p>
+            <p>The structural simulator framework is now fully unlocked for Level 1: Civil Infrastructure Deployment.</p>
             <button class="start-btn success-btn" onclick="dismissCelebrationAndLaunchGrid()">Launch Level 1 Structural Mesh</button>
+        </div>
+    </div>
+
+    <div id="level2-celebration-modal">
+        <div class="celebration-card" style="border-color: #f59e0b; box-shadow: 0 0 70px rgba(245, 158, 11, 0.3);">
+            <div class="tech-badge" style="background: rgba(245,158,11,0.15); border-color: #f59e0b; color: #f59e0b;">⚡ LEVEL UP UNLOCKED</div>
+            <h1>Level 1 Complete!</h1>
+            <p>Welcome to Level 2: Strict Zoning Laws & Resource Limitations. You are bound by a rigid 10-move framework.</p>
+            <button class="start-btn" style="background: linear-gradient(90deg, #f59e0b, #d97706); box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);" onclick="startLevelTwoCoreEngine()">Initiate Level 2 Operations</button>
+        </div>
+    </div>
+
+    <div id="level2-end-modal">
+        <div class="celebration-card" style="border-color: #34d399; box-shadow: 0 0 70px rgba(52, 211, 153, 0.4);">
+            <div class="tech-badge success">🏢 METROPOLIS MATRIX VERIFIED</div>
+            <h1 style="color: #34d399;">Level 2 Victorious!</h1>
+            <p>Flawless management of structural density within constrained parameters. Ready to advance to tactical engineering infrastructure defenses.</p>
+            <button class="start-btn" onclick="launchLevelThreeCelebration()">Unlock Level 3 Infrastructure</button>
+        </div>
+    </div>
+
+    <div id="level3-celebration-modal">
+        <div class="celebration-card" style="border-color: #ec4899; box-shadow: 0 0 70px rgba(236, 72, 153, 0.4);">
+            <div class="tech-badge" style="background: rgba(236,72,153,0.15); border-color: #ec4899; color: #ec4899;">☄️ CRITICAL CONSTRAINTS LAYER</div>
+            <h1 style="color: #ec4899;">Level 3: Core Disaster Shield</h1>
+            <p>Warning: Environmental structural hazards active. Random kinetic meteor strikes will impact grid matrices. Deploy upgraded Hyper Structures to stabilize telemetry arrays before structural total failure.</p>
+            <button class="start-btn" style="background: linear-gradient(90deg, #ec4899, #be185d); box-shadow: 0 4px 20px rgba(236, 72, 153, 0.3);" onclick="startLevelThreeCoreEngine()">Initiate Defense Mechanics</button>
+        </div>
+    </div>
+
+    <div id="level3-end-modal">
+        <div class="celebration-card" style="border-color: #a855f7; box-shadow: 0 0 70px rgba(168, 85, 247, 0.5);">
+            <div class="tech-badge" style="background: rgba(168,85,247,0.15); border-color: #a855f7; color: #a855f7;">👑 SUPREME ARCHITECT COGNITION</div>
+            <h1 style="color: #a855f7;">Level 3 Fully Mastered!</h1>
+            <p>Incredible! You have stabilized the simulation matrix grid against environmental anomalies and managed complex architectural constraints.</p>
+            <button class="start-btn" style="background: linear-gradient(90deg, #a855f7, #7c3aed);" onclick="alert('All system core engines fully operational and deployed!')">Terminate Engineering Simulation</button>
         </div>
     </div>
 
@@ -193,42 +208,34 @@
         </div>
 
         <div class="simulation-viewport" id="main-viewport">
-            
             <div class="iso-scene" id="matrix-grid-mesh"></div>
-
-            <div class="hud-suggestion-box" id="assistant-hud">
-                <div class="hint-text" id="hud-message-text">💡 <b>CORE NOT INITIALIZED:</b> Please execute the training bridge sequence from the central console card.</div>
-                <div id="hud-action-area" style="display: none;">
-                    <button class="tutorial-btn" onclick="triggerMilestoneCelebration()">Calibrate Matrix Field</button>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
         const GRID_SIZE = 36; 
         
-        // Asset definitions with explicit civil rules values (Soil Load Capacity vs Weight)
-        const REGISTRY_CATALOG = {
-            TREE: { id: "TREE", label: "Oak Tree", icon: "🌳", cost: 20, yield: 1, minSoilLoad: 10, structuralWeight: 5 },
-            ROAD: { id: "ROAD", label: "Smart Road", icon: "🛣️", cost: 30, yield: 0, minSoilLoad: 35, structuralWeight: 15 },
-            HOUSE: { id: "HOUSE", label: "Modern Villa", icon: "🏠", cost: 100, yield: 8, minSoilLoad: 60, structuralWeight: 45 }
+        let REGISTRY_CATALOG = {
+            TREE: { id: "TREE", label: "Oak Tree", icon: "🌳", cost: 20, yield: 1, minSoilLoad: 10 },
+            ROAD: { id: "ROAD", label: "Smart Road", icon: "🛣️", cost: 30, yield: 0, minSoilLoad: 35 },
+            HOUSE: { id: "HOUSE", label: "Modern Villa", icon: "🏠", cost: 100, yield: 8, minSoilLoad: 60 }
         };
 
         let engineState = {
             gridArray: Array(GRID_SIZE).fill(null),
+            damageArray: Array(GRID_SIZE).fill(false), // Track level 3 coordinate damages
             walletBal: 800,
             trainingStage: 0,
             selectedAsset: "TREE",
-            soilStabilityMatrix: [], // Populated dynamically with engineering attributes
+            soilStabilityMatrix: [],
             levelTwoMovesLeft: 10,
-            isLevelTwoActive: false
+            isLevelTwoActive: false,
+            isLevelThreeActive: false,
+            levelThreeStructuresPlaced: 0
         };
 
-        let soundContext = null;
-        let isLevelTwoInjected = false;
+        let disasterInterval = null;
 
-        // Populate baseline soil capacity metrics using a pseudorandom distribution logic
         function initCivilEngineeringSoilMatrix() {
             engineState.soilStabilityMatrix = [];
             for(let i=0; i<GRID_SIZE; i++) {
@@ -237,31 +244,11 @@
         }
 
         function bootEnginePipeline() {
-            try {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (AudioContextClass) soundContext = new AudioContextClass();
-            } catch (err) { console.log("Audio pipeline safely bypassed."); }
-
             document.getElementById("welcome-screen").style.opacity = 0;
             setTimeout(() => {
                 document.getElementById("welcome-screen").style.display = "none";
                 startTrainingFlow();
             }, 400);
-        }
-
-        function triggerSynthBeep(frequency, duration) {
-            if (!soundContext) return;
-            try {
-                let oscillator = soundContext.createOscillator();
-                let gainNode = soundContext.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(soundContext.destination);
-                oscillator.frequency.setValueAtTime(frequency, soundContext.currentTime);
-                gainNode.gain.setValueAtTime(0.05, soundContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, soundContext.currentTime + duration);
-                oscillator.start();
-                oscillator.stop(soundContext.currentTime + duration);
-            } catch (err) {}
         }
 
         function appendTelemetryLog(message, type = "normal") {
@@ -280,11 +267,9 @@
         function startTrainingFlow() {
             engineState.trainingStage = 1;
             initCivilEngineeringSoilMatrix();
-            document.getElementById("hud-message-text").innerHTML = "🛰️ <b>TRAINING STAGE 0.1:</b> Core reserves active. Calibration arrays loaded. Please click the calibration option in the bottom panel to verify baseline sync vectors.";
-            document.getElementById("hud-action-area").style.display = "block";
-            
             appendTelemetryLog("Pipeline online. Secure telemetry streaming active.");
             renderStructuralCatalog();
+            setTimeout(triggerMilestoneCelebration, 1000); 
         }
 
         function renderStructuralCatalog() {
@@ -310,33 +295,22 @@
 
         function selectActiveAsset(assetId) {
             engineState.selectedAsset = assetId;
-            triggerSynthBeep(440, 0.1);
             renderStructuralCatalog();
             appendTelemetryLog(`Active vector selected: [${assetId}]`);
         }
 
         function triggerMilestoneCelebration() {
-            triggerSynthBeep(659.25, 0.15);
-            setTimeout(() => triggerSynthBeep(880, 0.3), 150);
-            
             document.getElementById("celebration-modal").style.display = "flex";
             appendTelemetryLog("Training pipeline cycle completed successfully. Event milestone triggered.");
         }
 
         function dismissCelebrationAndLaunchGrid() {
-            triggerSynthBeep(523, 0.1);
             document.getElementById("celebration-modal").style.opacity = 0;
-            
             setTimeout(() => {
                 document.getElementById("celebration-modal").style.display = "none";
-                document.getElementById("hud-action-area").style.display = "none";
-                
                 const gridMesh = document.getElementById("matrix-grid-mesh");
                 gridMesh.style.display = "grid"; 
-
-                document.getElementById("hud-message-text").innerHTML = "🌳 <b>LEVEL 1 INITIALIZED:</b> 3D Coordinate grid open! Click a square block to build. Warning: Check the telemetry log stream to ensure your node passes Civil Foundation Laws.";
                 appendTelemetryLog("Level 1 running. 3D grid vectors mapped to foundation stability matrices.");
-                
                 buildActiveMatrixGrid();
                 setInterval(executePassiveIncomeTelemetry, 2000);
             }, 400);
@@ -349,8 +323,8 @@
 
             for (let i = 0; i < GRID_SIZE; i++) {
                 const cell = document.createElement("div");
-                cell.className = "grid-cell";
-                cell.title = `Node ${i} | Soil Load Capacity: ${engineState.soilStabilityMatrix[i]} kN/m²`;
+                cell.className = "grid-cell" + (engineState.damageArray[i] ? " damaged" : "");
+                cell.title = `Node i | Soil Load Capacity: ${engineState.soilStabilityMatrix[i]} kN/m²`;
                 cell.onclick = () => implementStructuralAsset(i);
                 
                 if (engineState.gridArray[i]) {
@@ -363,74 +337,79 @@
             }
         }
 
-        // CIVIL ENGINEERING LAW VALIDATION RULES ENFORCEMENT
         function implementStructuralAsset(index) {
             const targetAsset = REGISTRY_CATALOG[engineState.selectedAsset];
             const nodeSoilCapacity = engineState.soilStabilityMatrix[index];
 
-            // LEVEL 2 CONTROL TRACKER
-            if (engineState.isLevelTwoActive) {
+            if (engineState.isLevelTwoActive && !engineState.isLevelThreeActive) {
                 if (engineState.levelTwoMovesLeft <= 0) {
-                    triggerSynthBeep(120, 0.4);
                     appendTelemetryLog("[CRITICAL FAILURE]: Out of moves structural error context vector!", "error");
                     return;
                 }
             }
 
-            appendTelemetryLog(`Analyzing node vector {${index}}... Running concrete & shear foundation equations.`);
+            // LEVEL 3 FIX MECHANIC
+            if (engineState.isLevelThreeActive && engineState.damageArray[index]) {
+                let repairCost = Math.floor(targetAsset.cost * 0.5);
+                if (engineState.walletBal < repairCost) {
+                    appendTelemetryLog(`[ENGINEERING ERROR]: Insufficient funds to clear sector structural damage {${index}}`, "error");
+                    return;
+                }
+                engineState.walletBal -= repairCost;
+                engineState.damageArray[index] = false;
+                document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
+                appendTelemetryLog(`[REPAIR]: Structural reinforcement clear on address {${index}}`);
+                buildActiveMatrixGrid();
+                return;
+            }
 
-            // Rule A: Check economic capital reserves
             if (engineState.walletBal < targetAsset.cost) {
-                triggerSynthBeep(150, 0.2);
                 appendTelemetryLog(`[ENGINEERING ERROR]: Insufficient financial resources for asset [${targetAsset.id}].`, "error");
                 return;
             }
 
-            // Rule B: Enforce Civil Foundation Load Laws
             if (nodeSoilCapacity < targetAsset.minSoilLoad) {
-                triggerSynthBeep(120, 0.3);
-                appendTelemetryLog(`[STRUCTURAL FAILURE]: Node {${index}} Soil Capacity (${nodeSoilCapacity}kN/m²) is lower than Required Asset Load Limit (${targetAsset.minSoilLoad}kN/m²)! Construction rejected to prevent collapse risk.`, "error");
+                appendTelemetryLog(`[STRUCTURAL FAILURE]: Node {${index}} Soil Capacity (${nodeSoilCapacity}kN/m²) is lower than Required Asset Load Limit (${targetAsset.minSoilLoad}kN/m²)!`, "error");
                 return;
             }
 
-            // Success pipeline execution
             engineState.walletBal -= targetAsset.cost;
             engineState.gridArray[index] = targetAsset.id;
-            
             document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
-            triggerSynthBeep(523, 0.1);
             buildActiveMatrixGrid();
-            appendTelemetryLog(`[SUCCESS]: Structural Node [${targetAsset.id}] passed structural verification checks! Erected on Coordinate Address {${index}}.`, "normal");
+            appendTelemetryLog(`[SUCCESS]: Structural Node [${targetAsset.id}] passed structural verification checks on Coordinate Address {${index}}.`);
 
-            // EVALUATE GAME STATES
-            if (engineState.isLevelTwoActive) {
+            if (engineState.isLevelThreeActive) {
+                engineState.levelThreeStructuresPlaced++;
+                appendTelemetryLog(`[LEVEL 3 PROFILE]: Strategic assets erected: ${engineState.levelThreeStructuresPlaced} / 5`);
+                if (engineState.levelThreeStructuresPlaced >= 5) {
+                    clearInterval(disasterInterval);
+                    setTimeout(() => {
+                        document.getElementById("level3-end-modal").style.display = "flex";
+                    }, 500);
+                }
+            } else if (engineState.isLevelTwoActive) {
                 engineState.levelTwoMovesLeft--;
-                const movesDisp = document.getElementById("moves-display");
-                if(movesDisp) movesDisp.innerText = `⏳ ${engineState.levelTwoMovesLeft} Moves`;
-                appendTelemetryLog(`[LEVEL 2]: Move tracked. Constraints remaining: ${engineState.levelTwoMovesLeft}`);
-
+                document.getElementById("moves-display").innerText = `⏳ ${engineState.levelTwoMovesLeft} Moves`;
                 let currentBuildings = engineState.gridArray.filter(cell => cell !== null).length;
                 if (currentBuildings >= 3) {
                     setTimeout(() => {
-                        triggerSynthBeep(1046.50, 0.4);
                         document.getElementById("level2-end-modal").style.display = "flex";
                     }, 500);
-                    return;
-                }
-
-                if (engineState.levelTwoMovesLeft <= 0 && currentBuildings < 3) {
-                    triggerSynthBeep(90, 0.6);
-                    document.getElementById("hud-message-text").innerHTML = "❌ <b>LEVEL TWO FAILED:</b> Moves exhausted! Refresh to reload simulation pipeline.";
                 }
             } else {
-                processLevelOneCompletionCheck();
+                let builtNodeCount = engineState.gridArray.filter(cell => cell !== null).length;
+                if (builtNodeCount >= 4) {
+                    appendTelemetryLog("[SYSTEM EVENT]: Level 1 optimization conditions achieved.");
+                    document.getElementById("level2-celebration-modal").style.display = "flex";
+                }
             }
         }
 
         function executePassiveIncomeTelemetry() {
             let activePassiveYield = 0;
-            engineState.gridArray.forEach(cellAsset => {
-                if(cellAsset && REGISTRY_CATALOG[cellAsset]) {
+            engineState.gridArray.forEach((cellAsset, i) => {
+                if(cellAsset && REGISTRY_CATALOG[cellAsset] && !engineState.damageArray[i]) {
                     activePassiveYield += REGISTRY_CATALOG[cellAsset].yield;
                 }
             });
@@ -439,90 +418,8 @@
                 engineState.walletBal += activePassiveYield;
                 document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
                 appendTelemetryLog(`Harvested +${activePassiveYield} matrix infrastructure points into local core reserves.`);
-            } else {
-                appendTelemetryLog(`Ecosystem check sync: ${((engineState.gridArray.filter(n => n).length / GRID_SIZE) * 100).toFixed(0)}% grid utilization.`);
             }
-            
             document.getElementById("income-label").innerText = `📊 Active Income: +${activePassiveYield}/sec`;
-        }
-
-        // ==========================================
-        // LEVEL 2 ENGINE CODES LAYER INTEGRATION
-        // ==========================================
-        function injectLevelTwoUIElements() {
-            if (isLevelTwoInjected) return; 
-            
-            const moveTracker = document.createElement("div");
-            moveTracker.id = "level2-move-card";
-            moveTracker.className = "stat-card";
-            moveTracker.style.display = "none";
-            moveTracker.style.marginTop = "10px";
-            moveTracker.style.borderLeft = "3px solid #f59e0b";
-            moveTracker.innerHTML = `
-                <div class="stat-lbl" style="color: #f59e0b; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;">LEVEL 2 DESIGN CONSTRAINTS</div>
-                <div class="stat-val" id="moves-display" style="color: #f59e0b; font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; margin-top: 2px;">⏳ 10 Moves</div>
-                <div style="font-family: 'DM Mono', monospace; font-size: 10px; color: #94a3b8; margin-top: 4px;">
-                    ⚠️ Zoning Limit: Optimize load placement before budget or moves exhaust.
-                </div>
-            `;
-            
-            const walletCard = document.getElementById("wallet-card");
-            if(walletCard && walletCard.parentNode) {
-                walletCard.parentNode.insertBefore(moveTracker, walletCard.nextSibling);
-            }
-
-            const celebrationOverlay = document.createElement("div");
-            celebrationOverlay.id = "level2-celebration-modal";
-            celebrationOverlay.style.cssText = "position: fixed; inset: 0; background: rgba(5, 7, 15, 0.98); z-index: 10001; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease;";
-            celebrationOverlay.innerHTML = `
-                <div class="celebration-card" style="background: rgba(11, 19, 38, 0.95); border: 2px solid #f59e0b; padding: 45px; border-radius: 24px; text-align: center; max-width: 550px; box-shadow: 0 0 70px rgba(245, 158, 11, 0.3); backdrop-filter: blur(30px); color: white;">
-                    <div class="tech-badge" style="display: inline-block; padding: 4px 12px; background: rgba(245,158,11,0.15); border: 1px solid #f59e0b; border-radius: 99px; font-family: 'DM Mono', monospace; font-size: 10px; color: #f59e0b; margin-bottom: 16px; letter-spacing: 1px;">⚡ COMPONENT UPGRADE UNLOCKED</div>
-                    <h1 style="font-family: 'Syne', sans-serif; font-size: 36px; margin-bottom: 12px; color: #fff; letter-spacing: -1px;">Level 1 Complete!</h1>
-                    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 30px; line-height: 1.6; text-align: justify;">
-                        Outstanding engineering! Your structural grid placement layout cleared baseline spatial zoning parameters. Level 1 optimization is completely stabilized. Welcome to <b>Level 2: Strict Zoning Laws & Resource Limitations</b>.
-                    </p>
-                    <div style="background: rgba(255,255,255,0.02); border: 1px dashed rgba(245,158,11,0.3); padding: 16px; border-radius: 12px; margin-bottom: 25px; text-align: left;">
-                        <h4 style="color: #fff; font-size: 13px; margin-bottom: 6px; font-family: 'Plus Jakarta Sans', sans-serif;">💡 LEVEL 2 STRATEGIC ANCHOR TIPS:</h4>
-                        <p style="font-size: 11px; color: #94a3b8; margin: 0; text-align: justify; line-height: 1.4; font-family: 'DM Mono', monospace;">
-                            1. You are bound by a rigid <b>10-move budget framework</b>. Every single structure placed consumes 1 vector move.<br>
-                            2. Check the capacity tolerances inside your telemetry panel before executing node adjustments.<br>
-                            3. Maximize asset diversification to unlock your structural economy loop safely.
-                        </p>
-                    </div>
-                    <button class="start-btn" style="background: linear-gradient(90deg, #f59e0b, #d97706); color: white; border: none; padding: 14px 40px; font-size: 15px; font-weight: 700; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3); transition: all 0.2s ease;" onclick="startLevelTwoCoreEngine()">Initiate Level 2 Operations</button>
-                </div>
-            `;
-            document.body.appendChild(celebrationOverlay);
-
-            const endOverlay = document.createElement("div");
-            endOverlay.id = "level2-end-modal";
-            endOverlay.style.cssText = "position: fixed; inset: 0; background: rgba(5, 7, 15, 0.99); z-index: 10002; display: none; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease;";
-            endOverlay.innerHTML = `
-                <div class="celebration-card" style="background: rgba(11, 19, 38, 0.95); border: 2px solid #34d399; padding: 45px; border-radius: 24px; text-align: center; max-width: 550px; box-shadow: 0 0 70px rgba(52, 211, 153, 0.4); backdrop-filter: blur(30px); color: white;">
-                    <div class="tech-badge success" style="display: inline-block; padding: 4px 12px; background: rgba(52, 211, 153, 0.15); border: 1px solid #34d399; border-radius: 99px; font-family: 'DM Mono', monospace; font-size: 10px; color: #34d399; margin-bottom: 16px; letter-spacing: 1px;">🏢 METROPOLIS MATRIX VERIFIED</div>
-                    <h1 style="font-family: 'Syne', sans-serif; font-size: 36px; margin-bottom: 12px; color: #34d399; letter-spacing: -1px;">Level 2 Victorious!</h1>
-                    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 30px; line-height: 1.6; text-align: justify;">
-                        Magnificent execution! You managed structural density allocations flawlessly within the constrained limits. Your structural ecosystem has proven perfectly balanced. Level 2 complete.
-                    </p>
-                    <div style="font-family: 'DM Mono', monospace; font-size: 11px; color: #a5b4fc; background: rgba(99,102,241,0.1); padding: 12px; border-radius: 8px; margin-bottom: 25px;">
-                        🛰️ Status Pipeline: Awaiting Level 3 System Architecture Configuration
-                    </div>
-                    <button class="start-btn" style="background: linear-gradient(90deg, #6366f1, #4f46e5); color: white; border: none; padding: 14px 40px; font-size: 15px; font-weight: 700; border-radius: 12px; cursor: pointer;" onclick="alert('Level 3 modules locked till your next instruction command vector!')">Standby for Level 3</button>
-                </div>
-            `;
-            document.body.appendChild(endOverlay);
-            
-            isLevelTwoInjected = true;
-        }
-
-        function processLevelOneCompletionCheck() {
-            let builtNodeCount = engineState.gridArray.filter(cell => cell !== null).length;
-            if (builtNodeCount >= 4) {
-                injectLevelTwoUIElements();
-                triggerSynthBeep(783.99, 0.2);
-                appendTelemetryLog("[SYSTEM EVENT]: Level 1 optimization conditions achieved. Pausing core simulation clocks.");
-                document.getElementById("level2-celebration-modal").style.display = "flex";
-            }
         }
 
         function startLevelTwoCoreEngine() {
@@ -531,18 +428,67 @@
             engineState.walletBal = 600; 
             engineState.gridArray = Array(GRID_SIZE).fill(null); 
             
-            triggerSynthBeep(523.25, 0.15);
             document.getElementById("level2-celebration-modal").style.display = "none";
             
-            const moveTracker = document.getElementById("level2-move-card");
-            if(moveTracker) moveTracker.style.display = "block";
+            const moveTracker = document.getElementById("level2-move-card") || document.createElement("div");
+            moveTracker.id = "level2-move-card";
+            moveTracker.className = "stat-card";
+            moveTracker.style.marginTop = "10px";
+            moveTracker.style.borderLeft = "3px solid #f59e0b";
+            moveTracker.innerHTML = `
+                <div class="stat-lbl" style="color: #f59e0b;">LEVEL 2 DESIGN CONSTRAINTS</div>
+                <div class="stat-val" id="moves-display" style="color: #f59e0b; font-size: 24px;">⏳ 10 Moves</div>
+            `;
+            const walletCard = document.getElementById("wallet-card");
+            if(walletCard && !document.getElementById("level2-move-card")) walletCard.parentNode.insertBefore(moveTracker, walletCard.nextSibling);
             
             document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
-            document.getElementById("moves-display").innerText = `⏳ 10 Moves`;
-            document.getElementById("hud-message-text").innerHTML = "⚡ <b>LEVEL 2 ACTIVE:</b> Strategic 10-Move Limit Enforced. Deploy high-yield assets with precision before exhaustion vectors engage.";
-            
-            appendTelemetryLog("Level 2 initialized. Standard operational frameworks shifted to move budget tracking parameters.");
+            appendTelemetryLog("Level 2 initialized.");
             buildActiveMatrixGrid();
+        }
+
+        function launchLevelThreeCelebration() {
+            document.getElementById("level2-end-modal").style.display = "none";
+            document.getElementById("level3-celebration-modal").style.display = "flex";
+        }
+
+        // ==========================================
+        // LEVEL 3 ENGINE ARCHITECTURE INTEGRATION
+        // ==========================================
+        function startLevelThreeCoreEngine() {
+            engineState.isLevelTwoActive = false;
+            engineState.isLevelThreeActive = true;
+            engineState.walletBal = 1200; 
+            engineState.gridArray = Array(GRID_SIZE).fill(null);
+            engineState.damageArray = Array(GRID_SIZE).fill(false);
+            engineState.levelThreeStructuresPlaced = 0;
+
+            document.getElementById("level3-celebration-modal").style.display = "none";
+            
+            // Upgrade items catalog to Level 3 specifications
+            REGISTRY_CATALOG.HYPER_DOME = { id: "HYPER_DOME", label: "Quantum Shield Dome", icon: "🔮", cost: 300, yield: 25, minSoilLoad: 50 };
+            renderStructuralCatalog();
+
+            const moveCard = document.getElementById("level2-move-card");
+            if (moveCard) moveCard.style.display = "none";
+
+            document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
+            appendTelemetryLog("Level 3 Operational Interface Engaged. Quantum Dome unlocked.");
+            buildActiveMatrixGrid();
+
+            // Setup Dynamic Disaster Clock Vectors (Random Kinetic Strike target)
+            disasterInterval = setInterval(() => {
+                let randomTargetIndex = Math.floor(Math.random() * GRID_SIZE);
+                engineState.damageArray[randomTargetIndex] = true;
+                
+                if (engineState.gridArray[randomTargetIndex]) {
+                    appendTelemetryLog(`[METEOR IMPACT]: Structural asset [${engineState.gridArray[randomTargetIndex]}] destroyed at coordinate node {${randomTargetIndex}}!`, "error");
+                    engineState.gridArray[randomTargetIndex] = null;
+                } else {
+                    appendTelemetryLog(`[ENVIRONMENTAL HAZARD]: Kinetic strike hit empty sector grid vector {${randomTargetIndex}}! Soil destabilized.`, "warning");
+                }
+                buildActiveMatrixGrid();
+            }, 4500);
         }
     </script>
 </body>
