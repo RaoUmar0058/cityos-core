@@ -223,7 +223,7 @@
 
         let engineState = {
             gridArray: Array(GRID_SIZE).fill(null),
-            damageArray: Array(GRID_SIZE).fill(false), // Track level 3 coordinate damages
+            damageArray: Array(GRID_SIZE).fill(false),
             walletBal: 800,
             trainingStage: 0,
             selectedAsset: "TREE",
@@ -235,6 +235,63 @@
         };
 
         let disasterInterval = null;
+        let audioCtx = null;
+
+        // Trending Sizzling / UI Charging Sound Wave Synthesizer
+        function playSizzlingSound() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                let duration = 0.8;
+                let bufferSize = audioCtx.sampleRate * duration;
+                let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                let data = buffer.getChannelData(0);
+                
+                // Pure sizzling noise generation
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                let noiseNode = audioCtx.createBufferSource();
+                noiseNode.buffer = buffer;
+
+                // High pass filter for that authentic modern games "crisp" texture
+                let filter = audioCtx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                filter.Q.setValueAtTime(1, audioCtx.currentTime);
+
+                // Synth oscillator sweep for the riser effect underneath the sizzle
+                let osc = audioCtx.createOscillator();
+                let oscGain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + duration);
+
+                let mainGain = audioCtx.createGain();
+                mainGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                mainGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+                oscGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+                // Routing signals
+                noiseNode.connect(filter);
+                filter.connect(mainGain);
+                
+                osc.connect(oscGain);
+                oscGain.connect(audioCtx.destination);
+                
+                mainGain.connect(audioCtx.destination);
+
+                noiseNode.start();
+                osc.start();
+                noiseNode.stop(audioCtx.currentTime + duration);
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {
+                console.log("Audio contextual interface delayed initialization.");
+            }
+        }
 
         function initCivilEngineeringSoilMatrix() {
             engineState.soilStabilityMatrix = [];
@@ -348,7 +405,6 @@
                 }
             }
 
-            // LEVEL 3 FIX MECHANIC
             if (engineState.isLevelThreeActive && engineState.damageArray[index]) {
                 let repairCost = Math.floor(targetAsset.cost * 0.5);
                 if (engineState.walletBal < repairCost) {
@@ -391,8 +447,11 @@
             } else if (engineState.isLevelTwoActive) {
                 engineState.levelTwoMovesLeft--;
                 document.getElementById("moves-display").innerText = `⏳ ${engineState.levelTwoMovesLeft} Moves`;
-                let currentBuildings = engineState.gridArray.filter(cell => cell !== null).length;
-                if (currentBuildings >= 3) {
+                
+                // Count modern villas inside level 2 matrix specifically
+                let houseCount = engineState.gridArray.filter(cell => cell === "HOUSE").length;
+                if (houseCount >= 3) {
+                    playSizzlingSound(); // Level 2 successful trigger point sound!
                     setTimeout(() => {
                         document.getElementById("level2-end-modal").style.display = "flex";
                     }, 500);
@@ -424,6 +483,7 @@
 
         function startLevelTwoCoreEngine() {
             engineState.isLevelTwoActive = true;
+            engineState.isLevelThreeActive = false;
             engineState.levelTwoMovesLeft = 10;
             engineState.walletBal = 600; 
             engineState.gridArray = Array(GRID_SIZE).fill(null); 
@@ -442,6 +502,7 @@
             const walletCard = document.getElementById("wallet-card");
             if(walletCard && !document.getElementById("level2-move-card")) walletCard.parentNode.insertBefore(moveTracker, walletCard.nextSibling);
             
+            document.getElementById("level2-move-card").style.display = "block";
             document.getElementById("coins-display").innerText = `💰 ${engineState.walletBal}`;
             appendTelemetryLog("Level 2 initialized.");
             buildActiveMatrixGrid();
@@ -452,9 +513,6 @@
             document.getElementById("level3-celebration-modal").style.display = "flex";
         }
 
-        // ==========================================
-        // LEVEL 3 ENGINE ARCHITECTURE INTEGRATION
-        // ==========================================
         function startLevelThreeCoreEngine() {
             engineState.isLevelTwoActive = false;
             engineState.isLevelThreeActive = true;
@@ -465,7 +523,6 @@
 
             document.getElementById("level3-celebration-modal").style.display = "none";
             
-            // Upgrade items catalog to Level 3 specifications
             REGISTRY_CATALOG.HYPER_DOME = { id: "HYPER_DOME", label: "Quantum Shield Dome", icon: "🔮", cost: 300, yield: 25, minSoilLoad: 50 };
             renderStructuralCatalog();
 
@@ -476,7 +533,7 @@
             appendTelemetryLog("Level 3 Operational Interface Engaged. Quantum Dome unlocked.");
             buildActiveMatrixGrid();
 
-            // Setup Dynamic Disaster Clock Vectors (Random Kinetic Strike target)
+            if(disasterInterval) clearInterval(disasterInterval);
             disasterInterval = setInterval(() => {
                 let randomTargetIndex = Math.floor(Math.random() * GRID_SIZE);
                 engineState.damageArray[randomTargetIndex] = true;
